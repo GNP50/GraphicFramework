@@ -25,7 +25,7 @@ public:
     virtual void setEngineName(string engineName) override;
     virtual void setApiVersion(int apiVersion) override;
     virtual void setStructType(VkStructureType structureType) override;
-    virtual void setRequiredExtension();
+    virtual void setRequiredExtension() override;
 
     virtual VkApplicationInfo& returnObj(){
 
@@ -48,7 +48,12 @@ public:
         return appRappresentation;
     };
 };
-class VkEngine:public GraphicEngine<VkInstance,VkAppConfiguration,VkResult>{
+class VkEngine:
+        public GraphicEngine<
+                VkInstance,
+                VkAppConfiguration,
+                VkResult,
+                GLFWwindow>{
 protected:
 public:
     VkEngine(){
@@ -81,6 +86,25 @@ public:
     }
     virtual void setAppConfig (VkAppConfiguration config);
     virtual void setInstance();
+
+    //window handlers
+    virtual void initWindow(int w,int h) override;
+    virtual void defaultWindowResizeHandler(GLFWwindow* window, int width, int height) override;
+    virtual void setResizeWindowCallBack(void* newFunc) override;
+
 private:
+};
+
+
+class VkPhyDevice:public PhysicalDevice<VkPhysicalDevice,VkInstance>{
+protected:
+    virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
+    virtual bool isDeviceSuitable(vector<VkPhysicalDevice> devices) override;
+    virtual void initDevices(VkInstance instance) override;
+
+    template<typename Criteria>
+    void getFirstSuitable(Criteria criteria);
+
+
 };
 #endif //ASS0_VULKANFRAMEWORK_H

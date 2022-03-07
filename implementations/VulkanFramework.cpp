@@ -103,8 +103,78 @@ void VkEngine::setInstance() {
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
     if(result != VK_SUCCESS) {
-        PrintVkError(result);
+        printError(result);
         throw std::runtime_error("failed to create instance!");
     }
 }
 
+void VkEngine::initWindow(int w,int h) {
+    glfwInit();
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    this->window = glfwCreateWindow(w, h,
+    this->appConfiguration.appName.c_str(), nullptr, nullptr);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, reinterpret_cast<GLFWframebuffersizefun>(this->framebufferResizeCallback));
+};
+
+void VkEngine::defaultWindowResizeHandler(GLFWwindow* window, int width, int height) {
+    //todo
+    (glfwGetWindowUserPointer(window));
+
+};
+
+void VkEngine::setResizeWindowCallBack(void* newFunc) {
+    this->framebufferResizeCallback = framebufferResizeCallback;
+};
+
+//bool VkPhyDevice::isDevicesSuitable(vector<VkPhysicalDevice_T *> devices){
+//    QueueFamilyIndices indices = findQueueFamilies(device);
+//
+//    bool extensionsSupported = checkDeviceExtensionSupport(device);
+//
+//    bool swapChainAdequate = false;
+//    if (extensionsSupported) {
+//        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+//        swapChainAdequate = !swapChainSupport.formats.empty() &&
+//                            !swapChainSupport.presentModes.empty();
+//    }
+//
+//    VkPhysicalDeviceFeatures supportedFeatures;
+//    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+//
+//    return indices.isComplete() && extensionsSupported && swapChainAdequate &&
+//           supportedFeatures.samplerAnisotropy;
+//};
+
+
+
+//todo add logic for get the best suitable(this piece is given by the init devices)
+//for (const auto& device : devices) {
+//if (isDeviceSuitable(device)) {
+//physicalDevice = device;
+//msaaSamples = getMaxUsableSampleCount();
+//std::cout << "\n\nMaximum samples for anti-aliasing: " << msaaSamples << "\n\n\n";
+//break;
+//}
+//}
+
+if (physicalDevice == VK_NULL_HANDLE) {
+throw std::runtime_error("failed to find a suitable GPU!");
+}
+
+void VkPhyDevice::initDevices(VkInstance instance){
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0) {
+        throw std::runtime_error("failed to find GPUs with Vulkan support!");
+    }
+
+    this->devices = vector<VkPhysicalDevice>(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    Terminal::getInstance().print("Physical devices found: ");
+    Terminal::getInstance().printnl(deviceCount);
+};

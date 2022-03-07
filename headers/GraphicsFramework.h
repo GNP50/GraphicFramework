@@ -17,7 +17,7 @@ template<typename Result>
 struct ErrCodeStruct {
     Result resultCode;
     std::string meaning;
-}
+};
 
 
 template<typename Ret>
@@ -40,15 +40,14 @@ protected:
     int engineMinor;
     int enginePatch;
 
-    string appName;
     string engineName;
     int apiVersion;
     StructTp structureType;
 
     bool enableValidationLayers;
     Ret appRappresentation;
-
 public:
+    string appName;
     vector<const char*> extension;
 
 
@@ -101,7 +100,7 @@ public:
         this->structureType = structTp;
     }
 
-    virtual void setEnableValidationLayers(bool value){enableValidationLayers = value};
+    virtual void setEnableValidationLayers(bool value){enableValidationLayers = value;};
     virtual void setRequiredExtension() = 0;
     virtual Ret& returnObj() = 0;
 };
@@ -113,14 +112,17 @@ public:
 template<
         typename Instance,
         typename Config,
-        typename ErroCode
+        typename ErroCode,
+        typename WindowObj
 >
 class GraphicEngine{
 protected:
     Instance instance;
     Config appConfiguration;
+    WindowObj* window;
 
     static map<ErroCode,string> errorStorer;
+    void (*framebufferResizeCallback)(WindowObj, int, int);
 
 public:
 
@@ -129,17 +131,33 @@ public:
     virtual void setInstance() = 0;
 
     void printError(ErroCode errCode){
-        Terminal::getInstance().print(
-                errorStorer.at(errCode),BackGroudColor::red,ForeGroudColor::yellow);
+        Terminal::getInstance().printnl(
+                errorStorer.at(errCode), BackGroudColor::red, ForeGroudColor::yellow);
     }
 
     //window handlers
     virtual void initWindow(int w,int h);
-    virtual void defaultWindowResizeHandler();
-    virtual void setResizeWindowCallBack():
+    virtual void defaultWindowResizeHandler(WindowObj* window, int width, int height);
+    virtual void setResizeWindowCallBack(void* newFunc);
 
 };
 
 
+template<
+        typename Device,
+        typename Instance
+        >
+class PhysicalDevice{
+protected:
+    vector<Device> devices;
 
+    virtual void initDevices(Instance instance) = 0;
+
+    template<typename Criteria>
+    void getFirstSuitable(Criteria criteria);
+
+    virtual bool isDevicesSuitable(vector<Device> devices) = 0;
+    virtual bool isDeviceSuitable(vector<Device> devices) = 0;
+
+};
 #endif //GRAPHICFRAMEWORK

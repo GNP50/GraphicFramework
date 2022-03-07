@@ -41,8 +41,8 @@ public:
             instance = new Terminal();
         return *instance;
     }
-    void print(
-            string toPrint,
+    void printnl(
+            auto toPrint,
             BackGroudColor backcolor = BackGroudColor::black,
             ForeGroudColor foreGroudColor = ForeGroudColor::white,
             string endChar = "\n"
@@ -52,6 +52,13 @@ public:
                 ";"<<
                    static_cast<int>(backcolor)<<"m"<<toPrint<<"\033[0m"<<endChar;
     };
+
+    void print(auto toPrint,
+               BackGroudColor backcolor = BackGroudColor::black,
+               ForeGroudColor foreGroudColor = ForeGroudColor::white){
+        println(toPrint,backcolor,foreGroudColor,"");
+    }
+
 };
 
 

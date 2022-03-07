@@ -6,7 +6,7 @@ project(ass0)
 
 
 
-add_executable(DB main.cpp)
+add_executable(DB implementations/VulkanFramework.cpp)
 
 execute_process (
         COMMAND brew --prefix glfw
