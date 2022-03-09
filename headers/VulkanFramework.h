@@ -5,6 +5,7 @@
 #ifndef ASS0_VULKANFRAMEWORK_H
 #define ASS0_VULKANFRAMEWORK_H
 #include<GraphicsFramework.h>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
 
@@ -53,7 +54,8 @@ class VkEngine:
                 VkInstance,
                 VkAppConfiguration,
                 VkResult,
-                GLFWwindow>{
+                GLFWwindow,
+                VkSurfaceKHR>{
 protected:
 public:
     VkEngine(){
@@ -96,14 +98,45 @@ private:
 };
 
 
-class VkPhyDevice:public PhysicalDevice<VkPhysicalDevice,VkInstance>{
+
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
+
+class VkPhyDevice:public PhysicalDevice<
+        VkPhysicalDevice,
+        VkInstance,
+        VkSurfaceKHR,
+        SwapChainSupportDetails,
+        VkPhysicalDeviceFeatures,
+        VkExtensionProperties
+        >{
 protected:
     virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
     virtual bool isDeviceSuitable(vector<VkPhysicalDevice> devices) override;
+    virtual bool isFeatureSupported(int offset) override;
+    virtual bool isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions) override;
+
+    virtual VkPhysicalDeviceFeatures getSupportedExtensions(int offset) override;
+    virtual bool isSwapChainAdeguate(int offset,VkSurfaceKHR surface) override;
+
     virtual void initDevices(VkInstance instance) override;
+    virtual SwapChainSupportDetails queryChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) override;
 
     template<typename Criteria>
     void getFirstSuitable(Criteria criteria);
+
+    virtual QueueFamilyIndices  findQueueFamilies(VkPhysicalDevice device) override;
+
+public:
+    VkPhyDevice(vector<const char *> deviceExts, vector<const char *> extension = vector<const char *>({
+                                                                                                               VK_KHR_SWAPCHAIN_EXTENSION_NAME
+                                                                                                       }))
+            : PhysicalDevice(extension) {
+    }
 
 
 };

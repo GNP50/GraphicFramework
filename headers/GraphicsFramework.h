@@ -113,13 +113,15 @@ template<
         typename Instance,
         typename Config,
         typename ErroCode,
-        typename WindowObj
+        typename WindowObj,
+        typename SurfaceObj
 >
 class GraphicEngine{
 protected:
     Instance instance;
     Config appConfiguration;
     WindowObj* window;
+    SurfaceObj surface;
 
     static map<ErroCode,string> errorStorer;
     void (*framebufferResizeCallback)(WindowObj, int, int);
@@ -145,19 +147,49 @@ public:
 
 template<
         typename Device,
-        typename Instance
+        typename Instance,
+        typename SurfaceObj,
+        typename SwapChainDetail,
+        typename DeviceFeature,
+        typename DeviceExtension
         >
 class PhysicalDevice{
 protected:
     vector<Device> devices;
+    std::vector<const char*> deviceExtensions;
 
     virtual void initDevices(Instance instance) = 0;
 
     template<typename Criteria>
     void getFirstSuitable(Criteria criteria);
 
+    virtual bool isFeatureSupported(int offset) = 0;
+    virtual DeviceFeature getSupportedExtensions(int offset) = 0;
+    virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
     virtual bool isDeviceSuitable(vector<Device> devices) = 0;
+    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions);
+
+    virtual SwapChainDetail queryChainSupport(Device device,SurfaceObj surfaceObj) = 0;
+
+    //lather when other library will be added try to make this general(or if not leave it as is)
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+
+        bool isComplete() {
+            return graphicsFamily.has_value() &&
+                   presentFamily.has_value();
+        }
+    };
+
+    virtual QueueFamilyIndices  findQueueFamilies(Device device) = 0;
+
+public:
+    PhysicalDevice(vector<const char*> deviceExts){
+        deviceExtensions = deviceExts;
+    }
+
 
 };
 #endif //GRAPHICFRAMEWORK

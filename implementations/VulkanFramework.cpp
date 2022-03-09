@@ -117,6 +117,10 @@ void VkEngine::initWindow(int w,int h) {
     this->appConfiguration.appName.c_str(), nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, reinterpret_cast<GLFWframebuffersizefun>(this->framebufferResizeCallback));
+
+    if (glfwCreateWindowSurface(instance, window, nullptr, &surface)
+        != VK_SUCCESS)
+        Terminal::getInstance().printnl("failed to create window surface!");
 };
 
 void VkEngine::defaultWindowResizeHandler(GLFWwindow* window, int width, int height) {
@@ -129,40 +133,87 @@ void VkEngine::setResizeWindowCallBack(void* newFunc) {
     this->framebufferResizeCallback = framebufferResizeCallback;
 };
 
-//bool VkPhyDevice::isDevicesSuitable(vector<VkPhysicalDevice_T *> devices){
-//    QueueFamilyIndices indices = findQueueFamilies(device);
-//
-//    bool extensionsSupported = checkDeviceExtensionSupport(device);
-//
-//    bool swapChainAdequate = false;
-//    if (extensionsSupported) {
-//        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
-//        swapChainAdequate = !swapChainSupport.formats.empty() &&
-//                            !swapChainSupport.presentModes.empty();
-//    }
-//
-//    VkPhysicalDeviceFeatures supportedFeatures;
-//    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-//
+bool VkPhyDevice::isDevicesSuitable(vector<VkPhysicalDevice_T *> devices){
+    return true;
+    //TODO real implementation
 //    return indices.isComplete() && extensionsSupported && swapChainAdequate &&
 //           supportedFeatures.samplerAnisotropy;
-//};
+};
 
+VkPhysicalDeviceFeatures VkPhyDevice::getSupportedExtensions(int offset){
+    VkPhysicalDeviceFeatures supportedFeatures;
+    vkGetPhysicalDeviceFeatures(devices[offset], &supportedFeatures);
+    return supportedFeatures;
+};
 
+VkPhyDevice::QueueFamilyIndices  VkPhyDevice::findQueueFamilies(VkPhysicalDevice device) {
+    QueueFamilyIndices indices;
 
-//todo add logic for get the best suitable(this piece is given by the init devices)
-//for (const auto& device : devices) {
-//if (isDeviceSuitable(device)) {
-//physicalDevice = device;
-//msaaSamples = getMaxUsableSampleCount();
-//std::cout << "\n\nMaximum samples for anti-aliasing: " << msaaSamples << "\n\n\n";
-//break;
-//}
-//}
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
+                                             nullptr);
 
-if (physicalDevice == VK_NULL_HANDLE) {
-throw std::runtime_error("failed to find a suitable GPU!");
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
+                                             queueFamilies.data());
+
+    int i=0;
+    for (const auto& queueFamily : queueFamilies) {
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+        }
+
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface,
+                                             &presentSupport);
+        if (presentSupport) {
+            indices.presentFamily = i;
+        }
+
+        if (indices.isComplete()) {
+            break;
+        }
+        i++;
+    }
+
+    return indices;
 }
+
+SwapChainSupportDetails VkPhyDevice::queryChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) {
+    SwapChainSupportDetails details;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+                                              &details.capabilities);
+
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+                                         nullptr);
+
+    if (formatCount != 0) {
+        details.formats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface,
+                                             &formatCount, details.formats.data());
+    }
+
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                                              &presentModeCount, nullptr);
+
+    if (presentModeCount != 0) {
+        details.presentModes.resize(presentModeCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                                                  &presentModeCount, details.presentModes.data());
+    }
+
+    return details;
+}
+
+
+bool VkPhyDevice::isSwapChainAdeguate(int offset,VkSurfaceKHR surface){
+    SwapChainSupportDetails swapChainSupport = queryChainSupport(devices.at(offset),surface);
+    return !swapChainSupport.formats.empty() &&
+           !swapChainSupport.presentModes.empty();
+};
+
 
 void VkPhyDevice::initDevices(VkInstance instance){
     uint32_t deviceCount = 0;
@@ -178,3 +229,40 @@ void VkPhyDevice::initDevices(VkInstance instance){
     Terminal::getInstance().print("Physical devices found: ");
     Terminal::getInstance().printnl(deviceCount);
 };
+
+bool VkPhyDevice::isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions){
+    QueueFamilyIndices indices = findQueueFamilies(devices[offset]);
+
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
+                                         &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
+                                         &extensionCount, availableExtensions.data());
+
+    requiredExtensions(deviceExtensions.begin(),
+                                             deviceExtensions.end());
+
+    for (const auto& extension : availableExtensions){
+        requiredExtensions.erase(extension.extensionName);
+    }
+
+    return requiredExtensions.empty();
+};
+
+
+
+//todo add logic for get the best suitable(this piece is given by the init devices)
+//for (const auto& device : devices) {
+//if (isDeviceSuitable(device)) {
+//physicalDevice = device;
+//msaaSamples = getMaxUsableSampleCount();
+//std::cout << "\n\nMaximum samples for anti-aliasing: " << msaaSamples << "\n\n\n";
+//break;
+//}
+//}
+
+//if (physicalDevice == VK_NULL_HANDLE) {
+//throw std::runtime_error("failed to find a suitable GPU!");
+//}
