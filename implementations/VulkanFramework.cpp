@@ -62,6 +62,32 @@ void VkEngine::setAppConfig (VkAppConfiguration config){
     GraphicEngine::setAppConfig(config);
 };
 
+bool VkEngine::checkValidationLayerSupport() {
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    std::vector<VkLayerProperties> availableLayers(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount,
+                                       availableLayers.data());
+
+    for (const char* layerName : validationLayers) {
+        bool layerFound = false;
+
+        for (const auto& layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void VkEngine::setInstance() {
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -92,7 +118,7 @@ void VkEngine::setInstance() {
                 static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
 
-        populateDebugMessengerCreateInfo(debugCreateInfo);
+        setupDebugMessenger();
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)
                            &debugCreateInfo;
     } else {
@@ -241,14 +267,21 @@ bool VkPhyDevice::isExtensionSupported(int offset,vector<VkExtensionProperties> 
     vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
                                          &extensionCount, availableExtensions.data());
 
-    requiredExtensions(deviceExtensions.begin(),
-                                             deviceExtensions.end());
-
-    for (const auto& extension : availableExtensions){
-        requiredExtensions.erase(extension.extensionName);
+    for (const auto extension : availableExtensions) {
+        bool found = false;
+        string first(extension.extensionName);
+        for (const auto reqExtension: requiredExtensions) {
+            string second(reqExtension.extensionName);
+            if (first == second && reqExtension.specVersion == extension.specVersion) {
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+            return false;
     }
 
-    return requiredExtensions.empty();
+    return false;
 };
 
 

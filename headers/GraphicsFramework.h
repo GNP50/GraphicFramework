@@ -5,6 +5,7 @@
 #ifndef GRAPHICFRAMEWORK
 #define GRAPHICFRAMEWORK
 
+#include <set>
 #include <vector>
 #include <string>
 #include <map>
@@ -122,15 +123,26 @@ protected:
     Config appConfiguration;
     WindowObj* window;
     SurfaceObj surface;
+    std::vector<const char*> validationLayers;
+
+    bool enableValidationLayers;
 
     static map<ErroCode,string> errorStorer;
     void (*framebufferResizeCallback)(WindowObj, int, int);
 
 public:
+    virtual bool checkValidationLayerSupport() =0;
 
 
     virtual void setAppConfig(Config config){instance = config;};
     virtual void setInstance() = 0;
+
+    virtual void setValidationLayers(vector<const char*> validationLayers = {
+            "VK_LAYER_KHRONOS_validation"
+    }){
+        this->validationLayers = validationLayers;
+    }
+
 
     void printError(ErroCode errCode){
         Terminal::getInstance().printnl(
@@ -141,6 +153,9 @@ public:
     virtual void initWindow(int w,int h);
     virtual void defaultWindowResizeHandler(WindowObj* window, int width, int height);
     virtual void setResizeWindowCallBack(void* newFunc);
+
+    //debug helper
+    virtual void setupDebugMessenger(void (*debugCallback)()) = 0;
 
 };
 
@@ -157,6 +172,7 @@ class PhysicalDevice{
 protected:
     vector<Device> devices;
     std::vector<const char*> deviceExtensions;
+    SurfaceObj surface;
 
     virtual void initDevices(Instance instance) = 0;
 

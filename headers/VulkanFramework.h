@@ -10,7 +10,15 @@
 #include <vulkan/vulkan.hpp>
 
 
+//default debug caller
+static VKAPI_ATTR VkBool32 VKAPI_CALL defaultDebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    return VK_FALSE;
+}
 
 class VkAppConfiguration:public AppConfiguration<VkApplicationInfo,VkStructureType>{
 public:
@@ -56,6 +64,12 @@ class VkEngine:
                 VkResult,
                 GLFWwindow,
                 VkSurfaceKHR>{
+private:
+    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    void (*debugCallback)();
+
+
 protected:
 public:
     VkEngine(){
@@ -93,6 +107,55 @@ public:
     virtual void initWindow(int w,int h) override;
     virtual void defaultWindowResizeHandler(GLFWwindow* window, int width, int height) override;
     virtual void setResizeWindowCallBack(void* newFunc) override;
+
+    virtual bool checkValidationLayerSupport() override;
+
+    void setupDebugMessenger() {
+        if (!enableValidationLayers) return;
+
+        createInfo.sType =
+                VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        createInfo.messageSeverity =
+    //			VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | // disabled in the tutorial
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                 VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                 VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        createInfo.pfnUserCallback = reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(debugCallback);
+        createInfo.pUserData = nullptr;
+
+        if (CreateDebugUtilsMessengerEXT(&createInfo) != VK_SUCCESS)
+            Terminal::getInstance().print(
+                    "failed to set up debug messenger!",
+                    BackGroudColor::yellow,
+                    ForeGroudColor::red);
+    }
+
+    void DestroyDebugUtilsMessengerEXT() {
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)
+                vkGetInstanceProcAddr(instance,
+                                      "vkDestroyDebugUtilsMessengerEXT");
+        if (func != nullptr) {
+            func(instance, debugMessenger, nullptr); //fyi lather you have to understande the allocator
+        }
+    }
+
+    VkResult CreateDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo) {
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
+                vkGetInstanceProcAddr(instance,
+                                      "vkCreateDebugUtilsMessengerEXT");
+        if (func != nullptr) {
+            return func(instance, pCreateInfo, nullptr, &debugMessenger);//fyi lather you have to understande the allocator
+        } else {
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
+    }
+
+
+
+
 
 private:
 };
