@@ -32,9 +32,10 @@ enum class BackGroudColor{
     white = 47
 };
 class Terminal {
-private:
-    static Terminal *instance;
+protected:
     Terminal(){};
+    static Terminal *instance;
+
 public:
     static Terminal& getInstance(){
         if(instance == nullptr)
@@ -56,10 +57,13 @@ public:
     void print(auto toPrint,
                BackGroudColor backcolor = BackGroudColor::black,
                ForeGroudColor foreGroudColor = ForeGroudColor::white){
-        println(toPrint,backcolor,foreGroudColor,"");
+        printnl(toPrint,backcolor,foreGroudColor,"");
     }
 
 };
+
+Terminal* Terminal::instance = nullptr;
+
 
 
 #endif //ASS0_TERMINAL_H

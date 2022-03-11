@@ -65,35 +65,35 @@ public:
         this->setApiVersion();
 
     }
-    virtual void setAppMajor(int appMajor){
+    virtual void setAppMajor(int appMajor = 1){
         this->appMajor = appMajor;
     }
-    virtual void setAppMinor(int appMinor){
+    virtual void setAppMinor(int appMinor= 0){
         this->appMinor = appMinor;
     }
-    virtual void setAppPatch(int appPatch){
+    virtual void setAppPatch(int appPatch= 0){
         this->appPatch = appPatch;
     }
-    virtual void setEngineMajor(int engineMajor){
+    virtual void setEngineMajor(int engineMajor= 1){
         this->engineMajor = engineMajor;
     }
-    virtual void setEngineMinor(int engineMinor){
+    virtual void setEngineMinor(int engineMinor= 0){
         this->engineMinor = engineMinor;
     }
-    virtual void setEnginePatch(int enginePatch){
+    virtual void setEnginePatch(int enginePatch= 0){
         this->enginePatch = enginePatch;
     }
 
-    virtual void setEngineName(string engineName){
+    virtual void setEngineName(string engineName = ""){
         this->engineName = engineName;
     }
 
-    virtual void setAppName(string appName){
+    virtual void setAppName(string appName = ""){
         this->engineName = engineName;
     }
 
 
-    virtual void setApiVersion(int apiVersion){
+    virtual void setApiVersion(int apiVersion =1 ){
         this->apiVersion = apiVersion;
     }
 
@@ -127,14 +127,14 @@ protected:
 
     bool enableValidationLayers;
 
-    static map<ErroCode,string> errorStorer;
+    map<ErroCode,string> errorStorer;
     void (*framebufferResizeCallback)(WindowObj, int, int);
 
 public:
     virtual bool checkValidationLayerSupport() =0;
 
 
-    virtual void setAppConfig(Config config){instance = config;};
+    virtual void setAppConfig(Config config){appConfiguration = config;};
     virtual void setInstance() = 0;
 
     virtual void setValidationLayers(vector<const char*> validationLayers = {
@@ -157,7 +157,14 @@ public:
     //debug helper
     virtual void setupDebugMessenger(void (*debugCallback)()) = 0;
 
+    //cleanup methods
+
+    virtual void cleanup() = 0;
+
+
 };
+
+
 
 
 template<

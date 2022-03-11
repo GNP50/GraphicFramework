@@ -100,8 +100,8 @@ public:
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_OUT_OF_POOL_MEMORY_KHR, "Out of Pool Memory" });
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_INVALID_EXTERNAL_HANDLE, "Invalid External Handle" });
     }
-    virtual void setAppConfig (VkAppConfiguration config);
-    virtual void setInstance();
+    virtual void setAppConfig (VkAppConfiguration config) override;
+    virtual void setInstance() override;
 
     //window handlers
     virtual void initWindow(int w,int h) override;
@@ -154,6 +154,8 @@ public:
     }
 
 
+    //clean up logic
+    //virtual void cleanup() override;
 
 
 
@@ -179,8 +181,8 @@ class VkPhyDevice:public PhysicalDevice<
         >{
 protected:
     virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
-    virtual bool isDeviceSuitable(vector<VkPhysicalDevice> devices) override;
-    virtual bool isFeatureSupported(int offset) override;
+
+    //virtual bool isFeatureSupported(int offset) override;
     virtual bool isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions) override;
 
     virtual VkPhysicalDeviceFeatures getSupportedExtensions(int offset) override;

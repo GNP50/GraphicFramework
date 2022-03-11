@@ -149,6 +149,47 @@ void VkEngine::initWindow(int w,int h) {
         Terminal::getInstance().printnl("failed to create window surface!");
 };
 
+/*
+void VkEngine::cleanup() {
+    cleanupSwapChain();
+
+    for (size_t i = 0; i < Scene.size(); i++) {
+        vkDestroySampler(device, Scene[i].TD.textureSampler, nullptr);
+        vkDestroyImageView(device, Scene[i].TD.textureImageView, nullptr);
+        vkDestroyImage(device, Scene[i].TD.textureImage, nullptr);
+        vkFreeMemory(device, Scene[i].TD.textureImageMemory, nullptr);
+
+        vkDestroyBuffer(device, Scene[i].MD.indexBuffer, nullptr);
+        vkFreeMemory(device, Scene[i].MD.indexBufferMemory, nullptr);
+
+        vkDestroyBuffer(device, Scene[i].MD.vertexBuffer, nullptr);
+        vkFreeMemory(device, Scene[i].MD.vertexBufferMemory, nullptr);
+    }
+
+    vkDestroyDescriptorSetLayout(device, PhongDescriptorSetLayout, nullptr);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(device, inFlightFences[i], nullptr);
+    }
+
+    vkDestroyCommandPool(device, commandPool, nullptr);
+
+    vkDestroyDevice(device, nullptr);
+
+    if (enableValidationLayers) {
+        DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    }
+
+    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    glfwDestroyWindow(window);
+
+    glfwTerminate();
+}
+*/
 void VkEngine::defaultWindowResizeHandler(GLFWwindow* window, int width, int height) {
     //todo
     (glfwGetWindowUserPointer(window));

@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_CXX_STANDARD 20)
 
-project(ass0)
+project(DB)
 
 
+file(GLOB DB_SRC CONFIGURE_DEPENDS "headers/*.h" "implementations/*.cpp")
 
 
-add_executable(DB implementations/VulkanFramework.cpp)
+add_library(DB SHARED implementations/VulkanFramework.cpp)
 
 execute_process (
         COMMAND brew --prefix glfw
@@ -55,7 +56,8 @@ include_directories (${GLMINCLUDE})
 include_directories (${VULKANINCLUDE})
 include_directories(headers)
 
-link_libraries(${CMAKE_PROJECT_NAME} ${VULKANLIBRARY})
-link_libraries(${CMAKE_PROJECT_NAME} ${GLFWLIBRARY})
+
+target_link_libraries(${CMAKE_PROJECT_NAME} ${VULKANLIBRARY})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${GLFWLIBRARY})
 link_directories(${GLMLIBRARY})
 
