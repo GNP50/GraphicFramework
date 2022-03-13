@@ -106,8 +106,161 @@ public:
     virtual Ret& returnObj() = 0;
 };
 
+//todo decide if it have to been general
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() &&
+               presentFamily.has_value();
+    }
+};
 
 
+template<
+        typename Device,
+        typename Instance,
+        typename SurfaceObj,
+        typename SwapChainDetail,
+        typename DeviceFeature,
+        typename DeviceExtension,
+        typename LogicaDevice,
+        typename Engine,
+        typename Queue
+>
+class PhysicalDevice{
+protected:
+    vector<Device> devices;
+    std::vector<const char*> deviceExtensions;
+    SurfaceObj surface;
+    Engine engine;
+    virtual void initDevices(Instance instance) = 0;
+
+    template<typename Criteria>
+    void getFirstSuitable(Criteria criteria);
+
+    virtual bool isFeatureSupported(int offset) = 0;
+    virtual DeviceFeature getSupportedExtensions(int offset) = 0;
+    virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
+    virtual bool isDevicesSuitable(vector<Device> devices) = 0;
+    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions);
+
+
+
+public:
+    Queue graphicsQueue,presentQueue;
+
+
+    PhysicalDevice(vector<const char*> deviceExts){
+        deviceExtensions = deviceExts;
+    }
+
+    virtual SwapChainDetail queryChainSupport(Device device,SurfaceObj surfaceObj) = 0;
+    virtual QueueFamilyIndices  findQueueFamilies(int  off) = 0;
+    Device getDevice(int off){return devices[off];}
+    virtual LogicaDevice createLogicalDevice(int off);
+};
+
+
+template <
+        typename BufferType,
+        typename ConfigurationFlags,
+        typename PropertyFlags,
+        typename DeviceMemory,
+        typename Device,
+        typename PhyDevice
+        >
+class Buffer{
+protected:
+    //todo write setters for them
+    int size;
+    ConfigurationFlags usage;
+    BufferType buffer;
+    PropertyFlags properties;
+    DeviceMemory bufferMemory;
+    Device device;
+    PhyDevice physicalDevice;
+
+    virtual void createBuffer() = 0;
+    virtual uint32_t findMemoryType(uint32_t typeFilter,PropertyFlags properties) = 0;
+public:
+    Buffer(int size = 100){this->size = size;}
+    Buffer(const Buffer& toCopy){
+        this->usage = toCopy.usage;
+        this->properties = toCopy.properties;
+        this->bufferMemory = toCopy.bufferMemory;
+        this->device = toCopy.device;
+        this->physicalDevice = toCopy.physicalDevice;
+    }
+
+
+    virtual void create() = 0;
+
+};
+
+
+
+template <
+        typename BufferType,
+        typename ConfigurationFlags,
+        typename PropertyFlags,
+        typename DeviceMemory,
+        typename Device,
+        typename PhyDevice
+>
+class VertexBuffer:Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>
+{
+
+public:
+    vector<float> vertices;
+
+    VertexBuffer(int size):Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>(size){};
+    virtual void create();
+
+    void setVertices(vector<float> vertices){
+        this->vertices = vertices;
+    }
+
+    // Overloaded assignment
+    VertexBuffer& operator= (const VertexBuffer& toAssign){
+        this->setVertices(toAssign.vertices);
+    };
+
+};
+
+
+template <
+        typename BufferType,
+        typename ConfigurationFlags,
+        typename PropertyFlags,
+        typename DeviceMemory,
+        typename Device,
+        typename PhyDevice
+>
+class IndexBuffer:Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>
+{
+public:
+    IndexBuffer(int size):Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>(size){};
+    virtual void create();
+
+};
+
+template <
+        typename BufferType,
+        typename ConfigurationFlags,
+        typename PropertyFlags,
+        typename DeviceMemory,
+        typename Device,
+        typename PhyDevice
+>
+class UniformBuffer:Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>
+{
+public:
+    UniformBuffer(int size):Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>(size){};
+    virtual void create();
+
+};
 
 
 template<
@@ -123,14 +276,14 @@ protected:
     Config appConfiguration;
     WindowObj* window;
     SurfaceObj surface;
-    std::vector<const char*> validationLayers;
 
-    bool enableValidationLayers;
 
     map<ErroCode,string> errorStorer;
     void (*framebufferResizeCallback)(WindowObj, int, int);
 
 public:
+    bool enableValidationLayers;
+    std::vector<const char*> validationLayers;
     virtual bool checkValidationLayerSupport() =0;
 
 
@@ -155,10 +308,10 @@ public:
     virtual void setResizeWindowCallBack(void* newFunc);
 
     //debug helper
-    virtual void setupDebugMessenger(void (*debugCallback)()) = 0;
+    virtual void setupDebugMessenger() = 0;
+
 
     //cleanup methods
-
     virtual void cleanup() = 0;
 
 
@@ -167,52 +320,5 @@ public:
 
 
 
-template<
-        typename Device,
-        typename Instance,
-        typename SurfaceObj,
-        typename SwapChainDetail,
-        typename DeviceFeature,
-        typename DeviceExtension
-        >
-class PhysicalDevice{
-protected:
-    vector<Device> devices;
-    std::vector<const char*> deviceExtensions;
-    SurfaceObj surface;
 
-    virtual void initDevices(Instance instance) = 0;
-
-    template<typename Criteria>
-    void getFirstSuitable(Criteria criteria);
-
-    virtual bool isFeatureSupported(int offset) = 0;
-    virtual DeviceFeature getSupportedExtensions(int offset) = 0;
-    virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
-    virtual bool isDevicesSuitable(vector<Device> devices) = 0;
-    virtual bool isDeviceSuitable(vector<Device> devices) = 0;
-    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions);
-
-    virtual SwapChainDetail queryChainSupport(Device device,SurfaceObj surfaceObj) = 0;
-
-    //lather when other library will be added try to make this general(or if not leave it as is)
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> presentFamily;
-
-        bool isComplete() {
-            return graphicsFamily.has_value() &&
-                   presentFamily.has_value();
-        }
-    };
-
-    virtual QueueFamilyIndices  findQueueFamilies(Device device) = 0;
-
-public:
-    PhysicalDevice(vector<const char*> deviceExts){
-        deviceExtensions = deviceExts;
-    }
-
-
-};
 #endif //GRAPHICFRAMEWORK
