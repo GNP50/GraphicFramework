@@ -110,7 +110,7 @@ public:
 
     virtual bool checkValidationLayerSupport() override;
 
-    void setupDebugMessenger() {
+    virtual void setupDebugMessenger() override{
         if (!enableValidationLayers) return;
 
         createInfo.sType =
@@ -155,7 +155,7 @@ public:
 
 
     //clean up logic
-    //virtual void cleanup() override;
+    virtual void cleanup() override;
 
 
 
@@ -164,12 +164,13 @@ private:
 
 
 
+//todo decide if it have to been general
+
 struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 };
-
 
 class VkPhyDevice:public PhysicalDevice<
         VkPhysicalDevice,
@@ -177,12 +178,13 @@ class VkPhyDevice:public PhysicalDevice<
         VkSurfaceKHR,
         SwapChainSupportDetails,
         VkPhysicalDeviceFeatures,
-        VkExtensionProperties
+        VkExtensionProperties,
+        VkDevice,
+        VkEngine,VkQueue
         >{
 protected:
     virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
-
-    //virtual bool isFeatureSupported(int offset) override;
+    virtual bool isFeatureSupported(int offset) override;
     virtual bool isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions) override;
 
     virtual VkPhysicalDeviceFeatures getSupportedExtensions(int offset) override;
@@ -194,15 +196,215 @@ protected:
     template<typename Criteria>
     void getFirstSuitable(Criteria criteria);
 
-    virtual QueueFamilyIndices  findQueueFamilies(VkPhysicalDevice device) override;
 
 public:
-    VkPhyDevice(vector<const char *> deviceExts, vector<const char *> extension = vector<const char *>({
+    VkPhyDevice(vector<const char *> extension = vector<const char *>({
                                                                                                                VK_KHR_SWAPCHAIN_EXTENSION_NAME
                                                                                                        }))
             : PhysicalDevice(extension) {
     }
+    virtual QueueFamilyIndices  findQueueFamilies(int off) override;
+    virtual VkDevice createLogicalDevice(int off) override;
+
+};
+
+
+
+
+template<typename BufferDataType>
+class VkGenericBuffer:public Buffer<
+        VkBuffer,
+        VkBufferUsageFlags,
+        VkMemoryPropertyFlags,
+        VkDeviceMemory,
+        VkDevice,VkPhyDevice,BufferDataType>{
+protected:
+    VkCommandPool  commandPool;
+    int phyDeviceOff;
+
+public:
+    virtual void createBuffer() override{
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = static_cast<VkDeviceSize>(this->size);
+        bufferInfo.usage = this->usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VkResult result =
+                vkCreateBuffer(this->device, &bufferInfo, nullptr, &this->buffer);
+        if (result != VK_SUCCESS) {
+            Terminal::getInstance().print(result);
+            Terminal::getInstance().print("\tfailed to create vertex buffer!");
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(this->device, this->buffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex =
+                findMemoryType(memRequirements.memoryTypeBits, this->properties);
+
+        result = vkAllocateMemory(this->device, &allocInfo, nullptr,
+                                  &this->bufferMemory);
+        if (result != VK_SUCCESS) {
+            Terminal::getInstance().print(result);
+            Terminal::getInstance().print("\tfailed to allocate vertex buffer memory!");
+        }
+
+        vkBindBufferMemory(this->device, this->buffer, this->bufferMemory, 0);
+    };
+    virtual uint32_t findMemoryType(uint32_t typeFilter,
+                            VkMemoryPropertyFlags properties) override{
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(this->physicalDevice.getDevice(phyDeviceOff), &memProperties);
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((typeFilter & (1 << i)) &&
+                (memProperties.memoryTypes[i].propertyFlags & properties) ==
+                properties) {
+                return i;
+            }
+        }
+
+        throw std::runtime_error("failed to find suitable memory type!");
+    }
+
+    VkGenericBuffer(int size): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(size){
+
+    }
+
+    VkGenericBuffer(const VkGenericBuffer& toCopy):Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(toCopy){
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        VkBufferCopy copyRegion{};
+        copyRegion.srcOffset = 0; // Optional copyRegion.dstOffset = 0; // Optional
+        copyRegion.size = this->size;
+        vkCmdCopyBuffer(commandBuffer, toCopy.buffer, this->buffer, 1, &copyRegion);
+
+        endSingleTimeCommands(commandBuffer);
+    }
+
+    ~VkGenericBuffer(){
+        vkDestroyBuffer(this->device, this->buffer, nullptr);
+        vkFreeMemory(this->device, this->bufferMemory, nullptr);
+    }
+
+    VkCommandBuffer beginSingleTimeCommands() {
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = commandPool;
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(this->device, &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        return commandBuffer;
+    }
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+        vkEndCommandBuffer(commandBuffer);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+        vkQueueSubmit(this->physicalDevice.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(this->physicalDevice.graphicsQueue);
+
+        vkFreeCommandBuffers(this->device, commandPool, 1, &commandBuffer);
+    }
+    void createCommandPool() {
+        QueueFamilyIndices queueFamilyIndices =
+                this->physicalDevice.findQueueFamilies(phyDeviceOff);
+
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+        poolInfo.flags = 0; // Optional
+
+        VkResult result = vkCreateCommandPool(this->device, &poolInfo, nullptr, &commandPool);
+        if (result != VK_SUCCESS) {
+            Terminal::getInstance().printnl(result,BackGroudColor::red,ForeGroudColor::red);
+            throw std::runtime_error("failed to create command pool!");
+        }
+    }
 
 
 };
+
+template<typename BufferDataType>
+class VkStagingBuffer:VkGenericBuffer<BufferDataType> {
+protected:
+
+public:
+    VkStagingBuffer(int size, vector<BufferDataType> data):VkGenericBuffer<BufferDataType>(size) {
+        this->usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+        this->data = data;
+    }
+
+    virtual void create() override {
+        this->createBuffer();
+        void *ppData;
+        vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
+
+        memcpy(data, this->data.data(), (size_t) this->bufferSize);
+        vkUnmapMemory(this->device, this->stagingBufferMemory);
+    };
+};
+
+template<typename BufferDataType>
+class VkVertexBuffer:VkGenericBuffer<BufferDataType>
+{
+public:
+
+    VkVertexBuffer(int size):VkGenericBuffer<BufferDataType>(size){
+        this->usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        this->properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+    }
+    virtual void create() override{
+        VkStagingBuffer<BufferDataType> stagingBuffer;
+
+        this->createBuffer();
+
+        copyBuffer(stagingBuffer.buffer, this->buffer, this->bufferSize);
+    };
+};
+
+template<typename BufferDataType>
+class VkUniformBuffer:VkGenericBuffer<BufferDataType>
+{
+
+
+public:
+
+    VkUniformBuffer(int size):VkGenericBuffer<BufferDataType>(size){
+        this->usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    }
+    virtual void create() override{
+        VkStagingBuffer<BufferDataType> stagingBuffer;
+
+        this->createBuffer();
+
+        copyBuffer(stagingBuffer.buffer, this->buffer, this->bufferSize);
+    };
+
+
+};
+
 #endif //ASS0_VULKANFRAMEWORK_H
