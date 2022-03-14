@@ -169,12 +169,16 @@ template <
         typename PropertyFlags,
         typename DeviceMemory,
         typename Device,
-        typename PhyDevice
+        typename PhyDevice,
+        typename BufferDataType
         >
 class Buffer{
 protected:
     //todo write setters for them
-    int size;
+    uint64_t size;
+    uint64_t bufferSize;
+    vector<BufferDataType> data;
+
     ConfigurationFlags usage;
     BufferType buffer;
     PropertyFlags properties;
@@ -185,7 +189,13 @@ protected:
     virtual void createBuffer() = 0;
     virtual uint32_t findMemoryType(uint32_t typeFilter,PropertyFlags properties) = 0;
 public:
-    Buffer(int size = 100){this->size = size;}
+    Buffer(int size = 100){
+        data =  vector<float>(size);
+
+
+        this->size = size;
+        this->bufferSize = sizeof(BufferDataType)*this->size;
+    }
     Buffer(const Buffer& toCopy){
         this->usage = toCopy.usage;
         this->properties = toCopy.properties;
@@ -197,69 +207,9 @@ public:
 
     virtual void create() = 0;
 
-};
-
-
-
-template <
-        typename BufferType,
-        typename ConfigurationFlags,
-        typename PropertyFlags,
-        typename DeviceMemory,
-        typename Device,
-        typename PhyDevice
->
-class VertexBuffer:Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>
-{
-
-public:
-    vector<float> vertices;
-
-    VertexBuffer(int size):Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>(size){};
-    virtual void create();
-
-    void setVertices(vector<float> vertices){
-        this->vertices = vertices;
+    void setUsage(const ConfigurationFlags toSet){
+        this->usage = toSet;
     }
-
-    // Overloaded assignment
-    VertexBuffer& operator= (const VertexBuffer& toAssign){
-        this->setVertices(toAssign.vertices);
-    };
-
-};
-
-
-template <
-        typename BufferType,
-        typename ConfigurationFlags,
-        typename PropertyFlags,
-        typename DeviceMemory,
-        typename Device,
-        typename PhyDevice
->
-class IndexBuffer:Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>
-{
-public:
-    IndexBuffer(int size):Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>(size){};
-    virtual void create();
-
-};
-
-template <
-        typename BufferType,
-        typename ConfigurationFlags,
-        typename PropertyFlags,
-        typename DeviceMemory,
-        typename Device,
-        typename PhyDevice
->
-class UniformBuffer:Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>
-{
-public:
-    UniformBuffer(int size):Buffer<BufferType,ConfigurationFlags,PropertyFlags,DeviceMemory,Device,PhyDevice>(size){};
-    virtual void create();
-
 };
 
 
