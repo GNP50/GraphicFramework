@@ -27,7 +27,8 @@ protected:
 };
 
 TEST_F(EngineTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
-
+    Terminal::getInstance().printnl("Starting creation objects ");
+    
 }
 
 #endif //DB_ENGINETESTS_H
