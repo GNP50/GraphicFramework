@@ -206,6 +206,14 @@ public:
     virtual QueueFamilyIndices  findQueueFamilies(int off) override;
     virtual VkDevice createLogicalDevice(int off) override;
 
+    //swaps function valutate if i have to make generic
+    virtual VkSurfaceFormatKHR chooseSwapSurfaceFormat(
+            const std::vector<VkSurfaceFormatKHR>& availableFormats);
+
+    virtual VkPresentModeKHR chooseSwapPresentMode(
+            const std::vector<VkPresentModeKHR>& availablePresentModes);
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
 };
 
 

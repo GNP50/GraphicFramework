@@ -146,6 +146,7 @@ protected:
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
     virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions);
 
+    virtual void createSwapChain(int off) = 0;
 
 
 public:
@@ -156,7 +157,7 @@ public:
         deviceExtensions = deviceExts;
     }
 
-    virtual SwapChainDetail queryChainSupport(Device device,SurfaceObj surfaceObj) = 0;
+    virtual SwapChainDetail querySwapChainSupport(Device device,SurfaceObj surfaceObj) = 0;
     virtual QueueFamilyIndices  findQueueFamilies(int  off) = 0;
     Device getDevice(int off){return devices[off];}
     virtual LogicaDevice createLogicalDevice(int off);
@@ -263,6 +264,8 @@ public:
 
     //cleanup methods
     virtual void cleanup() = 0;
+
+    virtual std::vector<const char*> getRequiredInstanceExtensions() = 0;
 
 
 };
