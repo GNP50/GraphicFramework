@@ -181,7 +181,12 @@ class VkPhyDevice:public PhysicalDevice<
         VkPhysicalDeviceFeatures,
         VkExtensionProperties,
         VkDevice,
-        VkEngine,VkQueue
+        VkEngine,
+        VkQueue,
+        VkImage,
+        VkSwapchainKHR,
+        VkFormat,
+        VkExtent2D
         >{
 protected:
     virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
@@ -192,13 +197,17 @@ protected:
     virtual bool isSwapChainAdeguate(int offset,VkSurfaceKHR surface) override;
 
     virtual void initDevices(VkInstance instance) override;
-    virtual SwapChainSupportDetails queryChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) override;
+    virtual SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) override;
 
     template<typename Criteria>
     void getFirstSuitable(Criteria criteria);
+    virtual VkSwapchainKHR createSwapChain(int off) override;
 
 
 public:
+    VkPhyDevice(VkEngine engine,VkInstance instance, vector<const char *> deviceExts) : PhysicalDevice(engine,instance, deviceExts) {
+        initDevices(instance);
+    }
     VkPhyDevice(vector<const char *> extension = vector<const char *>({
                                                                                                                VK_KHR_SWAPCHAIN_EXTENSION_NAME
                                                                                                        }))
@@ -280,11 +289,13 @@ public:
         throw std::runtime_error("failed to find suitable memory type!");
     }
 
-    VkGenericBuffer(int size): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(size){
+    VkGenericBuffer(int size): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(size),
+                               VkPhyDevice(nullptr, vector<const char *>()) {
 
     }
 
-    VkGenericBuffer(const VkGenericBuffer& toCopy):Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(toCopy){
+    VkGenericBuffer(const VkGenericBuffer& toCopy): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(toCopy),
+                                                    VkPhyDevice(nullptr, vector<const char *>()) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkBufferCopy copyRegion{};
@@ -378,14 +389,36 @@ class VkVertexBuffer:VkGenericBuffer<BufferDataType>
 public:
 
     VkVertexBuffer(int size):VkGenericBuffer<BufferDataType>(size){
-        this->usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+        this->usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         this->properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     }
     virtual void create() override{
         VkStagingBuffer<BufferDataType> stagingBuffer;
+        stagingBuffer.data = this->data;
+        stagingBuffer.create();
+        this->createBuffer();
 
+        copyBuffer(stagingBuffer.buffer, this->buffer, this->bufferSize);
+    };
+};
+
+template<typename BufferDataType>
+class VkIndexBuffer:VkGenericBuffer<BufferDataType>
+{
+public:
+
+    VkIndexBuffer(int size):VkGenericBuffer<BufferDataType>(size){
+        this->usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        this->properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+    }
+    virtual void create() override{
+        VkStagingBuffer<BufferDataType> stagingBuffer;
+        stagingBuffer.data = this->data;
+        stagingBuffer.create();
         this->createBuffer();
 
         copyBuffer(stagingBuffer.buffer, this->buffer, this->bufferSize);
@@ -415,5 +448,129 @@ public:
 
 
 };
+
+/** logic to transfer
+
+void createUniformBuffers() {
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+    uniformBuffers.resize(swapChainImages.size() * Scene.size());
+    uniformBuffersMemory.resize(swapChainImages.size() * Scene.size());
+
+    for (size_t i = 0; i < swapChainImages.size() * Scene.size(); i++) {
+        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     uniformBuffers[i], uniformBuffersMemory[i]);
+    }
+
+    bufferSize = sizeof(GlobalUniformBufferObject);
+
+    globalUniformBuffers.resize(swapChainImages.size());
+    globalUniformBuffersMemory.resize(swapChainImages.size());
+
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
+        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     globalUniformBuffers[i], globalUniformBuffersMemory[i]);
+    }
+
+    bufferSize = sizeof(UniformBufferObject);
+}
+
+
+void createCommandBuffers() {
+    commandBuffers.resize(swapChainFramebuffers.size());
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
+
+    VkResult result = vkAllocateCommandBuffers(device, &allocInfo,
+                                               commandBuffers.data());
+    if (result != VK_SUCCESS) {
+        PrintVkError(result);
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+
+    for (size_t i = 0; i < commandBuffers.size(); i++) {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0; // Optional
+        beginInfo.pInheritanceInfo = nullptr; // Optional
+
+        if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) !=
+            VK_SUCCESS) {
+            throw std::runtime_error("failed to begin recording command buffer!");
+        }
+
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = renderPass;
+        renderPassInfo.framebuffer = swapChainFramebuffers[i];
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = swapChainExtent;
+
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+        clearValues[1].depthStencil = {1.0f, 0};
+
+        renderPassInfo.clearValueCount =
+                static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
+
+        vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
+                             VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          PhongPipeline);
+
+        for(int j = 0; j < Scene.size(); j++) {
+            VkBuffer vertexBuffers[] = {Scene[j].MD.vertexBuffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+            vkCmdBindIndexBuffer(commandBuffers[i], Scene[j].MD.indexBuffer, 0,
+                                 VK_INDEX_TYPE_UINT32);
+            vkCmdBindDescriptorSets(commandBuffers[i],
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    PhongPipelineLayout, 0, 1,
+                                    &PhongDescriptorSets[i + j * swapChainImages.size()],
+                                    0, nullptr);
+
+            vkCmdDrawIndexed(commandBuffers[i],
+                             static_cast<uint32_t>(Scene[j].MD.indices.size()), 1, 0, 0, 0);
+        }
+
+        vkCmdEndRenderPass(commandBuffers[i]);
+        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record command buffer!");
+        }
+    }
+}
+
+struct UniformBufferObject {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+
+struct GlobalUniformBufferObject {
+    alignas(16) glm::vec3 lightDir;
+    alignas(16) glm::vec4 lightColor;
+    alignas(16) glm::vec3 eyePos;
+};
+
+
+struct TextureData {
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
+    VkImageView textureImageView;
+    VkSampler textureSampler;
+    uint32_t mipLevels;
+};
+
+**/
 
 #endif //ASS0_VULKANFRAMEWORK_H

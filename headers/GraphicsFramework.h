@@ -127,14 +127,25 @@ template<
         typename DeviceExtension,
         typename LogicaDevice,
         typename Engine,
-        typename Queue
+        typename Queue,
+        typename Images,
+        typename SwapChain,
+        typename SwapChainFormat,
+        typename SwapChainExtend
 >
 class PhysicalDevice{
 protected:
-    vector<Device> devices;
+    static vector<Device> devices;
     std::vector<const char*> deviceExtensions;
     SurfaceObj surface;
     Engine engine;
+    Instance instance;
+    std::vector<Images> swapChainImages;
+    SwapChain swapChain;
+    vector<LogicaDevice> logicalDevices;
+    SwapChainFormat swapChainImageFormat;
+    SwapChainExtend swapChainExtent;
+
     virtual void initDevices(Instance instance) = 0;
 
     template<typename Criteria>
@@ -146,13 +157,17 @@ protected:
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
     virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions);
 
-    virtual void createSwapChain(int off) = 0;
+    virtual SwapChain createSwapChain(int off) = 0;
 
 
 public:
     Queue graphicsQueue,presentQueue;
 
+    PhysicalDevice(Engine  engine,Instance instance, vector<const char *> deviceExts){
+        this-> engine = engine;
+        this->deviceExtensions = deviceExts;
 
+    }
     PhysicalDevice(vector<const char*> deviceExts){
         deviceExtensions = deviceExts;
     }
@@ -267,7 +282,7 @@ public:
 
     virtual std::vector<const char*> getRequiredInstanceExtensions() = 0;
 
-
+    WindowObj* getWindow(){return window;}
 };
 
 

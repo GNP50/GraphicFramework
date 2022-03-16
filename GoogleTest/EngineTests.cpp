@@ -26,9 +26,11 @@ protected:
     VkEngine* engine;
 };
 
-TEST_F(EngineTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
+TEST_F(EngineTestFixture, CreateInstance){ // 1/1/1 -> 1/3/1
     Terminal::getInstance().printnl("Starting creation objects ");
-    
+
+    engine->setInstance();
+
 }
 
 #endif //DB_ENGINETESTS_H
