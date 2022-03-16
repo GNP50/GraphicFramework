@@ -111,6 +111,7 @@ namespace GraphicLibrary {
         string toString();
     };
 
+
 }
 
 #endif //ASS0_GEOMETRIC_H
