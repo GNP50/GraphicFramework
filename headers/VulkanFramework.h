@@ -157,6 +157,7 @@ public:
     //clean up logic
     virtual void cleanup() override;
 
+    virtual std::vector<const char*> getRequiredInstanceExtensions() override;
 
 
 private:
