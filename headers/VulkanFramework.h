@@ -187,7 +187,7 @@ class VkPhyDevice:public PhysicalDevice<
         VkSwapchainKHR,
         VkFormat,
         VkExtent2D
-        >{
+>{
 protected:
     virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
     virtual bool isFeatureSupported(int offset) override;
@@ -209,8 +209,8 @@ public:
         initDevices(instance);
     }
     VkPhyDevice(vector<const char *> extension = vector<const char *>({
-                                                                                                               VK_KHR_SWAPCHAIN_EXTENSION_NAME
-                                                                                                       }))
+                                                                              VK_KHR_SWAPCHAIN_EXTENSION_NAME
+                                                                      }))
             : PhysicalDevice(extension) {
     }
     virtual QueueFamilyIndices  findQueueFamilies(int off) override;

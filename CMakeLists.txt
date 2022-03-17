@@ -7,7 +7,14 @@ project(DB)
 file(GLOB DB_SRC CONFIGURE_DEPENDS "headers/*.h" "implementations/*.cpp")
 
 
-add_library(DB SHARED implementations/VulkanFramework.cpp)
+add_library(DB SHARED
+        implementations/VulkanFramework.cpp
+        implementations/GraphicsFramework.cpp
+        headers/Terminal.h
+        headers/VulkanFramework.h
+        headers/GraphicsFramework.h
+
+        )
 
 execute_process (
         COMMAND brew --prefix glfw
