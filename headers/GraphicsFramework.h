@@ -177,6 +177,37 @@ public:
     Device getDevice(int off){return devices[off];}
     virtual LogicaDevice createLogicalDevice(int off);
 };
+template<
+        typename Device,
+        typename Instance,
+        typename SurfaceObj,
+        typename SwapChainDetail,
+        typename DeviceFeature,
+        typename DeviceExtension,
+        typename LogicaDevice,
+        typename Engine,
+        typename Queue,
+        typename Images,
+        typename SwapChain,
+        typename SwapChainFormat,
+        typename SwapChainExtend
+>
+vector<Device>
+PhysicalDevice<
+        Device,
+        Instance,
+        SurfaceObj,
+        SwapChainDetail,
+        DeviceFeature,
+        DeviceExtension,
+        LogicaDevice,
+        Engine,
+        Queue,
+        Images,
+        SwapChain,
+        SwapChainFormat,
+        SwapChainExtend
+>::devices;
 
 
 template <
