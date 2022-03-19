@@ -300,9 +300,9 @@ public:
     }
 
     //window handlers
-    virtual void initWindow(int w,int h);
-    virtual void defaultWindowResizeHandler(WindowObj* window, int width, int height);
-    virtual void setResizeWindowCallBack(void* newFunc);
+    virtual void initWindow(int w,int h) = 0;
+    virtual void defaultWindowResizeHandler(WindowObj* window, int width, int height) = 0;
+    virtual void setResizeWindowCallBack(void* newFunc) = 0;
 
     //debug helper
     virtual void setupDebugMessenger() = 0;

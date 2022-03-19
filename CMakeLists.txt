@@ -7,8 +7,11 @@ project(DB)
 file(GLOB DB_SRC CONFIGURE_DEPENDS "headers/*.h" "implementations/*.cpp")
 
 
-add_library(DB SHARED
+add_library(DB STATIC
         implementations/VulkanFramework.cpp
+        implementations/Terminal.cpp
+        implementations/GraphicsFramework.cpp
+
         headers/Terminal.h
         headers/VulkanFramework.h
         headers/GraphicsFramework.h

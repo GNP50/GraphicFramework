@@ -37,11 +37,7 @@ protected:
     static Terminal *instance;
 
 public:
-    static Terminal& getInstance(){
-        if(instance == nullptr)
-            instance = new Terminal();
-        return *instance;
-    }
+    static Terminal& getInstance();
     void printnl(
             auto toPrint,
             BackGroudColor backcolor = BackGroudColor::black,
@@ -62,7 +58,6 @@ public:
 
 };
 
-Terminal* Terminal::instance = nullptr;
 
 
 

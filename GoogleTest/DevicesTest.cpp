@@ -15,7 +15,7 @@ class DeviceTestFixture : public ::testing::Test {
 protected:
     virtual void SetUp()
     {
-        deviceRepository = new VkPhyDevice(nullptr, vector<const char *>());
+
     }
 
     virtual void TearDown() {
@@ -31,8 +31,5 @@ TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
 }
 
 
-TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
-
-}
 
 #endif //DB_DEVICESTEST_H
