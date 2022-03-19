@@ -5,6 +5,7 @@
 #include "VulkanFramework.h"
 
 
+
 void  VkAppConfiguration::setAppMajor(int appMajor = 1) {
     AppConfiguration::setApiVersion(appMajor);
 };
@@ -46,7 +47,7 @@ void VkAppConfiguration::setStructType(VkStructureType structureType) {
     AppConfiguration::setStructType(structureType);
 }
 
-void VkAppConfiguration::setRequiredExtension() {
+void VkAppConfiguration::setRequiredExtension(bool enableValidationLayers = false) {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;
     glfwExtensions =
@@ -58,9 +59,10 @@ void VkAppConfiguration::setRequiredExtension() {
         extension.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 }
 
-void VkEngine::setAppConfig (VkAppConfiguration config){
+void VkEngine::setAppConfig (VkAppConfiguration config = VkAppConfiguration()){
     GraphicEngine::setAppConfig(config);
 };
+
 
 bool VkEngine::checkValidationLayerSupport() {
     uint32_t layerCount;
@@ -89,6 +91,9 @@ bool VkEngine::checkValidationLayerSupport() {
 }
 
 void VkEngine::setInstance() {
+    this->setAppConfig();
+    this->appConfiguration.setRequiredExtension(enableValidationLayers);
+
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &(this->appConfiguration.returnObj());
@@ -113,12 +118,14 @@ void VkEngine::setInstance() {
                                            extensionsPr.data());
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+    setupDebugMessenger();
+
     if (enableValidationLayers) {
+        setValidationLayers();
         createInfo.enabledLayerCount =
                 static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
 
-        setupDebugMessenger();
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)
                            &debugCreateInfo;
     } else {
@@ -126,12 +133,15 @@ void VkEngine::setInstance() {
         createInfo.pNext = nullptr;
     }
 
+    VkInstance instance;
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
+    setupDebugCallback();
     if(result != VK_SUCCESS) {
         printError(result);
         throw std::runtime_error("failed to create instance!");
     }
+
 }
 
 void VkEngine::initWindow(int w,int h) {
@@ -144,10 +154,13 @@ void VkEngine::initWindow(int w,int h) {
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, reinterpret_cast<GLFWframebuffersizefun>(this->framebufferResizeCallback));
 
+};
+
+void VkEngine::createSurface(){
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface)
         != VK_SUCCESS)
         Terminal::getInstance().printnl("failed to create window surface!");
-};
+}
 
 std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {
     uint32_t glfwExtensionCount = 0;

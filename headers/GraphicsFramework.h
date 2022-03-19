@@ -45,7 +45,6 @@ protected:
     int apiVersion;
     StructTp structureType;
 
-    bool enableValidationLayers;
     Ret appRappresentation;
 public:
     string appName;
@@ -61,6 +60,7 @@ public:
         this->setEngineMinor();
         this->setEnginePatch();
 
+        this->setAppName();
         this->setEngineName();
         this->setApiVersion();
 
@@ -84,12 +84,12 @@ public:
         this->enginePatch = enginePatch;
     }
 
-    virtual void setEngineName(string engineName = ""){
+    virtual void setEngineName(string engineName = "No Name"){
         this->engineName = engineName;
     }
 
-    virtual void setAppName(string appName = ""){
-        this->engineName = engineName;
+    virtual void setAppName(string appName = "No name"){
+        this->appName = appName;
     }
 
 
@@ -101,8 +101,7 @@ public:
         this->structureType = structTp;
     }
 
-    virtual void setEnableValidationLayers(bool value){enableValidationLayers = value;};
-    virtual void setRequiredExtension() = 0;
+    virtual void setRequiredExtension(bool enableValidationLayers) = 0;
     virtual Ret& returnObj() = 0;
 };
 
@@ -279,13 +278,14 @@ protected:
     void (*framebufferResizeCallback)(WindowObj, int, int);
 
 public:
-    bool enableValidationLayers;
+    bool enableValidationLayers = true;
     std::vector<const char*> validationLayers;
     virtual bool checkValidationLayerSupport() =0;
 
 
-    virtual void setAppConfig(Config config){appConfiguration = config;};
+    virtual void setAppConfig(Config config = Config()){appConfiguration = config;};
     virtual void setInstance() = 0;
+    virtual void createSurface() = 0;
 
     virtual void setValidationLayers(vector<const char*> validationLayers = {
             "VK_LAYER_KHRONOS_validation"
@@ -306,6 +306,7 @@ public:
 
     //debug helper
     virtual void setupDebugMessenger() = 0;
+    virtual void setupDebugCallback() = 0;
 
 
     //cleanup methods

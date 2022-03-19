@@ -28,7 +28,7 @@ protected:
 
 TEST_F(EngineTestFixture, CreateInstance){ // 1/1/1 -> 1/3/1
     Terminal::getInstance().printnl("Starting creation objects ");
-
+    engine->initWindow(100,100);
     engine->setInstance();
 
 }

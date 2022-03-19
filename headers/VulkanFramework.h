@@ -35,7 +35,7 @@ public:
     virtual void setEngineName(string engineName) override;
     virtual void setApiVersion(int apiVersion) override;
     virtual void setStructType(VkStructureType structureType) override;
-    virtual void setRequiredExtension() override;
+    virtual void setRequiredExtension(bool enableValidationLayers) override;
 
     virtual VkApplicationInfo& returnObj(){
 
@@ -54,7 +54,7 @@ public:
                 this->engineMinor,
                 this->enginePatch);
 
-        appRappresentation.apiVersion = this->apiVersion;
+        appRappresentation.apiVersion = VK_API_VERSION_1_0;
         return appRappresentation;
     };
 };
@@ -103,6 +103,7 @@ public:
     }
     virtual void setAppConfig (VkAppConfiguration config) override;
     virtual void setInstance() override;
+    virtual void createSurface() override;
 
     //window handlers
     virtual void initWindow(int w,int h) override;
@@ -127,12 +128,16 @@ public:
         createInfo.pfnUserCallback = reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(debugCallback);
         createInfo.pUserData = nullptr;
 
+    }
+
+    virtual void setupDebugCallback() override{
         if (CreateDebugUtilsMessengerEXT(&createInfo) != VK_SUCCESS)
             Terminal::getInstance().print(
                     "failed to set up debug messenger!",
                     BackGroudColor::yellow,
                     ForeGroudColor::red);
     }
+
 
     void DestroyDebugUtilsMessengerEXT() {
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)
