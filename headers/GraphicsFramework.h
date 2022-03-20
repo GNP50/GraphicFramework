@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <numeric>
 #include <iostream>
 #include <Terminal.h>
 
@@ -154,7 +155,7 @@ protected:
     virtual DeviceFeature getSupportedExtensions(int offset) = 0;
     virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
-    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions);
+    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions) = 0;
 
     virtual SwapChain createSwapChain(int off) = 0;
 
@@ -162,19 +163,19 @@ protected:
 public:
     Queue graphicsQueue,presentQueue;
 
-    PhysicalDevice(Engine  engine,Instance instance, vector<const char *> deviceExts){
-        this-> engine = engine;
+    PhysicalDevice(vector<const char *> deviceExts){
         this->deviceExtensions = deviceExts;
+        this->instance = engine.getInstance();
+    }
 
-    }
-    PhysicalDevice(vector<const char*> deviceExts){
-        deviceExtensions = deviceExts;
-    }
 
     virtual SwapChainDetail querySwapChainSupport(Device device,SurfaceObj surfaceObj) = 0;
     virtual QueueFamilyIndices  findQueueFamilies(int  off) = 0;
     Device getDevice(int off){return devices[off];}
-    virtual LogicaDevice createLogicalDevice(int off);
+    virtual LogicaDevice createLogicalDevice(int off) = 0;
+    virtual vector<string> getAllDevicesName() = 0;
+
+
 };
 template<
         typename Device,
@@ -253,6 +254,7 @@ public:
 
     virtual void create() = 0;
 
+
     void setUsage(const ConfigurationFlags toSet){
         this->usage = toSet;
     }
@@ -285,6 +287,7 @@ public:
 
     virtual void setAppConfig(Config config = Config()){appConfiguration = config;};
     virtual void setInstance() = 0;
+    Instance getInstance(){return this->instance;}
     virtual void createSurface() = 0;
 
     virtual void setValidationLayers(vector<const char*> validationLayers = {
@@ -305,7 +308,7 @@ public:
     virtual void setResizeWindowCallBack(void* newFunc) = 0;
 
     //debug helper
-    virtual void setupDebugMessenger() = 0;
+    virtual void setupDebugMessenger(void (*callBack)()) = 0;
     virtual void setupDebugCallback() = 0;
 
 

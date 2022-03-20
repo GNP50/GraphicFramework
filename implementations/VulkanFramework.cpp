@@ -89,6 +89,15 @@ bool VkEngine::checkValidationLayerSupport() {
 
     return true;
 }
+VKAPI_ATTR VkBool32 VKAPI_CALL VkEngine::defaultDebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    return VK_FALSE;
+}
+
 
 void VkEngine::setInstance() {
     this->setAppConfig();
@@ -97,7 +106,7 @@ void VkEngine::setInstance() {
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &(this->appConfiguration.returnObj());
-
+    createInfo.pNext = NULL;
     createInfo.enabledLayerCount = 0;
 
 
@@ -133,7 +142,6 @@ void VkEngine::setInstance() {
         createInfo.pNext = nullptr;
     }
 
-    VkInstance instance;
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
     setupDebugCallback();
@@ -239,6 +247,16 @@ VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
     return swapChain;
 }
 
+vector<string> VkPhyDevice::getAllDevicesName() {
+    std::vector<std::string> toRet;
+    VkPhysicalDeviceProperties prop;
+    for(int i=0;i<devices.size();i++)
+       {
+           vkGetPhysicalDeviceProperties(devices[i],&prop);
+           toRet.push_back(string(prop.deviceName));
+       };
+    return toRet;
+}
 
 VkSurfaceFormatKHR VkPhyDevice::chooseSwapSurfaceFormat(
         const std::vector<VkSurfaceFormatKHR>& availableFormats)

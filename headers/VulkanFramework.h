@@ -55,6 +55,7 @@ public:
                 this->enginePatch);
 
         appRappresentation.apiVersion = VK_API_VERSION_1_0;
+        appRappresentation.pNext = NULL;
         return appRappresentation;
     };
 };
@@ -100,6 +101,11 @@ public:
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_INVALID_SHADER_NV, "Invalid Shader" });
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_OUT_OF_POOL_MEMORY_KHR, "Out of Pool Memory" });
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_INVALID_EXTERNAL_HANDLE, "Invalid External Handle" });
+
+        this->initWindow(100,100);
+        this->setInstance();
+        this->createSurface();
+
     }
     virtual void setAppConfig (VkAppConfiguration config) override;
     virtual void setInstance() override;
@@ -112,9 +118,11 @@ public:
 
     virtual bool checkValidationLayerSupport() override;
 
-    virtual void setupDebugMessenger() override{
+    virtual void setupDebugMessenger(void (*callBack)() = NULL) override{
         if (!enableValidationLayers) return;
 
+        if(callBack == NULL)
+            debugCallback = reinterpret_cast<void (*)(void)>(defaultDebugCallback);
         createInfo.sType =
                 VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity =
@@ -131,6 +139,7 @@ public:
     }
 
     virtual void setupDebugCallback() override{
+        setupDebugMessenger();
         if (CreateDebugUtilsMessengerEXT(&createInfo) != VK_SUCCESS)
             Terminal::getInstance().print(
                     "failed to set up debug messenger!",
@@ -165,9 +174,15 @@ public:
 
     virtual std::vector<const char*> getRequiredInstanceExtensions() override;
 
+    static VKAPI_ATTR VkBool32 VKAPI_CALL defaultDebugCallback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+
 
 private:
 };
+
 
 
 
@@ -211,14 +226,12 @@ protected:
 
 
 public:
-    VkPhyDevice(VkEngine engine,VkInstance instance, vector<const char *> deviceExts) : PhysicalDevice(engine,instance, deviceExts) {
+    VkPhyDevice( vector<const char *> deviceExts = vector<const char *>({
+                                                                                                VK_KHR_SWAPCHAIN_EXTENSION_NAME
+                                                                                        })) : PhysicalDevice(deviceExts) {
         initDevices(instance);
     }
-    VkPhyDevice(vector<const char *> extension = vector<const char *>({
-                                                                              VK_KHR_SWAPCHAIN_EXTENSION_NAME
-                                                                      }))
-            : PhysicalDevice(extension) {
-    }
+
     virtual QueueFamilyIndices  findQueueFamilies(int off) override;
     virtual VkDevice createLogicalDevice(int off) override;
 
@@ -229,7 +242,7 @@ public:
     virtual VkPresentModeKHR chooseSwapPresentMode(
             const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-
+    virtual vector<string> getAllDevicesName() override;
 };
 
 
