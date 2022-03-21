@@ -39,6 +39,18 @@ TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
 
 }
 
+TEST_F(DeviceTestFixture,FindQueueFamilyTests){
+    QueueFamilyIndices indices = deviceRepository->findQueueFamilies(0);
+    auto graphicsQueue = deviceRepository->graphicsQueue;
+    auto presetQueue = deviceRepository->presentQueue;
+
+    return;
+}
+
+TEST_F(DeviceTestFixture,CreateLogicalDeviceTest){
+    deviceRepository->createLogicalDevice(0);
+}
+
 
 
 #endif //DB_DEVICESTEST_H

@@ -23,17 +23,17 @@ struct ErrCodeStruct {
 
 
 template<typename Ret>
-class IReturnable
-{
+class IReturnable {
 public:
     virtual ~IReturnable() {}
-    virtual Ret& returnObj() = 0;
+
+    virtual Ret &returnObj() = 0;
 
 };
 
 
-template<typename Ret,typename StructTp>
-class AppConfiguration:public IReturnable<Ret>{
+template<typename Ret, typename StructTp>
+class AppConfiguration : public IReturnable<Ret> {
 protected:
     int appMajor;
     int appMinor;
@@ -49,10 +49,10 @@ protected:
     Ret appRappresentation;
 public:
     string appName;
-    vector<const char*> extension;
+    vector<const char *> extension;
 
 
-    AppConfiguration(){
+    AppConfiguration() {
         this->setAppMajor();
         this->setAppMinor();
         this->setAppPatch();
@@ -66,44 +66,51 @@ public:
         this->setApiVersion();
 
     }
-    virtual void setAppMajor(int appMajor = 1){
+
+    virtual void setAppMajor(int appMajor = 1) {
         this->appMajor = appMajor;
     }
-    virtual void setAppMinor(int appMinor= 0){
+
+    virtual void setAppMinor(int appMinor = 0) {
         this->appMinor = appMinor;
     }
-    virtual void setAppPatch(int appPatch= 0){
+
+    virtual void setAppPatch(int appPatch = 0) {
         this->appPatch = appPatch;
     }
-    virtual void setEngineMajor(int engineMajor= 1){
+
+    virtual void setEngineMajor(int engineMajor = 1) {
         this->engineMajor = engineMajor;
     }
-    virtual void setEngineMinor(int engineMinor= 0){
+
+    virtual void setEngineMinor(int engineMinor = 0) {
         this->engineMinor = engineMinor;
     }
-    virtual void setEnginePatch(int enginePatch= 0){
+
+    virtual void setEnginePatch(int enginePatch = 0) {
         this->enginePatch = enginePatch;
     }
 
-    virtual void setEngineName(string engineName = "No Name"){
+    virtual void setEngineName(string engineName = "No Name") {
         this->engineName = engineName;
     }
 
-    virtual void setAppName(string appName = "No name"){
+    virtual void setAppName(string appName = "No name") {
         this->appName = appName;
     }
 
 
-    virtual void setApiVersion(int apiVersion =1 ){
+    virtual void setApiVersion(int apiVersion = 1) {
         this->apiVersion = apiVersion;
     }
 
-    virtual void setStructType(StructTp structTp){
+    virtual void setStructType(StructTp structTp) {
         this->structureType = structTp;
     }
 
     virtual void setRequiredExtension(bool enableValidationLayers) = 0;
-    virtual Ret& returnObj() = 0;
+
+    virtual Ret &returnObj() = 0;
 };
 
 //todo decide if it have to been general
@@ -133,10 +140,10 @@ template<
         typename SwapChainFormat,
         typename SwapChainExtend
 >
-class PhysicalDevice{
+class PhysicalDevice {
 protected:
     static vector<Device> devices;
-    std::vector<const char*> deviceExtensions;
+    std::vector<const char *> deviceExtensions;
     SurfaceObj surface;
     Engine engine;
     Instance instance;
@@ -152,31 +159,41 @@ protected:
     void getFirstSuitable(Criteria criteria);
 
     virtual bool isFeatureSupported(int offset) = 0;
+
     virtual DeviceFeature getSupportedExtensions(int offset) = 0;
-    virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
+
+    virtual bool isSwapChainAdeguate(int offset, SurfaceObj surface) = 0;
+
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
-    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions) = 0;
+
+    virtual bool isExtensionSupported(int offset, vector<DeviceExtension> requiredExtensions) = 0;
 
     virtual SwapChain createSwapChain(int off) = 0;
 
 
 public:
-    Queue graphicsQueue,presentQueue;
+    Queue graphicsQueue, presentQueue;
 
-    PhysicalDevice(vector<const char *> deviceExts){
+    PhysicalDevice(vector<const char *> deviceExts) {
         this->deviceExtensions = deviceExts;
         this->instance = engine.getInstance();
+        this->surface = engine.getSurface();
     }
 
 
-    virtual SwapChainDetail querySwapChainSupport(Device device,SurfaceObj surfaceObj) = 0;
-    virtual QueueFamilyIndices  findQueueFamilies(int  off) = 0;
-    Device getDevice(int off){return devices[off];}
+    virtual SwapChainDetail querySwapChainSupport(Device device, SurfaceObj surfaceObj) = 0;
+
+    virtual QueueFamilyIndices findQueueFamilies(int off) = 0;
+
+    Device getDevice(int off) { return devices[off]; }
+
     virtual LogicaDevice createLogicalDevice(int off) = 0;
+
     virtual vector<string> getAllDevicesName() = 0;
 
 
 };
+
 template<
         typename Device,
         typename Instance,
@@ -193,24 +210,24 @@ template<
         typename SwapChainExtend
 >
 vector<Device>
-PhysicalDevice<
-        Device,
-        Instance,
-        SurfaceObj,
-        SwapChainDetail,
-        DeviceFeature,
-        DeviceExtension,
-        LogicaDevice,
-        Engine,
-        Queue,
-        Images,
-        SwapChain,
-        SwapChainFormat,
-        SwapChainExtend
->::devices;
+        PhysicalDevice<
+                Device,
+                Instance,
+                SurfaceObj,
+                SwapChainDetail,
+                DeviceFeature,
+                DeviceExtension,
+                LogicaDevice,
+                Engine,
+                Queue,
+                Images,
+                SwapChain,
+                SwapChainFormat,
+                SwapChainExtend
+        >::devices;
 
 
-template <
+template<
         typename BufferType,
         typename ConfigurationFlags,
         typename PropertyFlags,
@@ -218,8 +235,8 @@ template <
         typename Device,
         typename PhyDevice,
         typename BufferDataType
-        >
-class Buffer{
+>
+class Buffer {
 protected:
     //todo write setters for them
     uint64_t size;
@@ -234,16 +251,19 @@ protected:
     PhyDevice physicalDevice;
 
     virtual void createBuffer() = 0;
-    virtual uint32_t findMemoryType(uint32_t typeFilter,PropertyFlags properties) = 0;
+
+    virtual uint32_t findMemoryType(uint32_t typeFilter, PropertyFlags properties) = 0;
+
 public:
-    Buffer(int size = 100){
-        data =  vector<float>(size);
+    Buffer(int size = 100) {
+        data = vector<float>(size);
 
 
         this->size = size;
-        this->bufferSize = sizeof(BufferDataType)*this->size;
+        this->bufferSize = sizeof(BufferDataType) * this->size;
     }
-    Buffer(const Buffer& toCopy){
+
+    Buffer(const Buffer &toCopy) {
         this->usage = toCopy.usage;
         this->properties = toCopy.properties;
         this->bufferMemory = toCopy.bufferMemory;
@@ -255,7 +275,7 @@ public:
     virtual void create() = 0;
 
 
-    void setUsage(const ConfigurationFlags toSet){
+    void setUsage(const ConfigurationFlags toSet) {
         this->usage = toSet;
     }
 };
@@ -268,60 +288,67 @@ template<
         typename WindowObj,
         typename SurfaceObj
 >
-class GraphicEngine{
+class GraphicEngine {
 protected:
     Instance instance;
     Config appConfiguration;
-    WindowObj* window;
+    WindowObj *window;
     SurfaceObj surface;
 
 
-    map<ErroCode,string> errorStorer;
+    map<ErroCode, string> errorStorer;
+
     void (*framebufferResizeCallback)(WindowObj, int, int);
 
 public:
     bool enableValidationLayers = true;
-    std::vector<const char*> validationLayers;
-    virtual bool checkValidationLayerSupport() =0;
+    std::vector<const char *> validationLayers;
+
+    virtual bool checkValidationLayerSupport() = 0;
 
 
-    virtual void setAppConfig(Config config = Config()){appConfiguration = config;};
+    virtual void setAppConfig(Config config = Config()) { appConfiguration = config; };
+
     virtual void setInstance() = 0;
-    Instance getInstance(){return this->instance;}
+
+    Instance getInstance() { return this->instance; }
+
+    SurfaceObj getSurface() { return this->surface; }
+
     virtual void createSurface() = 0;
 
-    virtual void setValidationLayers(vector<const char*> validationLayers = {
+    virtual void setValidationLayers(vector<const char *> validationLayers = {
             "VK_LAYER_KHRONOS_validation"
-    }){
+    }) {
         this->validationLayers = validationLayers;
     }
 
 
-    void printError(ErroCode errCode){
+    void printError(ErroCode errCode) {
         Terminal::getInstance().printnl(
                 errorStorer.at(errCode), BackGroudColor::red, ForeGroudColor::yellow);
     }
 
     //window handlers
-    virtual void initWindow(int w,int h) = 0;
-    virtual void defaultWindowResizeHandler(WindowObj* window, int width, int height) = 0;
-    virtual void setResizeWindowCallBack(void* newFunc) = 0;
+    virtual void initWindow(int w, int h) = 0;
+
+    virtual void defaultWindowResizeHandler(WindowObj *window, int width, int height) = 0;
+
+    virtual void setResizeWindowCallBack(void *newFunc) = 0;
 
     //debug helper
     virtual void setupDebugMessenger(void (*callBack)()) = 0;
+
     virtual void setupDebugCallback() = 0;
 
 
     //cleanup methods
     virtual void cleanup() = 0;
 
-    virtual std::vector<const char*> getRequiredInstanceExtensions() = 0;
+    virtual std::vector<const char *> getRequiredInstanceExtensions() = 0;
 
-    WindowObj* getWindow(){return window;}
+    WindowObj *getWindow() { return window; }
 };
-
-
-
 
 
 #endif //GRAPHICFRAMEWORK
