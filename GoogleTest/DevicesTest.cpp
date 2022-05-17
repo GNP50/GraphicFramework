@@ -19,6 +19,7 @@ class DeviceTestFixture : public ::testing::Test {
 protected:
     virtual void SetUp()
     {
+
         deviceRepository = new VkPhyDevice();
     }
 
