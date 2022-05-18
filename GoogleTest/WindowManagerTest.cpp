@@ -16,10 +16,11 @@ class WindowTestFixture : public ::testing::Test {
 protected:
     virtual void SetUp()
     {
-        engine = new VkEngine();
         configuration = VkAppConfiguration();
         configuration.setAppName("Assignment 12");
-        engine->setAppConfig(configuration);
+
+        engine = new VkEngine(640,480,configuration);
+
 
     }
 
@@ -33,18 +34,10 @@ protected:
     VkAppConfiguration configuration;
 };
 
-TEST_F(WindowTestFixture, CreateInstance){ // 1/1/1 -> 1/3/1
+TEST_F(WindowTestFixture, Assignment12){ // 1/1/1 -> 1/3/1
     Terminal::getInstance().printnl("Starting creation objects ");
-    engine->initWindow(640,480);
-    engine->createSurface();
 
-    char escape;
-    scanf("%s",&escape);
-
-    while(escape!='q'){
-        std::this_thread::sleep_for(500ms);
-        scanf("%s",&escape);
-    }
+    engine->mainLoop();
 }
 
 #endif //DB_WINDOWSTESTS_H

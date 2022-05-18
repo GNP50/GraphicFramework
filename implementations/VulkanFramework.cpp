@@ -36,7 +36,7 @@ void  VkAppConfiguration::setEngineName(string engineName = "No engine"){
 };
 
 void  VkAppConfiguration::setAppName(string AppName = "No name"){
-    AppConfiguration::setAppName(engineName);
+    AppConfiguration::setAppName(AppName);
 };
 
 void  VkAppConfiguration::setApiVersion(int apiVersion = VK_API_VERSION_1_0){
@@ -185,6 +185,20 @@ std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {
     return extensions;
 }
 
+
+void VkEngine::mainLoop() {
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+
+
+        if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+            break;
+        }
+    }
+
+    //TODO WRITE PROPERLY THIS SHIT OF CODE
+    //vkDeviceWaitIdle(device);
+}
 VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
     SwapChainSupportDetails swapChainSupport =
             querySwapChainSupport(this->devices[off],this->surface);
@@ -249,14 +263,19 @@ VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
 
 vector<string> VkPhyDevice::getAllDevicesName() {
     std::vector<std::string> toRet;
-    VkPhysicalDeviceProperties prop;
+
     for(int i=0;i<devices.size();i++)
-       {
-           vkGetPhysicalDeviceProperties(devices[i],&prop);
-           toRet.push_back(string(prop.deviceName));
-       };
+        toRet.push_back(this->getDeviceName(i));
+
     return toRet;
 }
+
+string VkPhyDevice::getDeviceName(int off) {
+    VkPhysicalDeviceProperties prop;
+    vkGetPhysicalDeviceProperties(devices[off],&prop);
+    return string(prop.deviceName);
+
+} ;
 
 VkSurfaceFormatKHR VkPhyDevice::chooseSwapSurfaceFormat(
         const std::vector<VkSurfaceFormatKHR>& availableFormats)

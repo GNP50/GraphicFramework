@@ -7,6 +7,7 @@
 #define ASS0_VULKANFRAMEWORK_H
 #include<GraphicsFramework.h>
 #define GLFW_INCLUDE_VULKAN
+#include <map>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
 
@@ -102,11 +103,19 @@ public:
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_OUT_OF_POOL_MEMORY_KHR, "Out of Pool Memory" });
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_INVALID_EXTERNAL_HANDLE, "Invalid External Handle" });
 
-        this->initWindow(100,100);
         this->setInstance();
-        this->createSurface();
 
     }
+
+    VkEngine(int w,int h,VkAppConfiguration configuration){
+        this->setAppConfig(configuration);
+
+        this->initWindow(w,h);
+        this->setInstance();
+        this->createSurface();
+    }
+
+
     virtual void setAppConfig (VkAppConfiguration config) override;
     virtual void setInstance() override;
     virtual void createSurface() override;
@@ -115,6 +124,7 @@ public:
     virtual void initWindow(int w,int h) override;
     virtual void defaultWindowResizeHandler(GLFWwindow* window, int width, int height) override;
     virtual void setResizeWindowCallBack(void* newFunc) override;
+    virtual void mainLoop() override;
 
     virtual bool checkValidationLayerSupport() override;
 
@@ -222,6 +232,58 @@ protected:
 
     template<typename Criteria>
     void getFirstSuitable(Criteria criteria);
+
+
+    template<>
+    void getFirstSuitable<vector<VkExtensionProperties>>(vector<VkExtensionProperties> criteria){
+        //insert the type id if not present
+        if(!this->supportedDevices.contains(typeid(VkExtensionProperties)))
+        {
+            this->supportedDevices.insert(
+                {
+
+                                typeid(VkExtensionProperties),
+                                null
+
+                }
+            );
+        }
+
+        for(int i=0;i<this->devices.size();i++){
+            if(this->isExtensionSupported(i,criteria))
+                this->supportedDevices[typeid(VkExtensionProperties)].push_back(this->devices[i]);
+            if(this->verbose){
+                Terminal::getInstance().printnl("Found suitable:\t"+this->getDeviceName(i));
+            }
+        }
+
+    };
+
+    template<>
+    void getFirstSuitable<vector<VkPhysicalDeviceType>>(vector<VkPhysicalDeviceType> criteria){
+        //insert the type id if not present
+        if(!this->supportedDevices.contains(typeid(VkPhysicalDeviceType)))
+        {
+            this->supportedDevices.insert(
+                    {
+                            typeid(VkPhysicalDeviceType),
+                            vector<VkPhysicalDevice>()
+                    }
+            );
+        }
+
+
+        for(int i=0;i<this->devices.size();i++){
+            if(this->isExtensionSupported(i,criteria))
+                this->supportedDevices.push_back(this->devices[i]);
+            if(this->verbose){
+                Terminal::getInstance().printnl("Found suitable:\t"+this->getDeviceName(i));
+            }
+        }
+        VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+    };
+
+
     virtual VkSwapchainKHR createSwapChain(int off) override;
 
 
@@ -243,6 +305,8 @@ public:
             const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     virtual vector<string> getAllDevicesName() override;
+    virtual string getDeviceName(int off) override;
+
 };
 
 

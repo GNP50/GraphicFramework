@@ -136,6 +136,7 @@ template<
 class PhysicalDevice{
 protected:
     static vector<Device> devices;
+    static map<std::type_info,vector<Device>> supportedDevices;
     std::vector<const char*> deviceExtensions;
     SurfaceObj surface;
     Engine engine;
@@ -145,6 +146,8 @@ protected:
     vector<LogicaDevice> logicalDevices;
     SwapChainFormat swapChainImageFormat;
     SwapChainExtend swapChainExtent;
+
+    bool verbose = false;
 
     virtual void initDevices(Instance instance) = 0;
 
@@ -174,7 +177,12 @@ public:
     Device getDevice(int off){return devices[off];}
     virtual LogicaDevice createLogicalDevice(int off) = 0;
     virtual vector<string> getAllDevicesName() = 0;
+    virtual string getDeviceName(int off) = 0;
 
+
+    void setVerbosity(bool verbose){
+        this->verbose = verbose;
+    }
 
 };
 template<
@@ -306,6 +314,7 @@ public:
     virtual void initWindow(int w,int h) = 0;
     virtual void defaultWindowResizeHandler(WindowObj* window, int width, int height) = 0;
     virtual void setResizeWindowCallBack(void* newFunc) = 0;
+    virtual void mainLoop() = 0;
 
     //debug helper
     virtual void setupDebugMessenger(void (*callBack)()) = 0;

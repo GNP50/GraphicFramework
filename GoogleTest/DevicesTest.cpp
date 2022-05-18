@@ -40,6 +40,13 @@ TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
 
 }
 
+TEST_F(DeviceTestFixture, Assignment13){ // 1/1/1 -> 1/3/1
+
+    VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+
+}
+
+
 
 
 #endif //DB_DEVICESTEST_H
