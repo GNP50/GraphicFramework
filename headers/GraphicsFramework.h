@@ -12,6 +12,7 @@
 #include <numeric>
 #include <iostream>
 #include <Terminal.h>
+#include <typeindex>
 
 using namespace std;
 
@@ -106,17 +107,6 @@ public:
     virtual Ret& returnObj() = 0;
 };
 
-//todo decide if it have to been general
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() &&
-               presentFamily.has_value();
-    }
-};
-
 
 template<
         typename Device,
@@ -124,10 +114,10 @@ template<
         typename SurfaceObj,
         typename SwapChainDetail,
         typename DeviceFeature,
-        typename DeviceExtension,
         typename LogicaDevice,
         typename Engine,
         typename Queue,
+        typename QueueFlags,
         typename Images,
         typename SwapChain,
         typename SwapChainFormat,
@@ -136,8 +126,9 @@ template<
 class PhysicalDevice{
 protected:
     static vector<Device> devices;
-    static map<std::type_info,vector<Device>> supportedDevices;
+    static map<const std::type_index,vector<Device>> supportedDevices;
     std::vector<const char*> deviceExtensions;
+
     SurfaceObj surface;
     Engine engine;
     Instance instance;
@@ -158,13 +149,17 @@ protected:
     virtual DeviceFeature getSupportedExtensions(int offset) = 0;
     virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
-    virtual bool isExtensionSupported(int offset,vector<DeviceExtension> requiredExtensions) = 0;
+
+    template<typename DeviceExtension>
+    bool isExtensionSupported(int offset,DeviceExtension requiredExtensions);
 
     virtual SwapChain createSwapChain(int off) = 0;
-
+    virtual uint32_t* getUniqueIndicies(int off) = 0;
 
 public:
     Queue graphicsQueue,presentQueue;
+    std::map<int,vector<pair<QueueFlags,int>>> queueIndicies;
+    std::map<int,vector<int>> presentIndicies;
 
     PhysicalDevice(vector<const char *> deviceExts){
         this->deviceExtensions = deviceExts;
@@ -173,7 +168,7 @@ public:
 
 
     virtual SwapChainDetail querySwapChainSupport(Device device,SurfaceObj surfaceObj) = 0;
-    virtual QueueFamilyIndices  findQueueFamilies(int  off) = 0;
+    virtual bool  supportQueues(int  off, vector<QueueFlags> flags) = 0;
     Device getDevice(int off){return devices[off];}
     virtual LogicaDevice createLogicalDevice(int off) = 0;
     virtual vector<string> getAllDevicesName() = 0;
@@ -191,10 +186,10 @@ template<
         typename SurfaceObj,
         typename SwapChainDetail,
         typename DeviceFeature,
-        typename DeviceExtension,
         typename LogicaDevice,
         typename Engine,
         typename Queue,
+        typename QueueFlags,
         typename Images,
         typename SwapChain,
         typename SwapChainFormat,
@@ -207,10 +202,10 @@ PhysicalDevice<
         SurfaceObj,
         SwapChainDetail,
         DeviceFeature,
-        DeviceExtension,
         LogicaDevice,
         Engine,
         Queue,
+        QueueFlags,
         Images,
         SwapChain,
         SwapChainFormat,

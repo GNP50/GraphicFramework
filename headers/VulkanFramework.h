@@ -10,6 +10,7 @@
 #include <map>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+#include <typeindex>
 
 
 //default debug caller
@@ -210,10 +211,10 @@ class VkPhyDevice:public PhysicalDevice<
         VkSurfaceKHR,
         SwapChainSupportDetails,
         VkPhysicalDeviceFeatures,
-        VkExtensionProperties,
         VkDevice,
         VkEngine,
         VkQueue,
+        VkQueueFlagBits,
         VkImage,
         VkSwapchainKHR,
         VkFormat,
@@ -222,7 +223,7 @@ class VkPhyDevice:public PhysicalDevice<
 protected:
     virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
     virtual bool isFeatureSupported(int offset) override;
-    virtual bool isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions) override;
+
 
     virtual VkPhysicalDeviceFeatures getSupportedExtensions(int offset) override;
     virtual bool isSwapChainAdeguate(int offset,VkSurfaceKHR surface) override;
@@ -234,18 +235,23 @@ protected:
     void getFirstSuitable(Criteria criteria);
 
 
+    template<typename DeviceExt>
+    bool isExtensionSupported(int offset,DeviceExt requiredExtensions);
+
+
     template<>
     void getFirstSuitable<vector<VkExtensionProperties>>(vector<VkExtensionProperties> criteria){
         //insert the type id if not present
         if(!this->supportedDevices.contains(typeid(VkExtensionProperties)))
         {
+            auto toAdd = vector<VkPhysicalDevice>();
+
+
             this->supportedDevices.insert(
-                {
-
-                                typeid(VkExtensionProperties),
-                                null
-
-                }
+                    {
+                            typeid(VkExtensionProperties),
+                            toAdd
+                    }
             );
         }
 
@@ -264,27 +270,123 @@ protected:
         //insert the type id if not present
         if(!this->supportedDevices.contains(typeid(VkPhysicalDeviceType)))
         {
+            auto toAdd = vector<VkPhysicalDevice>();
+
+
             this->supportedDevices.insert(
                     {
                             typeid(VkPhysicalDeviceType),
-                            vector<VkPhysicalDevice>()
+                            toAdd
                     }
             );
         }
 
 
         for(int i=0;i<this->devices.size();i++){
-            if(this->isExtensionSupported(i,criteria))
-                this->supportedDevices.push_back(this->devices[i]);
-            if(this->verbose){
-                Terminal::getInstance().printnl("Found suitable:\t"+this->getDeviceName(i));
+            for(auto s_criteria:criteria) {
+                if (this->isExtensionSupported<VkPhysicalDeviceType>(i, s_criteria))
+                    this->supportedDevices[typeid(VkExtensionProperties)].push_back(this->devices[i]);
+                if (this->verbose) {
+                    Terminal::getInstance().printnl("Found suitable:\t" + this->getDeviceName(i));
+                }
             }
         }
-        VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+    };
+
+    template<>
+    void getFirstSuitable(vector<VkQueueFlagBits> criteria){
+        //insert the type id if not present
+        if(!this->supportedDevices.contains(typeid(VkQueueFlagBits)))
+        {
+            auto toAdd = vector<VkPhysicalDevice>();
+
+
+            this->supportedDevices.insert(
+                    {
+                            typeid(VkQueueFlagBits),
+                            toAdd
+                    }
+            );
+        }
+
+
+        for(int i=0;i<this->devices.size();i++){
+            for(auto s_criteria:criteria) {
+                if (this->isExtensionSupported<VkQueueFlagBits>(i, s_criteria))
+                    this->supportedDevices[typeid(VkExtensionProperties)].push_back(this->devices[i]);
+                if (this->verbose) {
+                    Terminal::getInstance().printnl("Found suitable:\t" + this->getDeviceName(i));
+                }
+            }
+        }
+    };
+
+    template<>
+    bool isExtensionSupported(int offset,VkPhysicalDeviceType requiredExtensions){
+        VkPhysicalDeviceProperties deviceProperties;
+        VkPhysicalDeviceFeatures deviceFeatures;
+        vkGetPhysicalDeviceProperties(this->devices[offset], &deviceProperties);
+        vkGetPhysicalDeviceFeatures(this->devices[offset], &deviceFeatures);
+
+
+        return deviceProperties.deviceType == requiredExtensions;
+    };
+
+    template<>
+    bool isExtensionSupported(int offset,vector<VkQueueFlagBits> requiredExtensions){
+        if(this->supportQueues(offset,requiredExtensions))
+            return true;
+    };
+
+    template<>
+    bool isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions){
+
+        uint32_t extensionCount;
+        vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
+                                             &extensionCount, nullptr);
+
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
+                                             &extensionCount, availableExtensions.data());
+
+        for (const auto extension : availableExtensions) {
+            bool found = false;
+            string first(extension.extensionName);
+            for (const auto reqExtension: requiredExtensions) {
+                string second(reqExtension.extensionName);
+                if (first == second && reqExtension.specVersion == extension.specVersion) {
+                    continue;
+                }else {
+                    found = false;
+                    break;
+                }
+            }
+            if(!found)
+                return false;
+        }
+
+        return false;
     };
 
 
     virtual VkSwapchainKHR createSwapChain(int off) override;
+    virtual uint32_t* getUniqueIndicies(int off){
+        auto graphFamilyIndVec = this->queueIndicies[off];
+
+
+        uint32_t queueFamilyIndices[] = {0,0};
+        for(auto gF:graphFamilyIndVec){
+            queueFamilyIndices[0] = gF.second;
+            for(auto i:presentIndicies[off]){
+                queueFamilyIndices[1] = i;
+
+                if(queueFamilyIndices[0]==queueFamilyIndices[1]) break;
+            }
+            if(queueFamilyIndices[0]==queueFamilyIndices[1]) break;
+        }
+
+        return queueFamilyIndices;
+    };
 
 
 public:
@@ -294,7 +396,7 @@ public:
         initDevices(instance);
     }
 
-    virtual QueueFamilyIndices  findQueueFamilies(int off) override;
+    virtual bool  supportQueues(int off,vector<VkQueueFlagBits> flags) override;
     virtual VkDevice createLogicalDevice(int off) override;
 
     //swaps function valutate if i have to make generic
@@ -425,12 +527,13 @@ public:
         vkFreeCommandBuffers(this->device, commandPool, 1, &commandBuffer);
     }
     void createCommandPool() {
-        QueueFamilyIndices queueFamilyIndices =
-                this->physicalDevice.findQueueFamilies(phyDeviceOff);
+
+
+        auto graphFamilyIndVec = this->physicalDevice.queueIndicies[phyDeviceOff];
 
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+        poolInfo.queueFamilyIndex = graphFamilyIndVec[0][1];
         poolInfo.flags = 0; // Optional
 
         VkResult result = vkCreateCommandPool(this->device, &poolInfo, nullptr, &commandPool);

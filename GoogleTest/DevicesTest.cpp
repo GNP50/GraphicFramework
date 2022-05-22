@@ -13,7 +13,6 @@
 #include <iostream>
 
 using namespace std;
-
 class DeviceTestFixture : public ::testing::Test {
 
 protected:
@@ -42,8 +41,14 @@ TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
 
 TEST_F(DeviceTestFixture, Assignment13){ // 1/1/1 -> 1/3/1
 
-    VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+    auto type = vector<VkPhysicalDeviceType>  {{VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU}};
+    auto extension = vector<VkQueueFlagBits> {{
+        VK_QUEUE_COMPUTE_BIT,
+        VK_QUEUE_GRAPHICS_BIT
+    }};
 
+    auto queueFlags = vector<VkQueueFlagBits>{{VK_QUEUE_GRAPHICS_BIT}};
+    deviceRepository.
 }
 
 

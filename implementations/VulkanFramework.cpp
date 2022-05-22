@@ -225,10 +225,14 @@ VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = findQueueFamilies(off);
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(),
-                                     indices.presentFamily.value()};
-    if (indices.graphicsFamily != indices.presentFamily) {
+
+
+    auto queueFamilyIndices = this->getUniqueIndicies(off);
+
+
+
+
+    if (queueFamilyIndices[0]!=queueFamilyIndices[1]) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -387,11 +391,10 @@ VkDevice VkPhyDevice::createLogicalDevice(int off) {
     if (logicalDevices[off] != nullptr)
         return logicalDevices[off];
 
-    QueueFamilyIndices indices = findQueueFamilies(off);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies =
-            {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    auto arr = this->getUniqueIndicies(off);
+    auto uniqueQueueFamilies = vector<uint32_t>(arr,arr+2);
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -435,8 +438,8 @@ VkDevice VkPhyDevice::createLogicalDevice(int off) {
         throw std::runtime_error("failed to create logical device!");
     }
 
-    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+    vkGetDeviceQueue(device, arr[0], 0, &graphicsQueue);
+    vkGetDeviceQueue(device, arr[1], 0, &presentQueue);
     logicalDevices[off] = device;
 
     return logicalDevices[off];
@@ -447,8 +450,10 @@ bool VkPhyDevice::isFeatureSupported(int offset){
     return false;
 };
 
-QueueFamilyIndices  VkPhyDevice::findQueueFamilies(int off) {
-    QueueFamilyIndices indices;
+bool  VkPhyDevice::supportQueues(int off, vector<VkQueueFlagBits> flags) {
+
+    presentIndicies.clear();
+    queueIndicies.clear();
 
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(devices[off], &queueFamilyCount,
@@ -458,26 +463,40 @@ QueueFamilyIndices  VkPhyDevice::findQueueFamilies(int off) {
     vkGetPhysicalDeviceQueueFamilyProperties(devices[off], &queueFamilyCount,
                                              queueFamilies.data());
 
-    int i=0;
+    int founded = 0,i=0;
+    auto c_flags = vector<VkQueueFlagBits>(flags);
+
     for (const auto& queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
+        for(int j=0;j<c_flags.size();j++) {
+            if (queueFamily.queueFlags & c_flags[j]) {
+                founded++;
+                //c_flags.erase(c_flags.begin()+j);
+                if(!queueIndicies.contains(off))
+                    queueIndicies.insert({off,vector<pair<VkQueueFlagBits,int>>()});
+
+                queueIndicies[off].push_back({c_flags[j],i});
+                //break;
+            }
+
+            VkBool32 presentSupport = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(this->devices[off], i, surface, &presentSupport);
+
+            if(presentSupport){
+                if(!presentIndicies.contains(off))
+                    presentIndicies.insert({off,vector<int>()});
+
+                presentIndicies[off].push_back(i);
+            }
+
         }
 
-        VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(devices[off], i, surface,
-                                             &presentSupport);
-        if (presentSupport) {
-            indices.presentFamily = i;
-        }
+        //if(founded==flags.size())
+        //    return true;
 
-        if (indices.isComplete()) {
-            break;
-        }
         i++;
     }
 
-    return indices;
+    return false;
 }
 
 SwapChainSupportDetails VkPhyDevice::querySwapChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) {
@@ -532,47 +551,3 @@ void VkPhyDevice::initDevices(VkInstance instance){
     Terminal::getInstance().print("Physical devices found: ");
     Terminal::getInstance().printnl(deviceCount);
 };
-
-bool VkPhyDevice::isExtensionSupported(int offset,vector<VkExtensionProperties> requiredExtensions){
-    QueueFamilyIndices indices = findQueueFamilies(offset);
-
-    uint32_t extensionCount;
-    vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
-                                         &extensionCount, nullptr);
-
-    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-    vkEnumerateDeviceExtensionProperties(devices[offset], nullptr,
-                                         &extensionCount, availableExtensions.data());
-
-    for (const auto extension : availableExtensions) {
-        bool found = false;
-        string first(extension.extensionName);
-        for (const auto reqExtension: requiredExtensions) {
-            string second(reqExtension.extensionName);
-            if (first == second && reqExtension.specVersion == extension.specVersion) {
-                found = true;
-                break;
-            }
-        }
-        if(!found)
-            return false;
-    }
-
-    return false;
-};
-
-
-
-//todo add logic for get the best suitable(this piece is given by the init devices)
-//for (const auto& device : devices) {
-//if (isDeviceSuitable(device)) {
-//physicalDevice = device;
-//msaaSamples = getMaxUsableSampleCount();
-//std::cout << "\n\nMaximum samples for anti-aliasing: " << msaaSamples << "\n\n\n";
-//break;
-//}
-//}
-
-//if (physicalDevice == VK_NULL_HANDLE) {
-//throw std::runtime_error("failed to find a suitable GPU!");
-//}
