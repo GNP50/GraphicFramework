@@ -394,7 +394,9 @@ VkDevice VkPhyDevice::createLogicalDevice(int off) {
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     auto arr = this->getUniqueIndicies(off);
-    auto uniqueQueueFamilies = vector<uint32_t>(arr,arr+2);
+    auto uniqueQueueFamilies = vector<uint32_t>{{
+        arr[0],arr[1]
+    }};
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -438,8 +440,8 @@ VkDevice VkPhyDevice::createLogicalDevice(int off) {
         throw std::runtime_error("failed to create logical device!");
     }
 
-    vkGetDeviceQueue(device, arr[0], 0, &graphicsQueue);
-    vkGetDeviceQueue(device, arr[1], 0, &presentQueue);
+    vkGetDeviceQueue(device, uniqueQueueFamilies[0], 0, &graphicsQueue);
+    vkGetDeviceQueue(device, uniqueQueueFamilies[1], 0, &presentQueue);
     logicalDevices[off] = device;
 
     return logicalDevices[off];
@@ -496,7 +498,7 @@ bool  VkPhyDevice::supportQueues(int off, vector<VkQueueFlagBits> flags) {
         i++;
     }
 
-    return false;
+    return presentIndicies.size()>0 && queueIndicies.size()>0;
 }
 
 SwapChainSupportDetails VkPhyDevice::querySwapChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) {
@@ -547,6 +549,8 @@ void VkPhyDevice::initDevices(VkInstance instance){
     this->logicalDevices = vector<VkDevice>(deviceCount);
 
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    this->surface = engine.getSurface();
 
     Terminal::getInstance().print("Physical devices found: ");
     Terminal::getInstance().printnl(deviceCount);

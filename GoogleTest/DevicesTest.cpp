@@ -41,14 +41,25 @@ TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
 
 TEST_F(DeviceTestFixture, Assignment13){ // 1/1/1 -> 1/3/1
 
-    auto type = vector<VkPhysicalDeviceType>  {{VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU}};
-    auto extension = vector<VkQueueFlagBits> {{
-        VK_QUEUE_COMPUTE_BIT,
-        VK_QUEUE_GRAPHICS_BIT
-    }};
+    auto type = vector<VkPhysicalDeviceType>  {{VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU}};
+
 
     auto queueFlags = vector<VkQueueFlagBits>{{VK_QUEUE_GRAPHICS_BIT}};
-    deviceRepository.
+
+    deviceRepository->getFirstSuitable(type);
+    deviceRepository->getFirstSuitable(queueFlags);
+
+    int choosen = *deviceRepository->getPerfectCriteriaMatcher().begin();
+    deviceRepository->createLogicalDevice(choosen);
+
+    auto buffer = VkGenericBuffer<float>(100,choosen);
+    buffer.setLogicalDevice(deviceRepository->getLogicalDevice(choosen));
+    buffer.setPhysicalDevice(*deviceRepository);
+
+
+    buffer.createCommandPool();
+    buffer.createBuffer();
+    assert(choosen==0);
 }
 
 

@@ -104,7 +104,11 @@ public:
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_OUT_OF_POOL_MEMORY_KHR, "Out of Pool Memory" });
         errorStorer.insert(pair<VkResult,string>{ VK_ERROR_INVALID_EXTERNAL_HANDLE, "Invalid External Handle" });
 
+        this->setAppConfig(VkAppConfiguration());
+
+        this->initWindow(12,12);
         this->setInstance();
+        this->createSurface();
 
     }
 
@@ -231,95 +235,14 @@ protected:
     virtual void initDevices(VkInstance instance) override;
     virtual SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) override;
 
-    template<typename Criteria>
-    void getFirstSuitable(Criteria criteria);
+
 
 
     template<typename DeviceExt>
     bool isExtensionSupported(int offset,DeviceExt requiredExtensions);
 
 
-    template<>
-    void getFirstSuitable<vector<VkExtensionProperties>>(vector<VkExtensionProperties> criteria){
-        //insert the type id if not present
-        if(!this->supportedDevices.contains(typeid(VkExtensionProperties)))
-        {
-            auto toAdd = vector<VkPhysicalDevice>();
 
-
-            this->supportedDevices.insert(
-                    {
-                            typeid(VkExtensionProperties),
-                            toAdd
-                    }
-            );
-        }
-
-        for(int i=0;i<this->devices.size();i++){
-            if(this->isExtensionSupported(i,criteria))
-                this->supportedDevices[typeid(VkExtensionProperties)].push_back(this->devices[i]);
-            if(this->verbose){
-                Terminal::getInstance().printnl("Found suitable:\t"+this->getDeviceName(i));
-            }
-        }
-
-    };
-
-    template<>
-    void getFirstSuitable<vector<VkPhysicalDeviceType>>(vector<VkPhysicalDeviceType> criteria){
-        //insert the type id if not present
-        if(!this->supportedDevices.contains(typeid(VkPhysicalDeviceType)))
-        {
-            auto toAdd = vector<VkPhysicalDevice>();
-
-
-            this->supportedDevices.insert(
-                    {
-                            typeid(VkPhysicalDeviceType),
-                            toAdd
-                    }
-            );
-        }
-
-
-        for(int i=0;i<this->devices.size();i++){
-            for(auto s_criteria:criteria) {
-                if (this->isExtensionSupported<VkPhysicalDeviceType>(i, s_criteria))
-                    this->supportedDevices[typeid(VkExtensionProperties)].push_back(this->devices[i]);
-                if (this->verbose) {
-                    Terminal::getInstance().printnl("Found suitable:\t" + this->getDeviceName(i));
-                }
-            }
-        }
-    };
-
-    template<>
-    void getFirstSuitable(vector<VkQueueFlagBits> criteria){
-        //insert the type id if not present
-        if(!this->supportedDevices.contains(typeid(VkQueueFlagBits)))
-        {
-            auto toAdd = vector<VkPhysicalDevice>();
-
-
-            this->supportedDevices.insert(
-                    {
-                            typeid(VkQueueFlagBits),
-                            toAdd
-                    }
-            );
-        }
-
-
-        for(int i=0;i<this->devices.size();i++){
-            for(auto s_criteria:criteria) {
-                if (this->isExtensionSupported<VkQueueFlagBits>(i, s_criteria))
-                    this->supportedDevices[typeid(VkExtensionProperties)].push_back(this->devices[i]);
-                if (this->verbose) {
-                    Terminal::getInstance().printnl("Found suitable:\t" + this->getDeviceName(i));
-                }
-            }
-        }
-    };
 
     template<>
     bool isExtensionSupported(int offset,VkPhysicalDeviceType requiredExtensions){
@@ -336,6 +259,7 @@ protected:
     bool isExtensionSupported(int offset,vector<VkQueueFlagBits> requiredExtensions){
         if(this->supportQueues(offset,requiredExtensions))
             return true;
+        return false;
     };
 
     template<>
@@ -370,29 +294,12 @@ protected:
 
 
     virtual VkSwapchainKHR createSwapChain(int off) override;
-    virtual uint32_t* getUniqueIndicies(int off){
-        auto graphFamilyIndVec = this->queueIndicies[off];
-
-
-        uint32_t queueFamilyIndices[] = {0,0};
-        for(auto gF:graphFamilyIndVec){
-            queueFamilyIndices[0] = gF.second;
-            for(auto i:presentIndicies[off]){
-                queueFamilyIndices[1] = i;
-
-                if(queueFamilyIndices[0]==queueFamilyIndices[1]) break;
-            }
-            if(queueFamilyIndices[0]==queueFamilyIndices[1]) break;
-        }
-
-        return queueFamilyIndices;
-    };
 
 
 public:
     VkPhyDevice( vector<const char *> deviceExts = vector<const char *>({
-                                                                                                VK_KHR_SWAPCHAIN_EXTENSION_NAME
-                                                                                        })) : PhysicalDevice(deviceExts) {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    })) : PhysicalDevice(deviceExts) {
         initDevices(instance);
     }
 
@@ -408,6 +315,108 @@ public:
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     virtual vector<string> getAllDevicesName() override;
     virtual string getDeviceName(int off) override;
+
+    template<typename Criteria>
+    void getFirstSuitable(Criteria criteria);
+    template<>
+    void getFirstSuitable<vector<VkExtensionProperties>>(vector<VkExtensionProperties> criteria){
+        //insert the type id if not present
+        if(!this->supportedDevices.contains(typeid(VkExtensionProperties)))
+        {
+            auto toAdd = set<int>();
+
+
+            this->supportedDevices.insert(
+                    {
+                            typeid(VkExtensionProperties),
+                            toAdd
+                    }
+            );
+        }
+
+        for(int i=0;i<this->devices.size();i++){
+            if(this->isExtensionSupported(i,criteria))
+                this->supportedDevices[typeid(VkExtensionProperties)].insert(i);
+            if(this->verbose){
+                Terminal::getInstance().printnl("Found suitable:\t"+this->getDeviceName(i));
+            }
+        }
+
+    };
+
+    template<>
+    void getFirstSuitable<vector<VkPhysicalDeviceType>>(vector<VkPhysicalDeviceType> criteria){
+        //insert the type id if not present
+        if(!this->supportedDevices.contains(typeid(VkPhysicalDeviceType)))
+        {
+            auto toAdd = set<int>();
+
+            this->supportedDevices.insert(
+                    {
+                            typeid(VkPhysicalDeviceType),
+                            toAdd
+                    }
+            );
+        }
+
+
+        for(int i=0;i<this->devices.size();i++){
+            for(auto s_criteria:criteria) {
+                if (this->isExtensionSupported<VkPhysicalDeviceType>(i, s_criteria))
+                    this->supportedDevices[typeid(VkPhysicalDeviceType)].insert(i);
+                if (this->verbose) {
+                    Terminal::getInstance().printnl("Found suitable:\t" + this->getDeviceName(i));
+                }
+            }
+        }
+    };
+
+    template<>
+    void getFirstSuitable(vector<VkQueueFlagBits> criteria){
+        //insert the type id if not present
+        if(!this->supportedDevices.contains(typeid(VkQueueFlagBits)))
+        {
+            auto toAdd = set<int>();
+
+
+            this->supportedDevices.insert(
+                    {
+                            typeid(VkQueueFlagBits),
+                            toAdd
+                    }
+            );
+        }
+
+
+        for(int i=0;i<this->devices.size();i++){
+
+            if (this->isExtensionSupported<>(i, criteria))
+                this->supportedDevices[typeid(VkQueueFlagBits)].insert(i);
+            if (this->verbose) {
+                Terminal::getInstance().printnl("Found suitable:\t" + this->getDeviceName(i));
+            }
+        }
+    };
+
+    virtual uint32_t* getUniqueIndicies(int off){
+        auto graphFamilyIndVec = this->queueIndicies[off];
+        auto presentFamilyInd = this->presentIndicies[off];
+
+        uint32_t queueFamilyIndices[] = {0,0};
+
+        for(auto gF:graphFamilyIndVec){
+            queueFamilyIndices[0] = gF.second;
+            for(auto i:presentIndicies[off]){
+                queueFamilyIndices[1] = i;
+
+                if(queueFamilyIndices[0]==queueFamilyIndices[1]) break;
+            }
+            if(queueFamilyIndices[0]==queueFamilyIndices[1]) break;
+        }
+
+        return queueFamilyIndices;
+    };
+
 
 };
 
@@ -461,7 +470,7 @@ public:
     virtual uint32_t findMemoryType(uint32_t typeFilter,
                             VkMemoryPropertyFlags properties) override{
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(this->physicalDevice.getDevice(phyDeviceOff), &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(this->physicalDevice.getDevice(this->phyDeviceOff), &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((typeFilter & (1 << i)) &&
@@ -474,13 +483,21 @@ public:
         throw std::runtime_error("failed to find suitable memory type!");
     }
 
-    VkGenericBuffer(int size): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(size),
-                               VkPhyDevice(nullptr, vector<const char *>()) {
-
+    VkGenericBuffer(int size,int choosenDev): Buffer<
+            VkBuffer,
+            VkBufferUsageFlags,
+            VkMemoryPropertyFlags,
+            VkDeviceMemory,
+            VkDevice,
+            VkPhysicalDevice,
+            BufferDataType>
+            (size){
+        this->size = size;
+        this->phyDeviceOff = choosenDev;
+        this->device = nullptr;
     }
 
-    VkGenericBuffer(const VkGenericBuffer& toCopy): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhyDevice,BufferDataType>(toCopy),
-                                                    VkPhyDevice(nullptr, vector<const char *>()) {
+    VkGenericBuffer(const VkGenericBuffer& toCopy): Buffer<VkBuffer, VkBufferUsageFlags, VkMemoryPropertyFlags, VkDeviceMemory, VkDevice, VkPhysicalDevice,BufferDataType>(toCopy) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkBufferCopy copyRegion{};
@@ -528,12 +545,12 @@ public:
     }
     void createCommandPool() {
 
-
-        auto graphFamilyIndVec = this->physicalDevice.queueIndicies[phyDeviceOff];
+        auto ind = this->physicalDevice.getUniqueIndicies();
+        auto graphFamilyIndVec = std::vector<int>(ind[0],ind[1]);
 
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = graphFamilyIndVec[0][1];
+        poolInfo.queueFamilyIndex = graphFamilyIndVec[0];
         poolInfo.flags = 0; // Optional
 
         VkResult result = vkCreateCommandPool(this->device, &poolInfo, nullptr, &commandPool);

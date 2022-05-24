@@ -126,7 +126,7 @@ template<
 class PhysicalDevice{
 protected:
     static vector<Device> devices;
-    static map<const std::type_index,vector<Device>> supportedDevices;
+    map<const std::type_index,set<int>> supportedDevices;
     std::vector<const char*> deviceExtensions;
 
     SurfaceObj surface;
@@ -142,8 +142,6 @@ protected:
 
     virtual void initDevices(Instance instance) = 0;
 
-    template<typename Criteria>
-    void getFirstSuitable(Criteria criteria);
 
     virtual bool isFeatureSupported(int offset) = 0;
     virtual DeviceFeature getSupportedExtensions(int offset) = 0;
@@ -154,7 +152,6 @@ protected:
     bool isExtensionSupported(int offset,DeviceExtension requiredExtensions);
 
     virtual SwapChain createSwapChain(int off) = 0;
-    virtual uint32_t* getUniqueIndicies(int off) = 0;
 
 public:
     Queue graphicsQueue,presentQueue;
@@ -174,9 +171,33 @@ public:
     virtual vector<string> getAllDevicesName() = 0;
     virtual string getDeviceName(int off) = 0;
 
+    virtual uint32_t* getUniqueIndicies(int off) = 0;
+
+    template<typename Criteria>
+    void getFirstSuitable(Criteria criteria);
+
+
+    set<int> getPerfectCriteriaMatcher(){
+        auto toRet = set<int>();
+        for(auto choosed:supportedDevices){
+            auto Update = set<int>();
+            if(toRet.empty())
+                set_union(toRet.begin(),toRet.end(),choosed.second.begin(),choosed.second.end(), inserter(Update,Update.begin()));
+            else
+                set_intersection(toRet.begin(),toRet.end(),choosed.second.begin(),choosed.second.end(), inserter(Update,Update.begin()));
+
+            toRet = Update;
+        }
+
+        return toRet;
+    }
 
     void setVerbosity(bool verbose){
         this->verbose = verbose;
+    }
+
+    LogicaDevice getLogicalDevice(int off){
+        return this->logicalDevices[off];
     }
 
 };
@@ -254,12 +275,16 @@ public:
         this->physicalDevice = toCopy.physicalDevice;
     }
 
-
-    virtual void create() = 0;
-
-
     void setUsage(const ConfigurationFlags toSet){
         this->usage = toSet;
+    }
+
+    void setPhysicalDevice(PhyDevice phydevice){
+        this->physicalDevice = phydevice;
+    }
+
+    void setLogicalDevice(Device device){
+        this->device = device;
     }
 };
 
@@ -322,6 +347,8 @@ public:
     virtual std::vector<const char*> getRequiredInstanceExtensions() = 0;
 
     WindowObj* getWindow(){return window;}
+    SurfaceObj getSurface(){return surface;}
+
 };
 
 
