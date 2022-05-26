@@ -4,7 +4,7 @@
 
 #include "VulkanFramework.h"
 
-
+using namespace Vulkan;
 
 void  VkAppConfiguration::setAppMajor(int appMajor = 1) {
     AppConfiguration::setApiVersion(appMajor);
@@ -227,7 +227,7 @@ VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
 
 
 
-    auto queueFamilyIndices = this->getUniqueIndicies(off);
+    auto queueFamilyIndices = this->getUniqueIndicies<uint32_t*>(off);
 
 
 
@@ -393,10 +393,9 @@ VkDevice VkPhyDevice::createLogicalDevice(int off) {
 
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    auto arr = this->getUniqueIndicies(off);
-    auto uniqueQueueFamilies = vector<uint32_t>{{
-        arr[0],arr[1]
-    }};
+    auto uniqueQueueFamilies = this->getUniqueIndicies<vector<uint32_t>>(off);
+
+
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {

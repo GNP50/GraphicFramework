@@ -11,6 +11,8 @@
 #include <chrono>
 #include <thread>
 
+using namespace Vulkan;
+
 class WindowTestFixture : public ::testing::Test {
 
 protected:

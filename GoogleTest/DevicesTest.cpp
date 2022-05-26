@@ -13,6 +13,9 @@
 #include <iostream>
 
 using namespace std;
+using namespace Vulkan;
+
+
 class DeviceTestFixture : public ::testing::Test {
 
 protected:
@@ -52,13 +55,14 @@ TEST_F(DeviceTestFixture, Assignment13){ // 1/1/1 -> 1/3/1
     int choosen = *deviceRepository->getPerfectCriteriaMatcher().begin();
     deviceRepository->createLogicalDevice(choosen);
 
-    auto buffer = VkGenericBuffer<float>(100,choosen);
-    buffer.setLogicalDevice(deviceRepository->getLogicalDevice(choosen));
-    buffer.setPhysicalDevice(*deviceRepository);
+    auto buffer = new VkUniformBuffer<float>(100,choosen);
+    buffer->setLogicalDevice(deviceRepository->getLogicalDevice(choosen));
+
+    buffer->setPhysicalDevice(deviceRepository);
 
 
-    buffer.createCommandPool();
-    buffer.createBuffer();
+    buffer->createCommandPool();
+    buffer->createBuffer();
     assert(choosen==0);
 }
 

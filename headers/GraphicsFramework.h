@@ -13,6 +13,8 @@
 #include <iostream>
 #include <Terminal.h>
 #include <typeindex>
+#include <stdio.h>
+#include <string.h>
 
 using namespace std;
 
@@ -171,7 +173,8 @@ public:
     virtual vector<string> getAllDevicesName() = 0;
     virtual string getDeviceName(int off) = 0;
 
-    virtual uint32_t* getUniqueIndicies(int off) = 0;
+    template<typename T>
+    T getUniqueIndicies(int off);
 
     template<typename Criteria>
     void getFirstSuitable(Criteria criteria);
@@ -257,6 +260,8 @@ protected:
     Device device;
     PhyDevice physicalDevice;
 
+    void* dataPointer;
+
     virtual void createBuffer() = 0;
     virtual uint32_t findMemoryType(uint32_t typeFilter,PropertyFlags properties) = 0;
 public:
@@ -286,6 +291,8 @@ public:
     void setLogicalDevice(Device device){
         this->device = device;
     }
+
+    virtual void create() = 0;
 };
 
 
