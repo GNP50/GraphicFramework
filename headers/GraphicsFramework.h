@@ -15,6 +15,7 @@
 #include <typeindex>
 #include <stdio.h>
 #include <string.h>
+#include <fstream>
 
 using namespace std;
 
@@ -359,7 +360,53 @@ public:
 };
 
 
+class Shader{
+protected:
+    string filename;
+    vector<char> data;
+    ifstream  file;
 
+public:
+    Shader(string filename):filename(filename){
 
+    }
+
+    template<typename... T>
+    void create(T...);
+
+    template<typename... T>
+    void destroy(T...);
+
+    std::vector<char> readFile() {
+        file = std::ifstream(filename, std::ios::ate | std::ios::binary);
+
+        if (!file.is_open()) {
+            throw std::runtime_error("failed to open file!");
+        }
+
+        size_t fileSize = (size_t) file.tellg();
+        std::vector<char> buffer(fileSize);
+        file.seekg(0);
+        file.read(buffer.data(), fileSize);
+        file.close();
+
+        data = vector<char>(buffer);
+        return buffer;
+    }
+};
+
+class Pipeline{
+    vector<Shader> shaders;
+
+public:
+    Pipeline(){
+
+    }
+
+    template<typename... T>
+    void create(T...);
+
+    void addShader(Shader& shader){this->shaders.push_back(shader);};
+};
 
 #endif //GRAPHICFRAMEWORK
