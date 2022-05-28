@@ -818,23 +818,46 @@ namespace Vulkan {
 
     class VkPipeline {
     protected:
-        vector<> createInfo;
+        vector<VkDynamicState> dynamicStates;
+        VkPipelineDynamicStateCreateInfo dynamicState;
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+        VkPipelineLayout pipelineLayout;
+
+        VkPipeline(vector<VkDynamicState> dynamicStates = {
+                VK_DYNAMIC_STATE_VIEWPORT,
+                VK_DYNAMIC_STATE_LINE_WIDTH
+        }){
+            this->dynamicStates = vector<VkDynamicState>(dynamicStates);
+
+            dynamicState = {};
+            dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+            dynamicState.pDynamicStates = dynamicStates.data();
+
+            pipelineLayoutInfo = {};
+            pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipelineLayoutInfo.setLayoutCount = 0; // Optional
+            pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+            pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+            pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+        }
+
+        template<VkDevice>
+        void create(VkDevice device){
+            if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create pipeline layout!");
+            }
+        };
+
+        template<VkDevice>
+        void cleanUp(VkDevice device){
+            vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        };
 
     };
 /** logic to transfer
 
 void createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-    uniformBuffers.resize(swapChainImages.size() * Scene.size());
-    uniformBuffersMemory.resize(swapChainImages.size() * Scene.size());
-
-    for (size_t i = 0; i < swapChainImages.size() * Scene.size(); i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     uniformBuffers[i], uniformBuffersMemory[i]);
-    }
 
     bufferSize = sizeof(GlobalUniformBufferObject);
 
@@ -922,11 +945,7 @@ void createCommandBuffers() {
     }
 }
 
-struct UniformBufferObject {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
+
 
 struct GlobalUniformBufferObject {
     alignas(16) glm::vec3 lightDir;

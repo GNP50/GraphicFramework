@@ -406,6 +406,9 @@ public:
     template<typename... T>
     void create(T...);
 
+    template<typename... T>
+    void cleanUp(T...);
+
     void addShader(Shader& shader){this->shaders.push_back(shader);};
 };
 
