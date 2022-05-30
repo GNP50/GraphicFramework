@@ -66,7 +66,31 @@ TEST_F(DeviceTestFixture, Assignment13){ // 1/1/1 -> 1/3/1
     assert(choosen==0);
 }
 
+TEST_F(DeviceTestFixture, Assignment14){ // 1/1/1 -> 1/3/1
 
+    auto type = vector<VkPhysicalDeviceType>  {{VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU}};
+
+
+    auto queueFlags = vector<VkQueueFlagBits>{{VK_QUEUE_GRAPHICS_BIT}};
+
+    deviceRepository->getFirstSuitable(type);
+    deviceRepository->getFirstSuitable(queueFlags);
+
+    int choosen = *deviceRepository->getPerfectCriteriaMatcher().begin();
+    deviceRepository->createLogicalDevice(choosen);
+
+    auto buffer = new VkUniformBuffer<float>(100,choosen);
+    buffer->setLogicalDevice(deviceRepository->getLogicalDevice(choosen));
+
+    buffer->setPhysicalDevice(deviceRepository);
+
+
+    buffer->createCommandPool();
+    buffer->createBuffer();
+    assert(choosen==0);
+}
+
+//VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 
 #endif //DB_DEVICESTEST_H

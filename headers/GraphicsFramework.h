@@ -13,24 +13,18 @@
 #include <iostream>
 #include <Terminal.h>
 #include <typeindex>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 
 using namespace std;
-
-template<typename Result>
-struct ErrCodeStruct {
-    Result resultCode;
-    std::string meaning;
-};
 
 
 template<typename Ret>
 class IReturnable
 {
 public:
-    virtual ~IReturnable() {}
+    virtual ~IReturnable() = default;
     virtual Ret& returnObj() = 0;
 
 };
@@ -110,21 +104,44 @@ public:
     virtual Ret& returnObj() = 0;
 };
 
+template<
+        typename SwapChain,
+        typename SwapChainFormat,
+        typename SwapChainDetail,
+        typename SwapChainExtend,
+        typename Images
+>
+class GenericSwapChain{
+protected:
+    SwapChainFormat swapChainImageFormat;
+    SwapChainExtend swapChainExtent;
+    SwapChain swapChain;
+    std::vector<Images> swapChainImages;
+
+
+public:
+
+    template<typename ...T>
+    void create(T...);
+
+    template<typename ...T>
+    SwapChainDetail querySwapChainSupport(T...);
+
+    template<typename ...T>
+    bool isSwapChainAdeguate(T...);
+
+};
+
 
 template<
         typename Device,
         typename Instance,
         typename SurfaceObj,
-        typename SwapChainDetail,
         typename DeviceFeature,
         typename LogicaDevice,
         typename Engine,
         typename Queue,
-        typename QueueFlags,
-        typename Images,
-        typename SwapChain,
-        typename SwapChainFormat,
-        typename SwapChainExtend
+        typename QueueFlags
 >
 class PhysicalDevice{
 protected:
@@ -135,11 +152,8 @@ protected:
     SurfaceObj surface;
     Engine engine;
     Instance instance;
-    std::vector<Images> swapChainImages;
-    SwapChain swapChain;
     vector<LogicaDevice> logicalDevices;
-    SwapChainFormat swapChainImageFormat;
-    SwapChainExtend swapChainExtent;
+
 
     bool verbose = false;
 
@@ -148,13 +162,11 @@ protected:
 
     virtual bool isFeatureSupported(int offset) = 0;
     virtual DeviceFeature getSupportedExtensions(int offset) = 0;
-    virtual bool isSwapChainAdeguate(int offset,SurfaceObj surface) = 0;
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
 
     template<typename DeviceExtension>
     bool isExtensionSupported(int offset,DeviceExtension requiredExtensions);
 
-    virtual SwapChain createSwapChain(int off) = 0;
 
 public:
     Queue graphicsQueue,presentQueue;
@@ -167,7 +179,6 @@ public:
     }
 
 
-    virtual SwapChainDetail querySwapChainSupport(Device device,SurfaceObj surfaceObj) = 0;
     virtual bool  supportQueues(int  off, vector<QueueFlags> flags) = 0;
     Device getDevice(int off){return devices[off];}
     virtual LogicaDevice createLogicalDevice(int off) = 0;
@@ -204,37 +215,28 @@ public:
         return this->logicalDevices[off];
     }
 
+    SurfaceObj getSurface(){return surface;};
+
 };
 template<
         typename Device,
         typename Instance,
         typename SurfaceObj,
-        typename SwapChainDetail,
         typename DeviceFeature,
         typename LogicaDevice,
         typename Engine,
         typename Queue,
-        typename QueueFlags,
-        typename Images,
-        typename SwapChain,
-        typename SwapChainFormat,
-        typename SwapChainExtend
->
+        typename QueueFlags>
 vector<Device>
 PhysicalDevice<
         Device,
         Instance,
         SurfaceObj,
-        SwapChainDetail,
         DeviceFeature,
         LogicaDevice,
         Engine,
         Queue,
-        QueueFlags,
-        Images,
-        SwapChain,
-        SwapChainFormat,
-        SwapChainExtend
+        QueueFlags
 >::devices;
 
 
@@ -394,6 +396,7 @@ public:
         return buffer;
     }
 };
+
 
 class Pipeline{
     vector<Shader> shaders;

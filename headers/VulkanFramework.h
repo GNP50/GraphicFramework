@@ -229,20 +229,17 @@ namespace Vulkan {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
+
+
     class VkPhyDevice : public PhysicalDevice<
             VkPhysicalDevice,
             VkInstance,
             VkSurfaceKHR,
-            SwapChainSupportDetails,
             VkPhysicalDeviceFeatures,
             VkDevice,
             VkEngine,
             VkQueue,
-            VkQueueFlagBits,
-            VkImage,
-            VkSwapchainKHR,
-            VkFormat,
-            VkExtent2D
+            VkQueueFlagBits
     > {
     protected:
         virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
@@ -252,11 +249,9 @@ namespace Vulkan {
 
         virtual VkPhysicalDeviceFeatures getSupportedExtensions(int offset) override;
 
-        virtual bool isSwapChainAdeguate(int offset, VkSurfaceKHR surface) override;
 
         virtual void initDevices(VkInstance instance) override;
 
-        virtual SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) override;
 
 
         template<typename DeviceExt>
@@ -312,7 +307,6 @@ namespace Vulkan {
         };
 
 
-        virtual VkSwapchainKHR createSwapChain(int off) override;
 
 
     public:
@@ -446,8 +440,80 @@ namespace Vulkan {
         };
 
 
+
     };
 
+
+    class VkSwapChain:public GenericSwapChain<
+            VkImage,
+            VkImage,
+            SwapChainSupportDetails,
+            VkExtent2D,
+            VkImage>{
+
+    private:
+        VkPhyDevice deviceRepository;
+
+        VkSurfaceKHR getSurface(){deviceRepository.getSurface();};
+        VkPhysicalDevice getDevice(int off){deviceRepository.getDevice(off);};
+    public:
+
+
+        template<typename ...T>
+        void create(T...);
+
+        template<typename ...T>
+        SwapChainSupportDetails querySwapChainSupport(T...);
+
+        template<typename ...T>
+        bool isSwapChainAdeguate(T...);
+
+        template<VkPhysicalDevice,VkSurfaceKHR>
+        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+            SwapChainSupportDetails details;
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+                                                      &details.capabilities);
+
+            uint32_t formatCount;
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+                                                 nullptr);
+
+            if (formatCount != 0) {
+                details.formats.resize(formatCount);
+                vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface,
+                                                     &formatCount, details.formats.data());
+            }
+
+            uint32_t presentModeCount;
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                                                      &presentModeCount, nullptr);
+
+            if (presentModeCount != 0) {
+                details.presentModes.resize(presentModeCount);
+                vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                                                          &presentModeCount, details.presentModes.data());
+            }
+
+            return details;
+        };
+
+
+
+
+
+        template<int,VkSurfaceKHR>
+        bool isSwapChainAdeguate(int offset, VkSurfaceKHR surface){
+            auto device = this->getDevice(offset);
+
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport<VkPhysicalDevice,VkSurfaceKHR>(device,surface);
+            return !swapChainSupport.formats.empty() &&
+                   !swapChainSupport.presentModes.empty();
+        };
+
+        void setDeviceRepository(VkPhyDevice device){
+            this->deviceRepository = device;
+        }
+    };
 
     template<typename BufferDataType>
     class VkGenericBuffer : public Buffer<

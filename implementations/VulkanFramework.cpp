@@ -199,9 +199,12 @@ void VkEngine::mainLoop() {
     //TODO WRITE PROPERLY THIS SHIT OF CODE
     //vkDeviceWaitIdle(device);
 }
-VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
+void VkSwapChain::create(int off) {
+    VkSurfaceKHR surface = this->getSurface();
+    VkPhysicalDevice device = this->getDevice(off);
+
     SwapChainSupportDetails swapChainSupport =
-            querySwapChainSupport(this->devices[off],this->surface);
+            querySwapChainSupport(device,surface);
     VkSurfaceFormatKHR surfaceFormat =
             chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode =
@@ -227,7 +230,7 @@ VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
 
 
 
-    auto queueFamilyIndices = this->getUniqueIndicies<uint32_t*>(off);
+    auto queueFamilyIndices = this->deviceRepository.getUniqueIndicies<uint32_t*>(off);
 
 
 
@@ -248,16 +251,16 @@ VkSwapchainKHR VkPhyDevice::createSwapChain(int off) {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    VkResult result = vkCreateSwapchainKHR(this->createLogicalDevice(off), &createInfo, nullptr, &swapChain);
+    VkResult result = vkCreateSwapchainKHR(this->deviceRepository.createLogicalDevice(off), &createInfo, nullptr, &swapChain);
     if (result != VK_SUCCESS) {
         Terminal::getInstance().print(result);
         throw std::runtime_error("failed to create swap chain!");
     }
 
 
-    vkGetSwapchainImagesKHR(this->createLogicalDevice(off), swapChain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(this->deviceRepository.createLogicalDevice(off), swapChain, &imageCount, nullptr);
     swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(this->createLogicalDevice(off), swapChain, &imageCount,
+    vkGetSwapchainImagesKHR(this->deviceRepository.createLogicalDevice(off), swapChain, &imageCount,
                             swapChainImages.data());
 
     swapChainImageFormat = surfaceFormat.format;
@@ -500,40 +503,8 @@ bool  VkPhyDevice::supportQueues(int off, vector<VkQueueFlagBits> flags) {
     return presentIndicies.size()>0 && queueIndicies.size()>0;
 }
 
-SwapChainSupportDetails VkPhyDevice::querySwapChainSupport(VkPhysicalDevice device,VkSurfaceKHR surface) {
-    SwapChainSupportDetails details;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
-                                              &details.capabilities);
-
-    uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
-                                         nullptr);
-
-    if (formatCount != 0) {
-        details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface,
-                                             &formatCount, details.formats.data());
-    }
-
-    uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                              &presentModeCount, nullptr);
-
-    if (presentModeCount != 0) {
-        details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                                  &presentModeCount, details.presentModes.data());
-    }
-
-    return details;
-}
 
 
-bool VkPhyDevice::isSwapChainAdeguate(int offset,VkSurfaceKHR surface){
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(devices[offset],surface);
-    return !swapChainSupport.formats.empty() &&
-           !swapChainSupport.presentModes.empty();
-};
 
 
 void VkPhyDevice::initDevices(VkInstance instance){
