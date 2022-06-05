@@ -230,7 +230,6 @@ namespace Vulkan {
     };
 
 
-
     class VkPhyDevice : public PhysicalDevice<
             VkPhysicalDevice,
             VkInstance,
@@ -251,7 +250,6 @@ namespace Vulkan {
 
 
         virtual void initDevices(VkInstance instance) override;
-
 
 
         template<typename DeviceExt>
@@ -305,8 +303,6 @@ namespace Vulkan {
 
             return false;
         };
-
-
 
 
     public:
@@ -440,80 +436,8 @@ namespace Vulkan {
         };
 
 
-
     };
 
-
-    class VkSwapChain:public GenericSwapChain<
-            VkImage,
-            VkImage,
-            SwapChainSupportDetails,
-            VkExtent2D,
-            VkImage>{
-
-    private:
-        VkPhyDevice deviceRepository;
-
-        VkSurfaceKHR getSurface(){deviceRepository.getSurface();};
-        VkPhysicalDevice getDevice(int off){deviceRepository.getDevice(off);};
-    public:
-
-
-        template<typename ...T>
-        void create(T...);
-
-        template<typename ...T>
-        SwapChainSupportDetails querySwapChainSupport(T...);
-
-        template<typename ...T>
-        bool isSwapChainAdeguate(T...);
-
-        template<VkPhysicalDevice,VkSurfaceKHR>
-        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
-            SwapChainSupportDetails details;
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
-                                                      &details.capabilities);
-
-            uint32_t formatCount;
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
-                                                 nullptr);
-
-            if (formatCount != 0) {
-                details.formats.resize(formatCount);
-                vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface,
-                                                     &formatCount, details.formats.data());
-            }
-
-            uint32_t presentModeCount;
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                                      &presentModeCount, nullptr);
-
-            if (presentModeCount != 0) {
-                details.presentModes.resize(presentModeCount);
-                vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                                          &presentModeCount, details.presentModes.data());
-            }
-
-            return details;
-        };
-
-
-
-
-
-        template<int,VkSurfaceKHR>
-        bool isSwapChainAdeguate(int offset, VkSurfaceKHR surface){
-            auto device = this->getDevice(offset);
-
-            SwapChainSupportDetails swapChainSupport = querySwapChainSupport<VkPhysicalDevice,VkSurfaceKHR>(device,surface);
-            return !swapChainSupport.formats.empty() &&
-                   !swapChainSupport.presentModes.empty();
-        };
-
-        void setDeviceRepository(VkPhyDevice device){
-            this->deviceRepository = device;
-        }
-    };
 
     template<typename BufferDataType>
     class VkGenericBuffer : public Buffer<
@@ -777,7 +701,15 @@ namespace Vulkan {
 
         };
 
-        template<VkDevice>
+
+        template<typename... T>
+        void create(T...);
+
+        template<typename... T>
+        void destroy(T...);
+
+
+        template<>
         void create(VkDevice device) {
             if (this->data.size() == 0)
                 this->readFile();
@@ -793,7 +725,7 @@ namespace Vulkan {
 
         }
 
-        template<VkDevice>
+        template<>
         void destroy(VkDevice device) {
             vkDestroyShaderModule(device, shaderModule, nullptr);
         }
@@ -830,7 +762,9 @@ namespace Vulkan {
 
 
             colorBlendAttachment = {};
-            colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+            colorBlendAttachment.colorWriteMask =
+                    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+                    VK_COLOR_COMPONENT_A_BIT;
             colorBlendAttachment.blendEnable = VK_FALSE;
             colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
             colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
@@ -881,153 +815,313 @@ namespace Vulkan {
         }
     };
 
+    class VkSwapChain : public GenericSwapChain<
+            VkSwapchainKHR ,
+            VkSurfaceFormatKHR,
+            SwapChainSupportDetails,
+            VkExtent2D,
+            VkImage,VkImageView> {
 
-    class VkPipeline {
-    protected:
-        vector<VkDynamicState> dynamicStates;
-        VkPipelineDynamicStateCreateInfo dynamicState;
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo;
-        VkPipelineLayout pipelineLayout;
+    private:
+        VkPhyDevice *deviceRepository;
+        int choosenDevice = 0;
 
-        VkPipeline(vector<VkDynamicState> dynamicStates = {
-                VK_DYNAMIC_STATE_VIEWPORT,
-                VK_DYNAMIC_STATE_LINE_WIDTH
-        }){
-            this->dynamicStates = vector<VkDynamicState>(dynamicStates);
+        VkSurfaceKHR getSurface() { deviceRepository->getSurface(); };
 
-            dynamicState = {};
-            dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-            dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-            dynamicState.pDynamicStates = dynamicStates.data();
+        VkPhysicalDevice getDevice(int off) { return deviceRepository->getDevice(off); };
+    public:
 
-            pipelineLayoutInfo = {};
-            pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutInfo.setLayoutCount = 0; // Optional
-            pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-            pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-            pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-        }
+        ~VkSwapChain(){
+            if(isCreated){
 
-        template<VkDevice>
-        void create(VkDevice device){
-            if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create pipeline layout!");
+                vkDestroySwapchainKHR(deviceRepository->getLogicalDevice(choosenDevice), swapChain, nullptr);
+                for (auto imageView : swapChainImageViews) {
+                    vkDestroyImageView(deviceRepository->getLogicalDevice(choosenDevice), imageView, nullptr);
+                }
             }
+        }
+        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+            SwapChainSupportDetails details;
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+                                                      &details.capabilities);
+
+            uint32_t formatCount;
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+                                                 nullptr);
+
+            if (formatCount != 0) {
+                details.formats.resize(formatCount);
+                vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface,
+                                                     &formatCount, details.formats.data());
+            }
+
+            uint32_t presentModeCount;
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                                                      &presentModeCount, nullptr);
+
+            if (presentModeCount != 0) {
+                details.presentModes.resize(presentModeCount);
+                vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                                                          &presentModeCount, details.presentModes.data());
+            }
+
+            return details;
         };
 
-        template<VkDevice>
-        void cleanUp(VkDevice device){
-            vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        SwapChainSupportDetails querySwapChainSupport(int off) {
+            auto device = this->getDevice(off);
+            auto surface = deviceRepository->getSurface();
+            return querySwapChainSupport(device, surface);
+        }
+
+        bool isSwapChainAdeguate(int offset) {
+            auto device = this->getDevice(offset);
+            auto surface = deviceRepository->getSurface();
+
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
+            return !swapChainSupport.formats.empty() &&
+                   !swapChainSupport.presentModes.empty();
         };
 
+
+        void setDeviceRepository(VkPhyDevice *device) {
+            this->deviceRepository = device;
+        }
+
+        template<typename Criteria>
+        void getFirstSuitable(Criteria criteria);
+
+        template<>
+        void getFirstSuitable<vector<VkSurfaceFormatKHR>>(vector<VkSurfaceFormatKHR> criteria) {
+            //insert the type id if not present
+            if (!this->supportedCapabilities.contains(typeid(VkSurfaceFormatKHR))) {
+                auto toAdd = set<int>();
+
+
+                this->supportedCapabilities.insert(
+                        {
+                                typeid(VkSurfaceFormatKHR),
+                                toAdd
+                        }
+                );
+            }
+
+
+            for (int i = 0; i < this->deviceRepository->getAllDevicesName().size(); i++) {
+                if (this->isExtensionSupported(i, criteria))
+                    this->supportedCapabilities[typeid(VkExtensionProperties)].insert(i);
+                if (this->verbose) {
+                    Terminal::getInstance().printnl("Found suitable:\t" + deviceRepository->getDeviceName(i));
+                }
+            }
+
+        };
+
+        template<>
+        void getFirstSuitable<vector<VkPresentModeKHR>>(vector<VkPresentModeKHR> criteria) {
+            //insert the type id if not present
+            if (!this->supportedCapabilities.contains(typeid(VkPresentModeKHR))) {
+                auto toAdd = set<int>();
+
+
+                this->supportedCapabilities.insert(
+                        {
+                                typeid(VkPresentModeKHR),
+                                toAdd
+                        }
+                );
+            }
+
+
+            for (int i = 0; i < this->deviceRepository->getAllDevicesName().size(); i++) {
+                if (this->isExtensionSupported(i, criteria))
+                    this->supportedCapabilities[typeid(VkPresentModeKHR)].insert(i);
+                if (this->verbose) {
+                    Terminal::getInstance().printnl("Found suitable:\t" + deviceRepository->getDeviceName(i));
+                }
+            }
+
+        };
+
+        template<>
+        void getFirstSuitable<VkSurfaceCapabilitiesKHR>(VkSurfaceCapabilitiesKHR criteria) {
+            //insert the type id if not present
+            if (!this->supportedCapabilities.contains(typeid(VkSurfaceCapabilitiesKHR))) {
+                auto toAdd = set<int>();
+
+
+                this->supportedCapabilities.insert(
+                        {
+                                typeid(VkSurfaceCapabilitiesKHR),
+                                toAdd
+                        }
+                );
+            }
+
+
+            for (int i = 0; i < this->deviceRepository->getAllDevicesName().size(); i++) {
+                if (this->isExtensionSupported(i, criteria))
+                    this->supportedCapabilities[typeid(VkSurfaceCapabilitiesKHR)].insert(i);
+                if (this->verbose) {
+                    Terminal::getInstance().printnl("Found suitable:\t" + deviceRepository->getDeviceName(i));
+                }
+            }
+
+        };
+
+
+        template<typename Criteria>
+        bool isExtensionSupported(int off, Criteria criteria);
+
+        template<>
+        bool isExtensionSupported<vector<VkSurfaceFormatKHR>>(int off, vector<VkSurfaceFormatKHR> criteria) {
+            auto cab = this->querySwapChainSupport(off).formats;
+            for (auto c: criteria) {
+                bool found = false;
+                for (auto f: cab)
+                    if (f.colorSpace == c.colorSpace || f.format == c.format) {
+                        found = true;
+                        break;
+                    }
+                if(found==false)
+                    return false;
+            }
+
+            return true;
+        }
+
+        template<>
+        bool isExtensionSupported<vector<VkPresentModeKHR>>(int off, vector<VkPresentModeKHR> criteria) {
+            auto cab = this->querySwapChainSupport(off).presentModes;
+            for (auto c: criteria) {
+                bool found = false;
+                for (auto f: cab)
+                    if (f == c){
+                        found = true;
+                        break;
+                    }
+                if(!found)
+                    return false;
+            }
+            return true;
+        }
+
+        template<>
+        bool isExtensionSupported<VkSurfaceCapabilitiesKHR>(int off, VkSurfaceCapabilitiesKHR criteria) {
+            auto cab = this->querySwapChainSupport(off).capabilities;
+
+            bool countCondition = cab.minImageCount>=criteria.minImageCount
+                            && cab.maxImageCount>=criteria.maxImageCount
+                            && cab.maxImageArrayLayers>=criteria.maxImageArrayLayers;
+
+            //implement other conditions
+            return countCondition;
+        }
+
+        set<int> getPerfectCriteriaMatcher() {
+            auto toRet = set<int>();
+            for (auto choosed: supportedCapabilities) {
+                auto Update = set<int>();
+                if (toRet.empty())
+                    set_union(toRet.begin(), toRet.end(), choosed.second.begin(), choosed.second.end(),
+                              inserter(Update, Update.begin()));
+                else
+                    set_intersection(toRet.begin(), toRet.end(), choosed.second.begin(), choosed.second.end(),
+                                     inserter(Update, Update.begin()));
+
+                toRet = Update;
+            }
+
+            return toRet;
+        }
+
+        void createSwapChain(int off,VkSurfaceFormatKHR surfaceFormat,VkPresentModeKHR presentMode,VkExtent2D extent  ) {
+            if(isCreated)
+                return;
+            this->swapChainExtent = swapChainExtent;
+            this->swapChainImageFormat = surfaceFormat;
+
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(off);
+
+            uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+            swapChainImages.resize(imageCount);
+
+            VkSwapchainCreateInfoKHR createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+            createInfo.surface = deviceRepository->getSurface();
+
+            createInfo.minImageCount = imageCount;
+            createInfo.imageFormat = surfaceFormat.format;
+            createInfo.imageColorSpace = surfaceFormat.colorSpace;
+            createInfo.imageExtent = extent;
+            createInfo.imageArrayLayers = 1;
+            createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+            auto queueFamilyIndices = this->deviceRepository->
+                    template getUniqueIndicies<uint32_t*>(off);
+
+
+
+            if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
+                createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+                createInfo.queueFamilyIndexCount = 2;
+                createInfo.pQueueFamilyIndices = queueFamilyIndices;
+            } else {
+                createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                createInfo.queueFamilyIndexCount = 0; // Optional
+                createInfo.pQueueFamilyIndices = nullptr; // Optional
+            }
+
+            createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+            createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+            createInfo.presentMode = presentMode;
+            createInfo.clipped = VK_TRUE;
+            createInfo.oldSwapchain = VK_NULL_HANDLE;
+            deviceRepository->createLogicalDevice(off);
+
+            if (vkCreateSwapchainKHR(deviceRepository->getLogicalDevice(off), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create swap chain!");
+            }
+
+            choosenDevice = off;
+            isCreated = true;
+
+        }
+
+        void updateSwapImages(){
+            uint32_t count = 0;
+            vkGetSwapchainImagesKHR(deviceRepository->getLogicalDevice(choosenDevice), swapChain, &count, nullptr);
+            swapChainImages.resize(count);
+            vkGetSwapchainImagesKHR(deviceRepository->getLogicalDevice(choosenDevice), swapChain, &count, swapChainImages.data());
+        }
+
+        void createImageView(){
+            swapChainImageViews.resize(swapChainImages.size());
+            for (size_t i = 0; i < swapChainImages.size(); i++) {
+                VkImageViewCreateInfo createInfo{};
+                createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                createInfo.image = swapChainImages[i];
+
+                createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                createInfo.format = swapChainImageFormat.format;
+
+                createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+                createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+                createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+                createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+                createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                createInfo.subresourceRange.baseMipLevel = 0;
+                createInfo.subresourceRange.levelCount = 1;
+                createInfo.subresourceRange.baseArrayLayer = 0;
+                createInfo.subresourceRange.layerCount = 1;
+
+                if (vkCreateImageView(deviceRepository->getLogicalDevice(choosenDevice), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+                    throw std::runtime_error("failed to create image views!");
+                }
+
+            }
+        }
     };
-/** logic to transfer
-
-void createUniformBuffers() {
-
-    bufferSize = sizeof(GlobalUniformBufferObject);
-
-    globalUniformBuffers.resize(swapChainImages.size());
-    globalUniformBuffersMemory.resize(swapChainImages.size());
-
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     globalUniformBuffers[i], globalUniformBuffersMemory[i]);
-    }
-
-    bufferSize = sizeof(UniformBufferObject);
-}
-
-
-void createCommandBuffers() {
-    commandBuffers.resize(swapChainFramebuffers.size());
-
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
-
-    VkResult result = vkAllocateCommandBuffers(device, &allocInfo,
-                                               commandBuffers.data());
-    if (result != VK_SUCCESS) {
-        PrintVkError(result);
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
-
-    for (size_t i = 0; i < commandBuffers.size(); i++) {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = 0; // Optional
-        beginInfo.pInheritanceInfo = nullptr; // Optional
-
-        if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) !=
-            VK_SUCCESS) {
-            throw std::runtime_error("failed to begin recording command buffer!");
-        }
-
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = swapChainFramebuffers[i];
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = swapChainExtent;
-
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
-        clearValues[1].depthStencil = {1.0f, 0};
-
-        renderPassInfo.clearValueCount =
-                static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
-
-        vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
-                             VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          PhongPipeline);
-
-        for(int j = 0; j < Scene.size(); j++) {
-            VkBuffer vertexBuffers[] = {Scene[j].MD.vertexBuffer};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(commandBuffers[i], Scene[j].MD.indexBuffer, 0,
-                                 VK_INDEX_TYPE_UINT32);
-            vkCmdBindDescriptorSets(commandBuffers[i],
-                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    PhongPipelineLayout, 0, 1,
-                                    &PhongDescriptorSets[i + j * swapChainImages.size()],
-                                    0, nullptr);
-
-            vkCmdDrawIndexed(commandBuffers[i],
-                             static_cast<uint32_t>(Scene[j].MD.indices.size()), 1, 0, 0, 0);
-        }
-
-        vkCmdEndRenderPass(commandBuffers[i]);
-        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to record command buffer!");
-        }
-    }
-}
-
-
-
-struct GlobalUniformBufferObject {
-    alignas(16) glm::vec3 lightDir;
-    alignas(16) glm::vec4 lightColor;
-    alignas(16) glm::vec3 eyePos;
-};
-
-
-struct TextureData {
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
-    VkSampler textureSampler;
-    uint32_t mipLevels;
-};
-
-**/
 }
 #endif //ASS0_VULKANFRAMEWORK_H

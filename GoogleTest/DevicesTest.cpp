@@ -87,6 +87,36 @@ TEST_F(DeviceTestFixture, Assignment14){ // 1/1/1 -> 1/3/1
 
     buffer->createCommandPool();
     buffer->createBuffer();
+
+    VkSwapChain swapChain;
+    swapChain.setDeviceRepository(deviceRepository);
+
+    auto cap = VkSurfaceCapabilitiesKHR();
+    cap.maxImageCount = 1;
+    cap.minImageCount = 1;
+    cap.maxImageArrayLayers = 1;
+
+    auto presentMode = vector<VkPresentModeKHR>{VK_PRESENT_MODE_FIFO_KHR,VK_PRESENT_MODE_MAILBOX_KHR};
+    auto formats = vector<VkSurfaceFormatKHR>{
+            {
+                    VK_FORMAT_B8G8R8A8_UNORM,
+                    VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+            },
+            {
+                    VK_FORMAT_R16G16B16A16_SFLOAT,
+                    VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+            },
+    };
+
+    swapChain.getFirstSuitable(formats);
+    swapChain.getFirstSuitable(presentMode);
+    swapChain.getFirstSuitable(cap);
+    assert(swapChain.getPerfectCriteriaMatcher().contains(0));
+
+    int off = 0;
+    swapChain.createSwapChain(off,formats[0],presentMode[0],VkExtent2D{100,100});
+    swapChain.updateSwapImages();
+    swapChain.createImageView();
     assert(choosen==0);
 }
 
