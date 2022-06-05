@@ -144,6 +144,120 @@ class GenericGraphicPipeline{
 protected:
     StageCreationInfo stageCreationInfo = {};
     Shader fragmentShader,vertexShader;
+public:
+    StageCreationInfo getStageCreationInfo() const {
+        return stageCreationInfo;
+    }
+
+    Shader getFragmentShader() const {
+        return fragmentShader;
+    }
+
+    Shader getVertexShader() const {
+        return vertexShader;
+    }
+
+    VertexInputCreateInfo getVertexInputInfo() const {
+        return vertexInputInfo;
+    }
+
+    InputAssemblyCreateInfo getInputAssembly() const {
+        return inputAssembly;
+    }
+
+    ViewPort getViewport() const {
+        return viewport;
+    }
+
+    Scissor getScissor() const {
+        return scissor;
+    }
+
+    RasterizationStateCreateInfo getRasterizer() const {
+        return rasterizer;
+    }
+
+    MultisampleStateCreateInfo getMultisampling() const {
+        return multisampling;
+    }
+
+    ColorBlendAttachmentState getColorBlendAttachment() const {
+        return colorBlendAttachment;
+    }
+
+    ColorBlendStateCreateInfo getColorBlending() const {
+        return colorBlending;
+    }
+
+    LayoutCreateInfo getPipelineLayoutInfo() const {
+        return pipelineLayoutInfo;
+    }
+
+    DepthStencilStateCreateInfo getDepthStencil() const {
+        return depthStencil;
+    }
+
+    PipelineCreateInfo getPipelineInfo() const {
+        return pipelineInfo;
+    }
+
+    SetLayoutBinding getUboLayoutBinding() const {
+        return uboLayoutBinding;
+    }
+
+    SetLayoutBinding getSamplerLayoutBinding() const {
+        return samplerLayoutBinding;
+    }
+
+    SetLayoutCreateInfo getLayoutInfo() const {
+        return layoutInfo;
+    }
+
+    SetLayout getDescriptorSetLayout() const {
+        return descriptorSetLayout;
+    }
+
+    PipelineLayout getPipelineLayout() const {
+        return pipelineLayout;
+    }
+
+    GraphicPipeLine getGraphicsPipeline() const {
+        return graphicsPipeline;
+    }
+
+    AttachmentDescription getDepthAttachment() const {
+        return depthAttachment;
+    }
+
+    AttachmentDescription getColorAttachment() const {
+        return colorAttachment;
+    }
+
+    AttachmentReference getColorAttachmentRef() const {
+        return colorAttachmentRef;
+    }
+
+    SubpassDescription getSubpass() const {
+        return subpass;
+    }
+
+    SubpassDependency getDependency() const {
+        return dependency;
+    }
+
+    RenderPassCreateInfo getRenderPassInfo() const {
+        return renderPassInfo;
+    }
+
+    RenderPass getRenderPass() const {
+        return renderPass;
+    }
+
+    const vector<Framebuffer> &getSwapChainFramebuffers() const {
+        return swapChainFramebuffers;
+    }
+
+protected:
     VertexInputCreateInfo vertexInputInfo = {};
     InputAssemblyCreateInfo inputAssembly = {};
     ViewPort viewport = {};
@@ -344,14 +458,13 @@ protected:
     //todo write setters for them
     uint64_t size;
     uint64_t bufferSize;
-    vector<BufferDataType> data;
 
     ConfigurationFlags usage;
     BufferType buffer;
     PropertyFlags properties;
     DeviceMemory bufferMemory;
     Device device;
-    PhyDevice physicalDevice;
+    PhyDevice *physicalDevice;
 
     void *dataPointer;
 
@@ -359,9 +472,10 @@ protected:
 
     virtual uint32_t findMemoryType(uint32_t typeFilter, PropertyFlags properties) = 0;
 
+    vector<BufferDataType> data;
 public:
     Buffer(int size = 100) {
-        data = vector<float>(size);
+        data = vector<BufferDataType>(size);
 
 
         this->size = size;
@@ -376,17 +490,25 @@ public:
         this->physicalDevice = toCopy.physicalDevice;
     }
 
+    void setData(vector<BufferDataType> data){
+        data = vector<BufferDataType>(data);
+    };
+
+
     void setUsage(const ConfigurationFlags toSet) {
         this->usage = toSet;
     }
 
-    void setPhysicalDevice(PhyDevice phydevice) {
+    void setPhysicalDevice(PhyDevice *phydevice) {
         this->physicalDevice = phydevice;
     }
 
     void setLogicalDevice(Device device) {
         this->device = device;
     }
+
+    BufferType getBuffer(){return buffer;}
+
 
     virtual void create() = 0;
 };

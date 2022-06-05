@@ -54,7 +54,7 @@ protected:
 
     void createUniformBuffer(){
         auto buffer = new VkUniformBuffer<float>(100,choosenDevice);
-        buffer->setLogicalDevice(deviceRepository->getLogicalDevice(choosenDevice));
+        buffer->setLogicalDevice(choosenDevice);
 
         buffer->setPhysicalDevice(deviceRepository);
 
@@ -152,6 +152,17 @@ TEST_F(DeviceTestFixture, PipeLineCreation){
     createPipeline();
     assert(1==1);
 }
+
+TEST_F(DeviceTestFixture, RendingTest){
+    ChooseADevice();
+    createUniformBuffer();
+    assert(choosenDevice==0);
+    createPipeline();
+
+
+    assert(1==1);
+}
+
 
 
 #endif //DB_DEVICESTEST_H

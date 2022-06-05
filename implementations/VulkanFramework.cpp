@@ -455,3 +455,11 @@ void VkPhyDevice::initDevices(VkInstance instance) {
     Terminal::getInstance().print("Physical devices found: ");
     Terminal::getInstance().printnl(deviceCount);
 };
+
+const vector<glm::vec3> &Object::getVertex() const {
+    return vertex;
+}
+
+const vector<glm::vec3> &Object::getIndicies() const {
+    return indicies;
+}

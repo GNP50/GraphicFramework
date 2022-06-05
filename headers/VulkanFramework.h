@@ -451,7 +451,7 @@ namespace Vulkan {
             VkBufferUsageFlags,
             VkMemoryPropertyFlags,
             VkDeviceMemory,
-            VkDevice, VkPhyDevice *, BufferDataType> {
+            VkDevice, VkPhyDevice, BufferDataType> {
     protected:
         VkCommandPool commandPool;
         int phyDeviceOff;
@@ -590,6 +590,14 @@ namespace Vulkan {
         virtual void create() override {
 
         }
+
+        void setLogicalDevice() {
+            setLogicalDevice(this->phyDeviceOff);
+        }
+        void setLogicalDevice(int off) {
+            this->device = this->physicalDevice->getLogicalDevice(off);
+        }
+
     };
 
     template<typename BufferDataType>
@@ -633,11 +641,11 @@ namespace Vulkan {
             VkStagingBuffer<BufferDataType> stagingBuffer(this->size, this->phyDeviceOff,
                                                           vector<BufferDataType>(this->size));
 
-            stagingBuffer.data = this->data;
+            stagingBuffer.setData(this->data);
             stagingBuffer.create();
             this->createBuffer();
 
-            copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
+            this->copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
         };
     };
 
@@ -656,11 +664,11 @@ namespace Vulkan {
             VkStagingBuffer<BufferDataType> stagingBuffer(this->size, this->phyDeviceOff,
                                                           vector<BufferDataType>(this->size));
 
-            stagingBuffer.data = this->data;
+            stagingBuffer.setData(this->data);
             stagingBuffer.create();
             this->createBuffer();
 
-            copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
+            this->copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
         };
     };
 
@@ -1482,6 +1490,314 @@ namespace Vulkan {
         }
     };
 
+    class Object{
+        vector<glm::vec3> vertex;
+        vector<glm::vec3> indicies;
+
+
+    public:
+        const vector<glm::vec3> &getVertex() const;
+        const vector<glm::vec3> &getIndicies() const;
+    };
+    class Model{
+        vector<Object> objects;
+        vector<float> vertex;
+        vector<int> indicies;
+
+        VkVertexBuffer<float> *vertexBuffer;
+        VkIndexBuffer<int> *indBuffer;
+
+        int choosenDevice;
+        VkPhyDevice *deviceRepository;
+
+        void createBuffers(){
+            vertexBuffer = new VkVertexBuffer<float>(vertex.size()*3,this->choosenDevice);
+            indBuffer = new VkIndexBuffer<int>(indicies.size()*3,this->choosenDevice);
+
+            vertexBuffer->setPhysicalDevice(deviceRepository);
+            indBuffer->setPhysicalDevice(deviceRepository);
+
+            vertexBuffer->setData(vertex);
+            indBuffer->setData(indicies);
+
+            vertexBuffer->create();
+            indBuffer->create();
+        }
+
+        int getVertexSize(){
+            uint32_t  toRet =0;
+            for(auto obj:objects)
+                toRet += obj.getVertex().size()*3;
+
+        }
+
+        int getIndSize(){
+            uint32_t  toRet =0;
+            for(auto obj:objects)
+                toRet += obj.getIndicies().size()*3;
+        }
+
+        void copyData(){
+            vertex.resize(getVertexSize());
+            indicies.resize(getIndSize());
+
+            for(auto toAdd:objects){
+                int i=0;
+                for(auto vert:toAdd.getVertex()){
+                    vertex[i++] = vert.x;
+                    vertex[i++] = vert.y;
+                    vertex[i++] = vert.z;
+                }
+
+                i=0;
+
+                for(auto ind:toAdd.getIndicies()){
+                    indicies[i++] = ind.x;
+                    indicies[i++] = ind.y;
+                    indicies[i++] = ind.z;
+                }
+
+            }
+        }
+
+        Model(){
+
+        }
+
+    public:
+        void addObject(Object& object){
+            objects.push_back(object);
+        }
+
+        void create(){
+            copyData();
+        }
+
+        VkBuffer getVertexBuffers(){
+
+           return vertexBuffer->getBuffer();
+        };
+
+        VkBuffer getIndexBuffers(){
+            return indBuffer->getBuffer();
+        };
+
+        auto getIndicies(){return indicies;};
+        auto getVerticies(){return vertex;};
+    };
+    class Render{
+        VkPhyDevice *deviceRepository;
+        VkCommandPool commandPool;
+        VkPipeLine *pipeLine;
+        VkSwapChain *swapChain;
+        std::vector<VkCommandBuffer> commandBuffers;
+        Model *model;
+
+        //Synchronization objects
+        std::vector<VkSemaphore> imageAvailableSemaphores;
+        std::vector<VkSemaphore> renderFinishedSemaphores;
+        std::vector<VkFence> inFlightFences;
+        std::vector<VkFence> imagesInFlight;
+
+        int choosen;
+
+        const int MAX_FRAMES_IN_FLIGHT = 2;
+        int currentFrame = 0;
+
+        Render(VkPhyDevice *deviceRepo,VkPipeLine *pipeLine,VkSwapChain *swapChain,Model* model){
+            this->pipeLine = pipeLine;
+
+            deviceRepository = deviceRepo;
+            choosen = *deviceRepo->getPerfectCriteriaMatcher().begin();
+
+            this->swapChain = swapChain;
+            this->model = model;
+        }
+
+        void createCommandPool() {
+            auto queueFamilyIndices =  deviceRepository->getUniqueIndicies<vector<uint32_t>>(
+                        choosen
+                    );
+
+            VkCommandPoolCreateInfo poolInfo{};
+            poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            poolInfo.queueFamilyIndex = queueFamilyIndices[0];
+            poolInfo.flags = 0; // Optional
+
+            VkResult result = vkCreateCommandPool(deviceRepository->getLogicalDevice(choosen), &poolInfo, nullptr, &commandPool);
+            if (result != VK_SUCCESS) {
+                Terminal::getInstance().printnl(result);
+                throw std::runtime_error("failed to create command pool!");
+            }
+        }
+
+
+
+        void createCommandBuffers() {
+            // Lesson 13
+            auto frameBuffers = pipeLine->getSwapChainFramebuffers();
+
+            commandBuffers.resize(frameBuffers.size());
+
+            VkCommandBufferAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.commandPool = commandPool;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
+
+            VkResult result = vkAllocateCommandBuffers(swapChain->getChoosenDevice(), &allocInfo,
+                                                       commandBuffers.data());
+            if (result != VK_SUCCESS) {
+                Terminal::getInstance().printnl(result);
+                throw std::runtime_error("failed to allocate command buffers!");
+            }
+
+            // Lesson 22.5 --- Draw calls
+            // This is where the commands that actually draw something on screen are!
+            for (size_t i = 0; i < commandBuffers.size(); i++) {
+                VkCommandBufferBeginInfo beginInfo{};
+                beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                beginInfo.flags = 0; // Optional
+                beginInfo.pInheritanceInfo = nullptr; // Optional
+
+                if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) !=
+                    VK_SUCCESS) {
+                    throw std::runtime_error("failed to begin recording command buffer!");
+                }
+
+                VkRenderPassBeginInfo renderPassInfo{};
+                renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                renderPassInfo.renderPass = pipeLine->getRenderPass();
+                renderPassInfo.framebuffer = pipeLine->getSwapChainFramebuffers()[i];
+                renderPassInfo.renderArea.offset = {0, 0};
+                renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
+
+                std::array<VkClearValue, 2> clearValues{};
+                clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+                clearValues[1].depthStencil = {1.0f, 0};
+
+                renderPassInfo.clearValueCount =
+                        static_cast<uint32_t>(clearValues.size());;
+                renderPassInfo.pClearValues = clearValues.data();
+
+                vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
+                                     VK_SUBPASS_CONTENTS_INLINE);
+                vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                  pipeLine->getGraphicsPipeline());
+
+                auto vBuff = model->getVertexBuffers();
+                auto iBuff = model->getIndexBuffers();
+
+                VkBuffer vertexBuffers[] = {vBuff};
+                VkBuffer indexBuffer = iBuff;
+
+                VkDeviceSize offsets[] = {0};
+
+                vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+                vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
+                                     VK_INDEX_TYPE_UINT32);
+                /**vkCmdBindDescriptorSets(commandBuffers[i],
+                                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
+                                        0, nullptr);**/
+
+                vkCmdDrawIndexed(commandBuffers[i],
+                                 static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
+                vkCmdEndRenderPass(commandBuffers[i]);
+                if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+                    throw std::runtime_error("failed to record command buffer!");
+                }
+            }
+        }
+
+        void createSyncObjects() {
+
+            imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+            renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+            inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+            imagesInFlight.resize(swapChain->getSwapChainImages().size(), VK_NULL_HANDLE);
+
+            VkSemaphoreCreateInfo semaphoreInfo{};
+            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+            VkFenceCreateInfo fenceInfo{};
+            fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                VkResult result1 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
+                                                     &imageAvailableSemaphores[i]);
+                VkResult result2 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
+                                                     &renderFinishedSemaphores[i]);
+                VkResult result3 = vkCreateFence(swapChain->getChoosenDevice(), &fenceInfo, nullptr,
+                                                 &inFlightFences[i]);
+                if (result1 != VK_SUCCESS ||
+                    result2 != VK_SUCCESS ||
+                    result3 != VK_SUCCESS) {
+                    Terminal::getInstance().printnl(result1);
+                    Terminal::getInstance().printnl(result2);
+                    Terminal::getInstance().printnl(result3);
+                    throw std::runtime_error("failed to create synchronization objects for a frame!!");
+                }
+            }
+        }
+
+        void drawFrame() {
+            vkWaitForFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame],
+                            VK_TRUE, UINT64_MAX);
+
+            uint32_t imageIndex;
+
+            VkResult result = vkAcquireNextImageKHR(swapChain->getChoosenDevice(), swapChain->getSwapChain(), UINT64_MAX,
+                                                    imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+            if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+                vkWaitForFences(swapChain->getChoosenDevice(), 1, &imagesInFlight[imageIndex],
+                                VK_TRUE, UINT64_MAX);
+            }
+            imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+
+            //updateUniformBuffer(imageIndex); //todo remeber to update
+
+            VkSubmitInfo submitInfo{};
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+            VkPipelineStageFlags waitStages[] =
+                    {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+            submitInfo.waitSemaphoreCount = 1;
+            submitInfo.pWaitSemaphores = waitSemaphores;
+            submitInfo.pWaitDstStageMask = waitStages;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+            VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores = signalSemaphores;
+
+            vkResetFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame]);
+
+            if (vkQueueSubmit(deviceRepository->graphicsQueue, 1, &submitInfo,
+                              inFlightFences[currentFrame]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to submit draw command buffer!");
+            }
+
+            VkPresentInfoKHR presentInfo{};
+            presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            presentInfo.waitSemaphoreCount = 1;
+            presentInfo.pWaitSemaphores = signalSemaphores;
+
+            VkSwapchainKHR swapChains[] = {swapChain->getSwapChain()};
+            presentInfo.swapchainCount = 1;
+            presentInfo.pSwapchains = swapChains;
+            presentInfo.pImageIndices = &imageIndex;
+            presentInfo.pResults = nullptr; // Optional
+
+            result = vkQueuePresentKHR(deviceRepository->presentQueue, &presentInfo);
+
+            currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        }
+
+    };
 
 }
 #endif //ASS0_VULKANFRAMEWORK_H
