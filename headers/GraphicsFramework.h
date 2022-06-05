@@ -111,7 +111,73 @@ public:
     virtual Ret &returnObj() = 0;
 };
 
+template<
+        typename GraphicPipeLine,
+        typename PipelineLayout,
+        typename StageCreationInfo,
+        typename VertexInputCreateInfo,
+        typename InputAssemblyCreateInfo,
+        typename RasterizationStateCreateInfo,
+        typename MultisampleStateCreateInfo,
+        typename ColorBlendAttachmentState,
+        typename ColorBlendStateCreateInfo,
+        typename LayoutCreateInfo,
+        typename DepthStencilStateCreateInfo,
+        typename PipelineCreateInfo,
+        typename Shader,
+        typename ViewPort,
+        typename Scissor,
+        typename SetLayoutBinding,
+        typename SetLayoutCreateInfo,
+        typename SetLayout,
+        typename AttachmentDescription,
+        typename AttachmentReference,
+        typename SubpassDescription,
+        typename SubpassDependency,
+        typename RenderPassCreateInfo,
+        typename RenderPass
+        >
+class GenericGraphicPipeline{
+protected:
+    StageCreationInfo stageCreationInfo;
+    Shader fragmentShader,vertexShader;
+    VertexInputCreateInfo vertexInputInfo;
+    InputAssemblyCreateInfo inputAssembly;
+    ViewPort viewport;
+    Scissor scissor;
+    RasterizationStateCreateInfo rasterizer;
+    MultisampleStateCreateInfo multisampling;
+    ColorBlendAttachmentState colorBlendAttachment;
+    ColorBlendStateCreateInfo colorBlending;
+    LayoutCreateInfo pipelineLayoutInfo;
+    DepthStencilStateCreateInfo depthStencil;
+    PipelineCreateInfo pipelineInfo;
+    SetLayoutBinding uboLayoutBinding;
+    SetLayoutBinding samplerLayoutBinding;
+    SetLayoutCreateInfo layoutInfo;
+    SetLayout descriptorSetLayout;
+    PipelineLayout pipelineLayout;
+    GraphicPipeLine graphicsPipeline;
+    AttachmentDescription depthAttachment;
+    AttachmentDescription colorAttachment;
+    AttachmentReference colorAttachmentRef;
+    SubpassDescription subpass;
+    SubpassDependency dependency;
+    RenderPassCreateInfo renderPassInfo;
+    RenderPass renderPass;
 
+public:
+    GenericGraphicPipeline(Shader& fragShader, Shader& vertexShader):
+        fragmentShader(fragShader),
+        vertexShader(vertexShader){
+
+
+    };
+
+    GenericGraphicPipeline()  = delete;
+
+
+};
 template<
         typename SwapChain,
         typename SwapChainFormat,
@@ -133,6 +199,13 @@ protected:
     bool verbose = true;
     bool isCreated = false;
 public:
+    SwapChainFormat getSwapChainImageFormat(){return swapChainImageFormat;};
+    SwapChainExtend getSwapChainExtent(){return swapChainExtent;};
+    SwapChain getSwapChain(){return swapChain;};
+    std::vector<Images> getSwapChainImages(){return swapChainImages;};
+    std::vector<ImageView> getSwapChainImageViews(){return swapChainImageViews;};
+
+
 
 
 };
@@ -388,16 +461,23 @@ public:
 
 };
 
-
-class Shader {
+template<typename StageCreateInfo>
+class Shader{
 protected:
     string filename;
     vector<char> data;
     ifstream file;
+    StageCreateInfo stageInfo;
 
 public:
     Shader(string filename) : filename(filename) {
 
+    }
+
+    Shader(Shader& shader){
+        this->filename = shader.filename;
+        this->stageInfo = shader.stageInfo;
+        this->data =  vector<char>(shader.data);
     }
 
     std::vector<char> readFile() {
@@ -416,6 +496,8 @@ public:
         data = vector<char>(buffer);
         return buffer;
     }
+
+    StageCreateInfo getStageCreateInfo(){return stageInfo;}
 };
 
 
