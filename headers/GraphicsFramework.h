@@ -16,6 +16,8 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <string.h>
+
 
 using namespace std;
 
@@ -139,38 +141,37 @@ template<
         >
 class GenericGraphicPipeline{
 protected:
-    StageCreationInfo stageCreationInfo;
+    StageCreationInfo stageCreationInfo = {};
     Shader fragmentShader,vertexShader;
-    VertexInputCreateInfo vertexInputInfo;
-    InputAssemblyCreateInfo inputAssembly;
-    ViewPort viewport;
-    Scissor scissor;
-    RasterizationStateCreateInfo rasterizer;
-    MultisampleStateCreateInfo multisampling;
-    ColorBlendAttachmentState colorBlendAttachment;
-    ColorBlendStateCreateInfo colorBlending;
-    LayoutCreateInfo pipelineLayoutInfo;
-    DepthStencilStateCreateInfo depthStencil;
-    PipelineCreateInfo pipelineInfo;
-    SetLayoutBinding uboLayoutBinding;
-    SetLayoutBinding samplerLayoutBinding;
-    SetLayoutCreateInfo layoutInfo;
-    SetLayout descriptorSetLayout;
-    PipelineLayout pipelineLayout;
-    GraphicPipeLine graphicsPipeline;
-    AttachmentDescription depthAttachment;
-    AttachmentDescription colorAttachment;
-    AttachmentReference colorAttachmentRef;
-    SubpassDescription subpass;
-    SubpassDependency dependency;
-    RenderPassCreateInfo renderPassInfo;
-    RenderPass renderPass;
+    VertexInputCreateInfo vertexInputInfo = {};
+    InputAssemblyCreateInfo inputAssembly = {};
+    ViewPort viewport = {};
+    Scissor scissor = {};
+    RasterizationStateCreateInfo rasterizer = {};
+    MultisampleStateCreateInfo multisampling = {};
+    ColorBlendAttachmentState colorBlendAttachment = {};
+    ColorBlendStateCreateInfo colorBlending = {};
+    LayoutCreateInfo pipelineLayoutInfo = {};
+    DepthStencilStateCreateInfo depthStencil = {};
+    PipelineCreateInfo pipelineInfo = {};
+    SetLayoutBinding uboLayoutBinding = {};
+    SetLayoutBinding samplerLayoutBinding = {};
+    SetLayoutCreateInfo layoutInfo = {};
+    SetLayout descriptorSetLayout = {};
+    PipelineLayout pipelineLayout = {};
+    GraphicPipeLine graphicsPipeline = {};
+    AttachmentDescription depthAttachment = {};
+    AttachmentDescription colorAttachment = {};
+    AttachmentReference colorAttachmentRef = {};
+    SubpassDescription subpass = {};
+    SubpassDependency dependency = {};
+    RenderPassCreateInfo renderPassInfo = {};
+    RenderPass renderPass = {};
 
 public:
     GenericGraphicPipeline(Shader& fragShader, Shader& vertexShader):
         fragmentShader(fragShader),
         vertexShader(vertexShader){
-
 
     };
 
@@ -188,9 +189,9 @@ template<
 >
 class GenericSwapChain {
 protected:
-    SwapChainFormat swapChainImageFormat;
-    SwapChainExtend swapChainExtent;
-    SwapChain swapChain;
+    SwapChainFormat swapChainImageFormat = {};
+    SwapChainExtend swapChainExtent = {};
+    SwapChain swapChain = {};
 
     std::vector<Images> swapChainImages;
     std::vector<ImageView> swapChainImageViews;
@@ -467,7 +468,7 @@ protected:
     string filename;
     vector<char> data;
     ifstream file;
-    StageCreateInfo stageInfo;
+    StageCreateInfo stageInfo = {} ;
 
 public:
     Shader(string filename) : filename(filename) {

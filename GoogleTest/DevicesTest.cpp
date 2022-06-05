@@ -90,7 +90,9 @@ protected:
 
 
         int off = choosenDeviceSwapChain;
-        swapChain.createSwapChain(off,formats[0],presentMode[0],VkExtent2D{100,100});
+        auto extend = VkExtent2D{100,100};
+
+        swapChain.createSwapChain(off,formats[0],presentMode[0], extend);
         swapChain.updateSwapImages();
         swapChain.createImageView();
     }
@@ -129,10 +131,16 @@ TEST_F(DeviceTestFixture, PipeLineCreation){
     assert(choosenDeviceSwapChain!=-1);
 
     VkFragmentShader fragShader = VkFragmentShader("shaders/Fragment.spv");
-    VkFragmentShader vertexShader = VkFragmentShader("shaders/Fragment.spv");
+    VkVertexShader vertexShader = VkVertexShader("shaders/Fragment.spv");
 
     fragShader.create(deviceRepository->getLogicalDevice(choosenDevice));
     vertexShader.create(deviceRepository->getLogicalDevice(choosenDevice));
+
+
+    VkPipeLine pipeline = VkPipeLine(fragShader,vertexShader);
+    pipeline.createGraphicsPipeline(swapChain);
+
+    assert(1==1);
 }
 
 

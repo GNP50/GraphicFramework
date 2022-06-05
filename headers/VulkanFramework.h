@@ -691,8 +691,8 @@ namespace Vulkan {
 
     class VkShader : public Shader<VkPipelineShaderStageCreateInfo> {
     protected:
-        VkShaderModuleCreateInfo createInfo;
-        VkShaderModule shaderModule;
+        VkShaderModuleCreateInfo createInfo = {};
+        VkShaderModule shaderModule = {};
 
     public:
         VkShader(string filename) : Shader(filename) {
@@ -731,7 +731,7 @@ namespace Vulkan {
                 throw std::runtime_error("failed to create shader module!");
             }
 
-
+            stageInfo.module = shaderModule;
         }
 
         template<>
@@ -742,15 +742,19 @@ namespace Vulkan {
     };
 
     class VkFragmentShader : public VkShader {
-        VkPipelineRasterizationStateCreateInfo rasterizer;
-        VkPipelineColorBlendAttachmentState colorBlendAttachment;
-        VkPipelineColorBlendStateCreateInfo colorBlending;
+        VkPipelineRasterizationStateCreateInfo rasterizer = {};
+        VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+        VkPipelineColorBlendStateCreateInfo colorBlending = {};
 
     public:
         VkFragmentShader(string filename,
                          VkPolygonMode polyMode = VK_POLYGON_MODE_FILL
         ) : VkShader(filename) {
+            stageInfo = {};
+            stageInfo.sType =
+                    VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             stageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+            stageInfo.pName = "main";
 
             rasterizer = {};
             rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -799,8 +803,8 @@ namespace Vulkan {
 
     class VkVertexShader : public VkShader {
     protected:
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo;
-        VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 
     public:
         VkVertexShader(
@@ -840,7 +844,7 @@ namespace Vulkan {
     public:
 
         ~VkSwapChain(){
-            if(isCreated){
+            if(!isCreated){
 
                 vkDestroySwapchainKHR(deviceRepository->getLogicalDevice(choosenDevice), swapChain, nullptr);
                 for (auto imageView : swapChainImageViews) {
@@ -952,6 +956,7 @@ namespace Vulkan {
 
         };
 
+        VkPhyDevice* getDeviceRepository(){return deviceRepository;}
         template<>
         void getFirstSuitable<VkSurfaceCapabilitiesKHR>(VkSurfaceCapabilitiesKHR criteria) {
             //insert the type id if not present
@@ -1048,10 +1053,10 @@ namespace Vulkan {
             return deviceRepository->getLogicalDevice(choosenDevice);
         }
 
-        void createSwapChain(int off,VkSurfaceFormatKHR surfaceFormat,VkPresentModeKHR presentMode,VkExtent2D extent  ) {
+        void createSwapChain(int off,VkSurfaceFormatKHR& surfaceFormat,VkPresentModeKHR& presentMode,VkExtent2D& extent  ) {
             if(isCreated)
                 return;
-            this->swapChainExtent = swapChainExtent;
+            this->swapChainExtent = extent;
             this->swapChainImageFormat = surfaceFormat;
 
             SwapChainSupportDetails swapChainSupport = querySwapChainSupport(off);
@@ -1140,7 +1145,7 @@ namespace Vulkan {
     class VkPipeLine:public GenericGraphicPipeline<
             VkPipeline,
             VkPipelineLayout,
-            VkPipelineShaderStageCreateInfo*,
+            VkPipelineShaderStageCreateInfo,
             VkPipelineVertexInputStateCreateInfo,
             VkPipelineInputAssemblyStateCreateInfo,
             VkPipelineRasterizationStateCreateInfo,
@@ -1204,11 +1209,6 @@ namespace Vulkan {
 
     public:
         VkPipeLine(VkShader& fragShader, VkShader& vertexShader) : GenericGraphicPipeline(fragShader, vertexShader) {
-            this->stageCreationInfo = (VkPipelineShaderStageCreateInfo*)malloc(sizeof(VkPipelineShaderStageCreateInfo)*2);
-            this->stageCreationInfo[0] =  vertexShader.getStageCreateInfo();
-            this->stageCreationInfo[1] =  fragShader.getStageCreateInfo();
-
-
         }
 
         void createRenderPass(VkSwapChain swapChain) {
@@ -1219,8 +1219,8 @@ namespace Vulkan {
             depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            depthAttachment.finalLayout =
-                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+            depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
             VkAttachmentReference depthAttachmentRef{};
             depthAttachmentRef.attachment = 1;
@@ -1244,6 +1244,7 @@ namespace Vulkan {
             subpass.colorAttachmentCount = 1;
             subpass.pColorAttachments = &colorAttachmentRef;
             subpass.pDepthStencilAttachment = &depthAttachmentRef;
+            subpass.pInputAttachments = NULL;
 
             dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
             dependency.dstSubpass = 0;
@@ -1303,9 +1304,8 @@ namespace Vulkan {
         }
 
         void createGraphicsPipeline(VkSwapChain swapChain) {
-
-            createDescriptorSetLayout(swapChain);
             createRenderPass(swapChain);
+            createDescriptorSetLayout(swapChain);
 
             VkPipelineShaderStageCreateInfo shaderStages[] =
                     {vertexShader.getStageCreateInfo(), fragmentShader.getStageCreateInfo()};
@@ -1453,9 +1453,7 @@ namespace Vulkan {
 
         }
 
-        ~VkPipeLine(){
-            free(this->stageCreationInfo);
-        }
+
     };
 
 }
