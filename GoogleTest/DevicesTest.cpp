@@ -97,8 +97,30 @@ protected:
         swapChain.createImageView();
     }
 
+    void createPipeline(){
+        setAndCreateSwapChain();
+        assert(choosenDeviceSwapChain!=-1);
+
+        fragShader = new VkFragmentShader("shaders/Fragment.spv");
+        vertexShader = new VkVertexShader("shaders/Vertex.spv");
+
+        fragShader->create(deviceRepository->getLogicalDevice(choosenDevice));
+        vertexShader->create(deviceRepository->getLogicalDevice(choosenDevice));
+
+
+        pipeline = new VkPipeLine(*fragShader,*vertexShader);
+        pipeline->createGraphicsPipeline(swapChain);
+
+        pipeline->createFrameBuffer(swapChain);
+    }
+
+
     VkPhyDevice* deviceRepository;
     VkSwapChain swapChain;
+    VkPipeLine *pipeline;
+    VkShader *fragShader;
+    VkShader *vertexShader;
+
     int choosenDevice = -1;
     int choosenDeviceSwapChain = -1;
 
@@ -127,20 +149,7 @@ TEST_F(DeviceTestFixture, PipeLineCreation){
     ChooseADevice();
     createUniformBuffer();
     assert(choosenDevice==0);
-    setAndCreateSwapChain();
-    assert(choosenDeviceSwapChain!=-1);
-
-    VkFragmentShader fragShader = VkFragmentShader("shaders/Fragment.spv");
-    VkVertexShader vertexShader = VkVertexShader("shaders/Vertex.spv");
-
-    fragShader.create(deviceRepository->getLogicalDevice(choosenDevice));
-    vertexShader.create(deviceRepository->getLogicalDevice(choosenDevice));
-
-
-    VkPipeLine pipeline = VkPipeLine(fragShader,vertexShader);
-    pipeline.createGraphicsPipeline(swapChain);
-
-    pipeline.createFrameBuffer(swapChain);
+    createPipeline();
     assert(1==1);
 }
 
