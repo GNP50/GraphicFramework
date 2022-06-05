@@ -137,7 +137,8 @@ template<
         typename SubpassDescription,
         typename SubpassDependency,
         typename RenderPassCreateInfo,
-        typename RenderPass
+        typename RenderPass,
+        typename Framebuffer
         >
 class GenericGraphicPipeline{
 protected:
@@ -167,6 +168,7 @@ protected:
     SubpassDependency dependency = {};
     RenderPassCreateInfo renderPassInfo = {};
     RenderPass renderPass = {};
+    std::vector<Framebuffer> swapChainFramebuffers;
 
 public:
     GenericGraphicPipeline(Shader& fragShader, Shader& vertexShader):

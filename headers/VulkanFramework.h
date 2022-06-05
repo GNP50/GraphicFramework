@@ -1166,7 +1166,9 @@ namespace Vulkan {
             VkSubpassDescription,
             VkSubpassDependency,
             VkRenderPassCreateInfo,
-            VkRenderPass>{
+            VkRenderPass,
+            VkFramebuffer>{
+
         // Lesson 17
         struct Vertex {
             glm::vec3 pos;
@@ -1454,7 +1456,32 @@ namespace Vulkan {
         }
 
 
+        void createFrameBuffer(VkSwapChain swapChain){
+            auto swapChainImageViews = swapChain.getSwapChainImageViews();
+            auto swapChainExtent = swapChain.getSwapChainExtent();
+
+            swapChainFramebuffers.resize(swapChainImageViews.size());
+            for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+                VkImageView attachments[] = {
+                        swapChainImageViews[i]
+                };
+
+                VkFramebufferCreateInfo framebufferInfo{};
+                framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+                framebufferInfo.renderPass = renderPass;
+                framebufferInfo.attachmentCount = 1;
+                framebufferInfo.pAttachments = attachments;
+                framebufferInfo.width = swapChainExtent.width;
+                framebufferInfo.height = swapChainExtent.height;
+                framebufferInfo.layers = 1;
+
+                if (vkCreateFramebuffer(swapChain.getChoosenDevice(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+                    throw std::runtime_error("failed to create framebuffer!");
+                }
+            }
+        }
     };
+
 
 }
 #endif //ASS0_VULKANFRAMEWORK_H

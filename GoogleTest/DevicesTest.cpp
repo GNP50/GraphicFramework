@@ -131,7 +131,7 @@ TEST_F(DeviceTestFixture, PipeLineCreation){
     assert(choosenDeviceSwapChain!=-1);
 
     VkFragmentShader fragShader = VkFragmentShader("shaders/Fragment.spv");
-    VkVertexShader vertexShader = VkVertexShader("shaders/Fragment.spv");
+    VkVertexShader vertexShader = VkVertexShader("shaders/Vertex.spv");
 
     fragShader.create(deviceRepository->getLogicalDevice(choosenDevice));
     vertexShader.create(deviceRepository->getLogicalDevice(choosenDevice));
@@ -140,6 +140,7 @@ TEST_F(DeviceTestFixture, PipeLineCreation){
     VkPipeLine pipeline = VkPipeLine(fragShader,vertexShader);
     pipeline.createGraphicsPipeline(swapChain);
 
+    pipeline.createFrameBuffer(swapChain);
     assert(1==1);
 }
 
