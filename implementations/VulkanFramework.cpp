@@ -187,18 +187,17 @@ std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {
 }
 
 
-void VkEngine::mainLoop() {
-    while (!glfwWindowShouldClose(window)) {
+bool VkEngine::mainLoop() {
+    if(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-            break;
+            return false;
         }
     }
 
-    //TODO WRITE PROPERLY THIS SHIT OF CODE
-    //vkDeviceWaitIdle(device);
+    return true;
 }
 
 

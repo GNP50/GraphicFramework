@@ -154,7 +154,7 @@ namespace Vulkan {
 
         virtual void setResizeWindowCallBack(void *newFunc) override;
 
-        virtual void mainLoop() override;
+        bool  mainLoop() override;
 
         virtual bool checkValidationLayerSupport() override;
 
@@ -312,10 +312,15 @@ namespace Vulkan {
 
 
     public:
-        VkPhyDevice(vector<const char *> deviceExts = vector<const char *>({
+        VkPhyDevice(
+                VkEngine engine,
+                vector<const char *> deviceExts = vector<const char *>({
                                                                                    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-                                                                           })) : PhysicalDevice(deviceExts) {
+                                                                           })
+
+        ) : PhysicalDevice(deviceExts,engine) {
             initDevices(instance);
+            this->setSurface(engine.getSurface());
         }
 
         virtual bool supportQueues(int off, vector<VkQueueFlagBits> flags) override;
@@ -1847,6 +1852,11 @@ namespace Vulkan {
                 }
 
                 VkRenderPassBeginInfo renderPassInfo{};
+                VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 1.0f};
+                clearColor.color =  {1.0f, 0.0f, 0.0f, 1.0f};
+                renderPassInfo.clearValueCount = 1;
+                renderPassInfo.pClearValues = &clearColor;
+
                 renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 renderPassInfo.renderPass = pipeLine->getRenderPass();
                 renderPassInfo.framebuffer = pipeLine->getSwapChainFramebuffers()[i];
@@ -1924,6 +1934,7 @@ namespace Vulkan {
             }
         }
 
+
         void drawFrame() {
             vkWaitForFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame],
                             VK_TRUE, UINT64_MAX);
@@ -1939,7 +1950,7 @@ namespace Vulkan {
             }
             imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
-            //updateUniformBuffer(imageIndex); //todo remeber to update
+            //updateUniformBuffer(imageIndex);
 
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1978,6 +1989,13 @@ namespace Vulkan {
             currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
         }
 
+        void mainLoop() {
+            while (deviceRepository->getEngine().mainLoop()) {
+                drawFrame();
+            }
+
+            vkDeviceWaitIdle(swapChain->getChoosenDevice());
+        }
     };
 
 }

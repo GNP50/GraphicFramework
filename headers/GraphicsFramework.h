@@ -370,7 +370,8 @@ public:
     std::map<int, vector<pair<QueueFlags, int>>> queueIndicies;
     std::map<int, vector<int>> presentIndicies;
 
-    PhysicalDevice(vector<const char *> deviceExts) {
+    PhysicalDevice(vector<const char *> deviceExts,Engine engine) {
+        this->engine = engine;
         this->deviceExtensions = deviceExts;
         this->instance = engine.getInstance();
     }
@@ -419,7 +420,9 @@ public:
     }
 
     SurfaceObj getSurface() { return surface; };
+    SurfaceObj setSurface(SurfaceObj surface) { this->surface =  surface; };
 
+    Engine getEngine(){return engine;}
 };
 
 template<
@@ -569,7 +572,7 @@ public:
 
     virtual void setResizeWindowCallBack(void *newFunc) = 0;
 
-    virtual void mainLoop() = 0;
+    virtual bool mainLoop() = 0;
 
     //debug helper
     virtual void setupDebugMessenger(void (*callBack)()) = 0;

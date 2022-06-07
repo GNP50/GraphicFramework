@@ -22,7 +22,16 @@ protected:
     virtual void SetUp()
     {
 
-        deviceRepository = new VkPhyDevice();
+        configuration = VkAppConfiguration();
+        configuration.setAppName("Assignment 12");
+        engine = new VkEngine(w,h,configuration);
+
+        deviceRepository = new VkPhyDevice(*engine);
+
+
+
+
+
     }
 
     virtual void TearDown() {
@@ -59,7 +68,7 @@ protected:
                 glm::vec3 (0.0f,0.1f,-0.1f)
         };
         auto index = vector<glm::vec3>{
-                glm::vec3 (0,1,2)
+                glm::vec3 (1,2,3)
         };
 
         triangle.setVertex(vertex);
@@ -103,7 +112,7 @@ protected:
 
 
         int off = choosenDeviceSwapChain;
-        auto extend = VkExtent2D{100,100};
+        auto extend = VkExtent2D{static_cast<uint32_t>(w),static_cast<uint32_t>(h)};
 
         swapChain.createSwapChain(off,formats[0],presentMode[0], extend);
         swapChain.updateSwapImages();
@@ -134,9 +143,15 @@ protected:
     VkShader *fragShader;
     VkShader *vertexShader;
     Model *m;
+
+
+    VkEngine* engine;
+    VkAppConfiguration configuration;
+
     int choosenDevice = -1;
     int choosenDeviceSwapChain = -1;
 
+    const int w = 640,h = 480;
 };
 
 TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
@@ -185,6 +200,7 @@ TEST_F(DeviceTestFixture, RendingTest){
     r.createCommandBuffers();
     r.createSyncObjects();
 
+    r.mainLoop();
     assert(1==1);
 }
 
