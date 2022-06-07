@@ -253,7 +253,7 @@ public:
         return renderPass;
     }
 
-    const vector<Framebuffer> &getSwapChainFramebuffers() const {
+    const vector<Framebuffer> getSwapChainFramebuffers() const {
         return swapChainFramebuffers;
     }
 
@@ -474,7 +474,7 @@ protected:
 
     vector<BufferDataType> data;
 public:
-    Buffer(int size = 100) {
+    Buffer(int size = 0) {
         data = vector<BufferDataType>(size);
 
 
@@ -491,7 +491,9 @@ public:
     }
 
     void setData(vector<BufferDataType> data){
-        data = vector<BufferDataType>(data);
+        this->data = vector<BufferDataType>(data);
+        this->size = data.size();
+        this->bufferSize = sizeof(BufferDataType) * this->size;
     };
 
 

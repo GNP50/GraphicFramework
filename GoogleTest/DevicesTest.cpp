@@ -53,14 +53,27 @@ protected:
     }
 
     void createUniformBuffer(){
-        auto buffer = new VkUniformBuffer<float>(100,choosenDevice);
-        buffer->setLogicalDevice(choosenDevice);
+        Object triangle = Object();
 
-        buffer->setPhysicalDevice(deviceRepository);
+        auto vertex = vector<glm::vec3>{
+                glm::vec3 (0.0f,0.1f,-0.1f)
+        };
+        auto index = vector<glm::vec3>{
+                glm::vec3 (0,1,2)
+        };
+
+        triangle.setVertex(vertex);
+        triangle.setIndicies(index);
+
+        m = new Model();
+
+        m->setDeviceRepository(deviceRepository);
+
+        m->addObject(triangle);
+        m->createBuffers();
 
 
-        buffer->createCommandPool();
-        buffer->createBuffer();
+
     }
 
     void setAndCreateSwapChain(){
@@ -108,7 +121,7 @@ protected:
         vertexShader->create(deviceRepository->getLogicalDevice(choosenDevice));
 
 
-        pipeline = new VkPipeLine(*fragShader,*vertexShader);
+        pipeline = new VkPipeLine(*fragShader,*vertexShader,deviceRepository);
         pipeline->createGraphicsPipeline(swapChain);
 
         pipeline->createFrameBuffer(swapChain);
@@ -120,7 +133,7 @@ protected:
     VkPipeLine *pipeline;
     VkShader *fragShader;
     VkShader *vertexShader;
-
+    Model *m;
     int choosenDevice = -1;
     int choosenDeviceSwapChain = -1;
 
@@ -159,6 +172,18 @@ TEST_F(DeviceTestFixture, RendingTest){
     assert(choosenDevice==0);
     createPipeline();
 
+
+
+    Render r = Render(
+            deviceRepository,
+            pipeline,
+            &swapChain,
+            m
+    );
+
+    r.createCommandPool();
+    r.createCommandBuffers();
+    r.createSyncObjects();
 
     assert(1==1);
 }
