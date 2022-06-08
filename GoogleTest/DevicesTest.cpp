@@ -65,10 +65,12 @@ protected:
         Object triangle = Object();
 
         auto vertex = vector<glm::vec3>{
-                glm::vec3 (0.0f,0.1f,-0.1f)
+                glm::vec3 (0.0f,0.1f,-0.1f),
+                glm::vec3 (0.5f,0.1f,-0.5f),
+                glm::vec3 (0.3f,0.1f,-0.1f)
         };
         auto index = vector<glm::vec3>{
-                glm::vec3 (1,2,3)
+                glm::vec3 (0,1,2)
         };
 
         triangle.setVertex(vertex);

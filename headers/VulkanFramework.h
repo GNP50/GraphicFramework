@@ -1201,6 +1201,11 @@ namespace Vulkan {
             VkFramebuffer>{
 
         // Lesson 17
+
+
+
+    public:
+
         struct Vertex {
             glm::vec3 pos;
             glm::vec3 norm;
@@ -1239,8 +1244,6 @@ namespace Vulkan {
             }
         };
 
-
-    public:
         VkAttachmentDescription colorAttachmentResolve{};
         VkPhyDevice *deviceRepo;
         // Questi dovrebbero essere i render target
@@ -1674,10 +1677,10 @@ namespace Vulkan {
     };
     class Model{
         vector<Object> objects;
-        vector<float> vertex;
+        vector<VkPipeLine::Vertex> vertex;
         vector<int> indicies;
 
-        VkVertexBuffer<float> *vertexBuffer;
+        VkVertexBuffer<VkPipeLine::Vertex> *vertexBuffer;
         VkIndexBuffer<int> *indBuffer;
 
         int choosenDevice;
@@ -1687,7 +1690,7 @@ namespace Vulkan {
         void createBuffers(){
             this->copyData();
 
-            vertexBuffer = new VkVertexBuffer<float>(vertex.size()*3,this->choosenDevice);
+            vertexBuffer = new VkVertexBuffer<VkPipeLine::Vertex>(vertex.size()*3,this->choosenDevice);
             indBuffer = new VkIndexBuffer<int>(indicies.size()*3,this->choosenDevice);
 
             vertexBuffer->setPhysicalDevice(deviceRepository);
@@ -1724,9 +1727,7 @@ namespace Vulkan {
             for(auto toAdd:objects){
                 int i=0;
                 for(auto vert:toAdd.getVertex()){
-                    vertex[i++] = vert.x;
-                    vertex[i++] = vert.y;
-                    vertex[i++] = vert.z;
+                    vertex[i++].pos = vert;
                 }
 
                 i=0;
@@ -1864,7 +1865,7 @@ namespace Vulkan {
                 renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
                 std::array<VkClearValue, 2> clearValues{};
-                clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+                clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
                 clearValues[1].depthStencil = {1.0f, 0};
 
                 renderPassInfo.clearValueCount =
@@ -1884,18 +1885,21 @@ namespace Vulkan {
 
                 VkDeviceSize offsets[] = {0};
 
-                vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+                 vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
-                vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
+
+
+                vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
+                /**vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
                                      VK_INDEX_TYPE_UINT32);
                 /**vkCmdBindDescriptorSets(commandBuffers[i],
                                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                                         pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
-                                        0, nullptr);**/
+                                        0, nullptr);
 
                 vkCmdDrawIndexed(commandBuffers[i],
                                  static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
-                vkCmdEndRenderPass(commandBuffers[i]);
+                **/vkCmdEndRenderPass(commandBuffers[i]);
                 if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
                     throw std::runtime_error("failed to record command buffer!");
                 }
