@@ -327,14 +327,7 @@ namespace Vulkan {
 
         virtual VkDevice createLogicalDevice(int off) override;
 
-        //swaps function valutate if i have to make generic
-        virtual VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-                const std::vector<VkSurfaceFormatKHR> &availableFormats);
 
-        virtual VkPresentModeKHR chooseSwapPresentMode(
-                const std::vector<VkPresentModeKHR> &availablePresentModes);
-
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
 
         virtual vector<string> getAllDevicesName() override;
 
@@ -637,7 +630,7 @@ namespace Vulkan {
             void *ppData;
             vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
 
-            memcpy(this->data.data(), ppData, (size_t) this->bufferSize);
+            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
             vkUnmapMemory(this->device, this->bufferMemory);
         };
 
@@ -1097,8 +1090,7 @@ namespace Vulkan {
 
             VkSwapchainCreateInfoKHR createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-            createInfo.surface = deviceRepository->getSurface();
-
+            createInfo.surface = getSurface();
             createInfo.minImageCount = imageCount;
             createInfo.imageFormat = surfaceFormat.format;
             createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -1355,7 +1347,7 @@ namespace Vulkan {
 
         void createGraphicsPipeline(VkSwapChain swapChain) {
             createRenderPass(swapChain);
-            createDescriptorSetLayout(swapChain);
+
 
             createDescriptorSetLayout(swapChain);
             createColorResources(swapChain);
@@ -1865,7 +1857,7 @@ namespace Vulkan {
                 renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
                 std::array<VkClearValue, 2> clearValues{};
-                clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
+                clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
                 clearValues[1].depthStencil = {1.0f, 0};
 
                 renderPassInfo.clearValueCount =
@@ -1890,16 +1882,16 @@ namespace Vulkan {
 
 
                 vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
-                /**vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
+                /**
+                 *
+                 */
+                vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
                                      VK_INDEX_TYPE_UINT32);
-                /**vkCmdBindDescriptorSets(commandBuffers[i],
-                                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                        pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
-                                        0, nullptr);
+
 
                 vkCmdDrawIndexed(commandBuffers[i],
                                  static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
-                **/vkCmdEndRenderPass(commandBuffers[i]);
+                vkCmdEndRenderPass(commandBuffers[i]);
                 if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
                     throw std::runtime_error("failed to record command buffer!");
                 }
