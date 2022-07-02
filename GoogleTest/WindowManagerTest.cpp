@@ -38,8 +38,12 @@ protected:
 
 TEST_F(WindowTestFixture, Assignment12){ // 1/1/1 -> 1/3/1
     Terminal::getInstance().printnl("Starting creation objects ");
+    configuration.setRequiredExtension(true);
 
-    engine->mainLoop();
+    for(auto ext:configuration.extension)
+        cout<<ext<<"\n";
+
+    while(engine->mainLoop());
 }
 
 #endif //DB_WINDOWSTESTS_H

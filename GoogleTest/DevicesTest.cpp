@@ -156,14 +156,13 @@ protected:
     const int w = 640,h = 480;
 };
 
-TEST_F(DeviceTestFixture, PrintAllDevicesName){ // 1/1/1 -> 1/3/1
+TEST_F(DeviceTestFixture, Assignment13){
+    // 1/1/1 -> 1/3/1
     PrintAllDevicesName();
-}
-
-TEST_F(DeviceTestFixture, Assignment13){ // 1/1/1 -> 1/3/1
-
     ChooseADevice();
     createUniformBuffer();
+    delete m;
+
     assert(choosenDevice==0);
 }
 
