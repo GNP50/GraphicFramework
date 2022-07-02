@@ -467,7 +467,7 @@ protected:
     PropertyFlags properties;
     DeviceMemory bufferMemory;
     Device device;
-    PhyDevice *physicalDevice;
+    std::shared_ptr<PhyDevice> physicalDevice;
 
     void *dataPointer;
 
@@ -504,7 +504,7 @@ public:
         this->usage = toSet;
     }
 
-    void setPhysicalDevice(PhyDevice *phydevice) {
+    void setPhysicalDevice(std::shared_ptr<PhyDevice> phydevice) {
         this->physicalDevice = phydevice;
     }
 

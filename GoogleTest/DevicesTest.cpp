@@ -26,7 +26,7 @@ protected:
         configuration.setAppName("Assignment 12");
         engine = new VkEngine(w,h,configuration);
 
-        deviceRepository = new VkPhyDevice(*engine);
+        deviceRepository = std::make_shared<VkPhyDevice>(*engine);
 
 
 
@@ -34,9 +34,6 @@ protected:
 
     }
 
-    virtual void TearDown() {
-        delete deviceRepository;
-    }
 
 
     void PrintAllDevicesName(){
@@ -139,7 +136,7 @@ protected:
     }
 
 
-    VkPhyDevice* deviceRepository;
+    std::shared_ptr<VkPhyDevice> deviceRepository;
     VkSwapChain swapChain;
     VkPipeLine *pipeline;
     VkShader *fragShader;

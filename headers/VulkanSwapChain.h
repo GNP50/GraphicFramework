@@ -16,7 +16,7 @@ namespace Vulkan{
             VkImage,VkImageView> {
 
     private:
-        VkPhyDevice *deviceRepository;
+        std::shared_ptr<VkPhyDevice> deviceRepository;
         int choosenDevice = 0;
 
         VkSurfaceKHR getSurface() { deviceRepository->getSurface(); };
@@ -78,7 +78,7 @@ namespace Vulkan{
         };
 
 
-        void setDeviceRepository(VkPhyDevice *device) {
+        void setDeviceRepository(std::shared_ptr<VkPhyDevice> device) {
             this->deviceRepository = device;
         }
 
@@ -137,7 +137,7 @@ namespace Vulkan{
 
         };
 
-        VkPhyDevice* getDeviceRepository(){return deviceRepository;}
+        std::shared_ptr<VkPhyDevice> getDeviceRepository(){return deviceRepository;}
         template<>
         void getFirstSuitable<VkSurfaceCapabilitiesKHR>(VkSurfaceCapabilitiesKHR criteria) {
             //insert the type id if not present

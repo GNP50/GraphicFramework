@@ -39,7 +39,7 @@ namespace Vulkan {
         VkIndexBuffer<int> *indBuffer;
 
         int choosenDevice;
-        VkPhyDevice *deviceRepository;
+        std::shared_ptr<VkPhyDevice> deviceRepository;
 
 
     public:
@@ -107,7 +107,7 @@ namespace Vulkan {
     public:
 
 
-        void setDeviceRepository(VkPhyDevice * phydevice ){
+        void setDeviceRepository(std::shared_ptr<VkPhyDevice > phydevice ){
             this->deviceRepository = phydevice;
         }
         void addObject(Object& object){
@@ -131,7 +131,7 @@ namespace Vulkan {
         auto getVerticies(){return vertex;};
     };
     class Render{
-        VkPhyDevice *deviceRepository;
+        std::shared_ptr<VkPhyDevice> deviceRepository;
         VkCommandPool commandPool;
         VkPipeLine *pipeLine;
         VkSwapChain *swapChain;
@@ -150,7 +150,7 @@ namespace Vulkan {
         int currentFrame = 0;
 
     public:
-        Render(VkPhyDevice *deviceRepo,VkPipeLine *pipeLine,VkSwapChain *swapChain,Model* model){
+        Render(std::shared_ptr<VkPhyDevice> deviceRepo,VkPipeLine *pipeLine,VkSwapChain *swapChain,Model* model){
             this->pipeLine = pipeLine;
 
             deviceRepository = deviceRepo;

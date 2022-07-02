@@ -81,7 +81,7 @@ namespace Vulkan{
         };
 
         VkAttachmentDescription colorAttachmentResolve{};
-        VkPhyDevice *deviceRepo;
+        std::shared_ptr<VkPhyDevice> deviceRepo;
         // Questi dovrebbero essere i render target
         VkImage depthImage;
         VkDeviceMemory depthImageMemory;
@@ -92,7 +92,7 @@ namespace Vulkan{
         VkDeviceMemory colorImageMemory;
         VkImageView colorImageView;
 
-        VkPipeLine(VkShader& fragShader, VkShader& vertexShader,VkPhyDevice *devicerepo) : GenericGraphicPipeline(fragShader, vertexShader) {
+        VkPipeLine(VkShader& fragShader, VkShader& vertexShader,std::shared_ptr<VkPhyDevice>devicerepo) : GenericGraphicPipeline(fragShader, vertexShader) {
             this->deviceRepo = devicerepo;
         }
 

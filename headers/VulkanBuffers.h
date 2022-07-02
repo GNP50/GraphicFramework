@@ -156,7 +156,7 @@ namespace Vulkan{
 
         }
 
-        void setPhysicalDevice(VkPhyDevice *phyDevice){
+        void setPhysicalDevice(std::shared_ptr<VkPhyDevice> phyDevice){
             Buffer<
                     VkBuffer,
                     VkBufferUsageFlags,
