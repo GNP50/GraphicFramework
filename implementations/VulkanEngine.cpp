@@ -1,9 +1,8 @@
-//
-// Created by Pierluigi Carlino on 20/03/22.
-//
-#include <VulkanEngine.h>
+#include "VulkanEngine.h"
 
-void VkEngine::setAppConfig (VkAppConfiguration config = VkAppConfiguration()){
+using namespace Vulkan;
+
+void VkEngine::setAppConfig(VkAppConfiguration config = VkAppConfiguration()) {
     GraphicEngine::setAppConfig(config);
 };
 
@@ -16,10 +15,10 @@ bool VkEngine::checkValidationLayerSupport() {
     vkEnumerateInstanceLayerProperties(&layerCount,
                                        availableLayers.data());
 
-    for (const char* layerName : validationLayers) {
+    for (const char *layerName: validationLayers) {
         bool layerFound = false;
 
-        for (const auto& layerProperties : availableLayers) {
+        for (const auto &layerProperties: availableLayers) {
             if (strcmp(layerName, layerProperties.layerName) == 0) {
                 layerFound = true;
                 break;
@@ -33,6 +32,17 @@ bool VkEngine::checkValidationLayerSupport() {
 
     return true;
 }
+
+VKAPI_ATTR VkBool32 VKAPI_CALL VkEngine::defaultDebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
+
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    return VK_FALSE;
+}
+
+
 void VkEngine::setInstance() {
     this->setAppConfig();
     this->appConfiguration.setRequiredExtension(enableValidationLayers);
@@ -42,7 +52,6 @@ void VkEngine::setInstance() {
     createInfo.pApplicationInfo = &(this->appConfiguration.returnObj());
     createInfo.pNext = NULL;
     createInfo.enabledLayerCount = 0;
-
 
 
     createInfo.enabledExtensionCount =
@@ -69,7 +78,7 @@ void VkEngine::setInstance() {
                 static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
 
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)
+        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)
                 &debugCreateInfo;
     } else {
         createInfo.enabledLayerCount = 0;
@@ -79,14 +88,14 @@ void VkEngine::setInstance() {
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
     setupDebugCallback();
-    if(result != VK_SUCCESS) {
+    if (result != VK_SUCCESS) {
         printError(result);
         throw std::runtime_error("failed to create instance!");
     }
 
 }
 
-void VkEngine::initWindow(int w,int h) {
+void VkEngine::initWindow(int w, int h) {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -98,7 +107,7 @@ void VkEngine::initWindow(int w,int h) {
 
 };
 
-void VkEngine::createSurface(){
+void VkEngine::createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface)
         != VK_SUCCESS)
         Terminal::getInstance().printnl("failed to create window surface!");
@@ -106,12 +115,12 @@ void VkEngine::createSurface(){
 
 std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {
     uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
+    const char **glfwExtensions;
     glfwExtensions =
             glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    std::vector<const char*> extensions(glfwExtensions,
-                                        glfwExtensions + glfwExtensionCount);
+    std::vector<const char *> extensions(glfwExtensions,
+                                         glfwExtensions + glfwExtensionCount);
     if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
@@ -120,26 +129,24 @@ std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {
 }
 
 
+bool VkEngine::mainLoop() {
+    if(!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
 
+        std::this_thread::sleep_for(2000ms);
 
-void VkEngine::defaultWindowResizeHandler(GLFWwindow* window, int width, int height) {
-    //todo
-    (glfwGetWindowUserPointer(window));
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+            return false;
+        }
 
-};
+        return true;
+    }
 
-void VkEngine::setResizeWindowCallBack(void* newFunc) {
-    this->framebufferResizeCallback = framebufferResizeCallback;
-};
-
-VKAPI_ATTR VkBool32 VKAPI_CALL VkEngine::defaultDebugCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-    return VK_FALSE;
+    return false;
 }
+
+
+
 
 void VkEngine::cleanup() {
     /*
@@ -182,4 +189,14 @@ if (enableValidationLayers) {
 
     glfwTerminate();
 }
+
+void VkEngine::defaultWindowResizeHandler(GLFWwindow *window, int width, int height) {
+    //todo
+    (glfwGetWindowUserPointer(window));
+
+};
+
+void VkEngine::setResizeWindowCallBack(void *newFunc) {
+    this->framebufferResizeCallback = framebufferResizeCallback;
+};
 

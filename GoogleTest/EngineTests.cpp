@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 #include <VulkanFramework.h>
 
+using namespace Vulkan;
 
 class EngineTestFixture : public ::testing::Test {
 

@@ -12,20 +12,20 @@
 #include <numeric>
 #include <iostream>
 #include <Terminal.h>
+#include <typeindex>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <string.h>
+
 
 using namespace std;
-
-template<typename Result>
-struct ErrCodeStruct {
-    Result resultCode;
-    std::string meaning;
-};
 
 
 template<typename Ret>
 class IReturnable {
 public:
-    virtual ~IReturnable() {}
+    virtual ~IReturnable() = default;
 
     virtual Ret &returnObj() = 0;
 
@@ -113,15 +113,218 @@ public:
     virtual Ret &returnObj() = 0;
 };
 
-//todo decide if it have to been general
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() &&
-               presentFamily.has_value();
+template<
+        typename GraphicPipeLine,
+        typename PipelineLayout,
+        typename StageCreationInfo,
+        typename VertexInputCreateInfo,
+        typename InputAssemblyCreateInfo,
+        typename RasterizationStateCreateInfo,
+        typename MultisampleStateCreateInfo,
+        typename ColorBlendAttachmentState,
+        typename ColorBlendStateCreateInfo,
+        typename LayoutCreateInfo,
+        typename DepthStencilStateCreateInfo,
+        typename PipelineCreateInfo,
+        typename Shader,
+        typename ViewPort,
+        typename Scissor,
+        typename SetLayoutBinding,
+        typename SetLayoutCreateInfo,
+        typename SetLayout,
+        typename AttachmentDescription,
+        typename AttachmentReference,
+        typename SubpassDescription,
+        typename SubpassDependency,
+        typename RenderPassCreateInfo,
+        typename RenderPass,
+        typename Framebuffer
+        >
+class GenericGraphicPipeline{
+protected:
+    StageCreationInfo stageCreationInfo = {};
+    Shader fragmentShader,vertexShader;
+public:
+    StageCreationInfo getStageCreationInfo() const {
+        return stageCreationInfo;
     }
+
+    Shader getFragmentShader() const {
+        return fragmentShader;
+    }
+
+    Shader getVertexShader() const {
+        return vertexShader;
+    }
+
+    VertexInputCreateInfo getVertexInputInfo() const {
+        return vertexInputInfo;
+    }
+
+    InputAssemblyCreateInfo getInputAssembly() const {
+        return inputAssembly;
+    }
+
+    ViewPort getViewport() const {
+        return viewport;
+    }
+
+    Scissor getScissor() const {
+        return scissor;
+    }
+
+    RasterizationStateCreateInfo getRasterizer() const {
+        return rasterizer;
+    }
+
+    MultisampleStateCreateInfo getMultisampling() const {
+        return multisampling;
+    }
+
+    ColorBlendAttachmentState getColorBlendAttachment() const {
+        return colorBlendAttachment;
+    }
+
+    ColorBlendStateCreateInfo getColorBlending() const {
+        return colorBlending;
+    }
+
+    LayoutCreateInfo getPipelineLayoutInfo() const {
+        return pipelineLayoutInfo;
+    }
+
+    DepthStencilStateCreateInfo getDepthStencil() const {
+        return depthStencil;
+    }
+
+    PipelineCreateInfo getPipelineInfo() const {
+        return pipelineInfo;
+    }
+
+    SetLayoutBinding getUboLayoutBinding() const {
+        return uboLayoutBinding;
+    }
+
+    SetLayoutBinding getSamplerLayoutBinding() const {
+        return samplerLayoutBinding;
+    }
+
+    SetLayoutCreateInfo getLayoutInfo() const {
+        return layoutInfo;
+    }
+
+    SetLayout getDescriptorSetLayout() const {
+        return descriptorSetLayout;
+    }
+
+    PipelineLayout getPipelineLayout() const {
+        return pipelineLayout;
+    }
+
+    GraphicPipeLine getGraphicsPipeline() const {
+        return graphicsPipeline;
+    }
+
+    AttachmentDescription getDepthAttachment() const {
+        return depthAttachment;
+    }
+
+    AttachmentDescription getColorAttachment() const {
+        return colorAttachment;
+    }
+
+    AttachmentReference getColorAttachmentRef() const {
+        return colorAttachmentRef;
+    }
+
+    SubpassDescription getSubpass() const {
+        return subpass;
+    }
+
+    SubpassDependency getDependency() const {
+        return dependency;
+    }
+
+    RenderPassCreateInfo getRenderPassInfo() const {
+        return renderPassInfo;
+    }
+
+    RenderPass getRenderPass() const {
+        return renderPass;
+    }
+
+    const vector<Framebuffer> getSwapChainFramebuffers() const {
+        return swapChainFramebuffers;
+    }
+
+protected:
+    VertexInputCreateInfo vertexInputInfo = {};
+    InputAssemblyCreateInfo inputAssembly = {};
+    ViewPort viewport = {};
+    Scissor scissor = {};
+    RasterizationStateCreateInfo rasterizer = {};
+    MultisampleStateCreateInfo multisampling = {};
+    ColorBlendAttachmentState colorBlendAttachment = {};
+    ColorBlendStateCreateInfo colorBlending = {};
+    LayoutCreateInfo pipelineLayoutInfo = {};
+    DepthStencilStateCreateInfo depthStencil = {};
+    PipelineCreateInfo pipelineInfo = {};
+    SetLayoutBinding uboLayoutBinding = {};
+    SetLayoutBinding samplerLayoutBinding = {};
+    SetLayoutCreateInfo layoutInfo = {};
+    SetLayout descriptorSetLayout = {};
+    PipelineLayout pipelineLayout = {};
+    GraphicPipeLine graphicsPipeline = {};
+    AttachmentDescription depthAttachment = {};
+    AttachmentDescription colorAttachment = {};
+    AttachmentReference colorAttachmentRef = {};
+    SubpassDescription subpass = {};
+    SubpassDependency dependency = {};
+    RenderPassCreateInfo renderPassInfo = {};
+    RenderPass renderPass = {};
+    std::vector<Framebuffer> swapChainFramebuffers;
+
+public:
+    GenericGraphicPipeline(Shader& fragShader, Shader& vertexShader):
+        fragmentShader(fragShader),
+        vertexShader(vertexShader){
+
+    };
+
+    GenericGraphicPipeline()  = delete;
+
+
+};
+template<
+        typename SwapChain,
+        typename SwapChainFormat,
+        typename SwapChainDetail,
+        typename SwapChainExtend,
+        typename Images,
+        typename ImageView
+>
+class GenericSwapChain {
+protected:
+    SwapChainFormat swapChainImageFormat = {};
+    SwapChainExtend swapChainExtent = {};
+    SwapChain swapChain = {};
+
+    std::vector<Images> swapChainImages;
+    std::vector<ImageView> swapChainImageViews;
+
+    map<const std::type_index, set<int>> supportedCapabilities;
+    bool verbose = true;
+    bool isCreated = false;
+public:
+    SwapChainFormat getSwapChainImageFormat(){return swapChainImageFormat;};
+    SwapChainExtend getSwapChainExtent(){return swapChainExtent;};
+    SwapChain getSwapChain(){return swapChain;};
+    std::vector<Images> getSwapChainImages(){return swapChainImages;};
+    std::vector<ImageView> getSwapChainImageViews(){return swapChainImageViews;};
+
+
+
+
 };
 
 
@@ -129,61 +332,52 @@ template<
         typename Device,
         typename Instance,
         typename SurfaceObj,
-        typename SwapChainDetail,
         typename DeviceFeature,
-        typename DeviceExtension,
         typename LogicaDevice,
         typename Engine,
         typename Queue,
-        typename Images,
-        typename SwapChain,
-        typename SwapChainFormat,
-        typename SwapChainExtend
+        typename QueueFlags
 >
 class PhysicalDevice {
 protected:
     static vector<Device> devices;
+    map<const std::type_index, set<int>> supportedDevices;
     std::vector<const char *> deviceExtensions;
+
     SurfaceObj surface;
     Engine engine;
     Instance instance;
-    std::vector<Images> swapChainImages;
-    SwapChain swapChain;
     vector<LogicaDevice> logicalDevices;
-    SwapChainFormat swapChainImageFormat;
-    SwapChainExtend swapChainExtent;
+
+
+    bool verbose = false;
 
     virtual void initDevices(Instance instance) = 0;
 
-    template<typename Criteria>
-    void getFirstSuitable(Criteria criteria);
 
     virtual bool isFeatureSupported(int offset) = 0;
 
     virtual DeviceFeature getSupportedExtensions(int offset) = 0;
 
-    virtual bool isSwapChainAdeguate(int offset, SurfaceObj surface) = 0;
-
     virtual bool isDevicesSuitable(vector<Device> devices) = 0;
 
-    virtual bool isExtensionSupported(int offset, vector<DeviceExtension> requiredExtensions) = 0;
-
-    virtual SwapChain createSwapChain(int off) = 0;
+    template<typename DeviceExtension>
+    bool isExtensionSupported(int offset, DeviceExtension requiredExtensions);
 
 
 public:
     Queue graphicsQueue, presentQueue;
+    std::map<int, vector<pair<QueueFlags, int>>> queueIndicies;
+    std::map<int, vector<int>> presentIndicies;
 
-    PhysicalDevice(vector<const char *> deviceExts) {
+    PhysicalDevice(vector<const char *> deviceExts,Engine engine) {
+        this->engine = engine;
         this->deviceExtensions = deviceExts;
         this->instance = engine.getInstance();
-        this->surface = engine.getSurface();
     }
 
 
-    virtual SwapChainDetail querySwapChainSupport(Device device, SurfaceObj surfaceObj) = 0;
-
-    virtual QueueFamilyIndices findQueueFamilies(int off) = 0;
+    virtual bool supportQueues(int off, vector<QueueFlags> flags) = 0;
 
     Device getDevice(int off) { return devices[off]; }
 
@@ -191,39 +385,65 @@ public:
 
     virtual vector<string> getAllDevicesName() = 0;
 
+    virtual string getDeviceName(int off) = 0;
 
+    template<typename T>
+    T getUniqueIndicies(int off);
+
+    template<typename Criteria>
+    void getFirstSuitable(Criteria criteria);
+
+
+    set<int> getPerfectCriteriaMatcher() {
+        auto toRet = set<int>();
+        for (auto choosed: supportedDevices) {
+            auto Update = set<int>();
+            if (toRet.empty())
+                set_union(toRet.begin(), toRet.end(), choosed.second.begin(), choosed.second.end(),
+                          inserter(Update, Update.begin()));
+            else
+                set_intersection(toRet.begin(), toRet.end(), choosed.second.begin(), choosed.second.end(),
+                                 inserter(Update, Update.begin()));
+
+            toRet = Update;
+        }
+
+        return toRet;
+    }
+
+    void setVerbosity(bool verbose) {
+        this->verbose = verbose;
+    }
+
+    LogicaDevice getLogicalDevice(int off) {
+        return this->logicalDevices[off];
+    }
+
+    SurfaceObj getSurface() { return surface; };
+    SurfaceObj setSurface(SurfaceObj surface) { this->surface =  surface; };
+
+    Engine getEngine(){return engine;}
 };
 
 template<
         typename Device,
         typename Instance,
         typename SurfaceObj,
-        typename SwapChainDetail,
         typename DeviceFeature,
-        typename DeviceExtension,
         typename LogicaDevice,
         typename Engine,
         typename Queue,
-        typename Images,
-        typename SwapChain,
-        typename SwapChainFormat,
-        typename SwapChainExtend
->
+        typename QueueFlags>
 vector<Device>
         PhysicalDevice<
                 Device,
                 Instance,
                 SurfaceObj,
-                SwapChainDetail,
                 DeviceFeature,
-                DeviceExtension,
                 LogicaDevice,
                 Engine,
                 Queue,
-                Images,
-                SwapChain,
-                SwapChainFormat,
-                SwapChainExtend
+                QueueFlags
         >::devices;
 
 
@@ -241,22 +461,24 @@ protected:
     //todo write setters for them
     uint64_t size;
     uint64_t bufferSize;
-    vector<BufferDataType> data;
 
     ConfigurationFlags usage;
     BufferType buffer;
     PropertyFlags properties;
     DeviceMemory bufferMemory;
     Device device;
-    PhyDevice physicalDevice;
+    std::shared_ptr<PhyDevice> physicalDevice;
+
+    void *dataPointer;
 
     virtual void createBuffer() = 0;
 
     virtual uint32_t findMemoryType(uint32_t typeFilter, PropertyFlags properties) = 0;
 
+    vector<BufferDataType> data;
 public:
-    Buffer(int size = 100) {
-        data = vector<float>(size);
+    Buffer(int size = 0) {
+        data = vector<BufferDataType>(size);
 
 
         this->size = size;
@@ -271,13 +493,29 @@ public:
         this->physicalDevice = toCopy.physicalDevice;
     }
 
-
-    virtual void create() = 0;
+    void setData(vector<BufferDataType> data){
+        this->data = vector<BufferDataType>(data);
+        this->size = data.size();
+        this->bufferSize = sizeof(BufferDataType) * this->size;
+    };
 
 
     void setUsage(const ConfigurationFlags toSet) {
         this->usage = toSet;
     }
+
+    void setPhysicalDevice(std::shared_ptr<PhyDevice> phydevice) {
+        this->physicalDevice = phydevice;
+    }
+
+    void setLogicalDevice(Device device) {
+        this->device = device;
+    }
+
+    BufferType getBuffer(){return buffer;}
+
+
+    virtual void create() = 0;
 };
 
 
@@ -313,8 +551,6 @@ public:
 
     Instance getInstance() { return this->instance; }
 
-    SurfaceObj getSurface() { return this->surface; }
-
     virtual void createSurface() = 0;
 
     virtual void setValidationLayers(vector<const char *> validationLayers = {
@@ -336,6 +572,8 @@ public:
 
     virtual void setResizeWindowCallBack(void *newFunc) = 0;
 
+    virtual bool mainLoop() = 0;
+
     //debug helper
     virtual void setupDebugMessenger(void (*callBack)()) = 0;
 
@@ -348,6 +586,48 @@ public:
     virtual std::vector<const char *> getRequiredInstanceExtensions() = 0;
 
     WindowObj *getWindow() { return window; }
+
+    SurfaceObj getSurface() { return surface; }
+
+};
+
+template<typename StageCreateInfo>
+class Shader{
+protected:
+    string filename;
+    vector<char> data;
+    ifstream file;
+    StageCreateInfo stageInfo = {} ;
+
+public:
+    Shader(string filename) : filename(filename) {
+
+    }
+
+    Shader(Shader& shader){
+        this->filename = shader.filename;
+        this->stageInfo = shader.stageInfo;
+        this->data =  vector<char>(shader.data);
+    }
+
+    std::vector<char> readFile() {
+        file = std::ifstream(filename, std::ios::ate | std::ios::binary);
+
+        if (!file.is_open()) {
+            throw std::runtime_error("failed to open file!");
+        }
+
+        size_t fileSize = (size_t) file.tellg();
+        std::vector<char> buffer(fileSize);
+        file.seekg(0);
+        file.read(buffer.data(), fileSize);
+        file.close();
+
+        data = vector<char>(buffer);
+        return buffer;
+    }
+
+    StageCreateInfo getStageCreateInfo(){return stageInfo;}
 };
 
 
