@@ -195,24 +195,11 @@ TEST_F(DeviceTestFixture, RendingTest){
     );
 
     r.createCommandPool();
-    r.createSyncObjects();
-
     r.createCommandBuffers();
+    r.createSyncObjects();
 
     r.mainLoop();
     assert(1==1);
-}
-
-TEST_F(DeviceTestFixture,FindQueueFamilyTests){
-    QueueFamilyIndices indices = deviceRepository->findQueueFamilies(0);
-    auto graphicsQueue = deviceRepository->graphicsQueue;
-    auto presetQueue = deviceRepository->presentQueue;
-
-    return;
-}
-
-TEST_F(DeviceTestFixture,CreateLogicalDeviceTest){
-    deviceRepository->createLogicalDevice(0);
 }
 
 
