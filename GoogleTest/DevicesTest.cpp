@@ -195,8 +195,9 @@ TEST_F(DeviceTestFixture, RendingTest){
     );
 
     r.createCommandPool();
-    r.createCommandBuffers();
     r.createSyncObjects();
+
+    r.createCommandBuffers();
 
     r.mainLoop();
     assert(1==1);
