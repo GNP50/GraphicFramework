@@ -126,7 +126,8 @@ template<
         typename LayoutCreateInfo,
         typename DepthStencilStateCreateInfo,
         typename PipelineCreateInfo,
-        typename Shader,
+        typename FragShader,
+        typename VertexShader,
         typename ViewPort,
         typename Scissor,
         typename SetLayoutBinding,
@@ -143,17 +144,18 @@ template<
 class GenericGraphicPipeline{
 protected:
     StageCreationInfo stageCreationInfo = {};
-    Shader fragmentShader,vertexShader;
+    FragShader fragmentShader;
+    VertexShader vertexShader;
 public:
     StageCreationInfo getStageCreationInfo() const {
         return stageCreationInfo;
     }
 
-    Shader getFragmentShader() const {
+    FragShader getFragmentShader() const {
         return fragmentShader;
     }
 
-    Shader getVertexShader() const {
+    VertexShader getVertexShader() const {
         return vertexShader;
     }
 
@@ -285,7 +287,7 @@ protected:
     std::vector<Framebuffer> swapChainFramebuffers;
 
 public:
-    GenericGraphicPipeline(Shader& fragShader, Shader& vertexShader):
+    GenericGraphicPipeline(FragShader& fragShader, VertexShader& vertexShader):
         fragmentShader(fragShader),
         vertexShader(vertexShader){
 
@@ -532,6 +534,7 @@ protected:
     Config appConfiguration;
     WindowObj *window;
     SurfaceObj surface;
+
 
 
     map<ErroCode, string> errorStorer;

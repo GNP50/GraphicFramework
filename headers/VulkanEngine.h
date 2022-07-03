@@ -33,6 +33,14 @@ namespace Vulkan {
         void (*debugCallback)();
 
 
+        // Camera
+        int width,heigth;
+        glm::mat3 CamDir = glm::mat3(1.0f);
+        glm::vec3 CamPos = glm::vec3(0.0f, 0.5f, 2.5f);
+        glm::vec3 CamAng = glm::vec3(0.0f, 0.0f, 0.0f);
+
+
+
     protected:
     public:
         VkEngine() {
@@ -72,6 +80,9 @@ namespace Vulkan {
         }
 
         VkEngine(int w, int h, VkAppConfiguration configuration) {
+            width = w;
+            heigth = h;
+
             this->setAppConfig(configuration);
 
             this->initWindow(w, h);
@@ -117,6 +128,12 @@ namespace Vulkan {
 
         }
 
+
+
+        void setCamDir(glm::mat3 toSet){CamDir = toSet;};
+        void setCamPos(glm::vec3 toSet){CamPos = toSet;};
+        void setCamAng(glm::vec3 toSet){CamAng = toSet;};
+
         virtual void setupDebugCallback() override {
             setupDebugMessenger();
             if (CreateDebugUtilsMessengerEXT(&createInfo) != VK_SUCCESS)
@@ -126,6 +143,7 @@ namespace Vulkan {
                         ForeGroudColor::red);
         }
 
+        void updateUniformBuffer(uint32_t currentImage);
 
         void DestroyDebugUtilsMessengerEXT() {
             auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)

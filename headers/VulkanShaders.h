@@ -9,7 +9,7 @@
 namespace Vulkan{
 
 
-    class VkShader : public Shader<VkPipelineShaderStageCreateInfo> {
+    class VkShader : public Shader<VkPipelineShaderStageCreateInfo>{
     protected:
         VkShaderModuleCreateInfo createInfo = {};
         VkShaderModule shaderModule = {};
@@ -39,6 +39,11 @@ namespace Vulkan{
 
 
         template<>
+        void destroy(VkDevice device){
+            vkDestroyShaderModule(device,shaderModule,NULL);
+        }
+
+        template<>
         void create(VkDevice device) {
             if (this->data.size() == 0)
                 this->readFile();
@@ -54,10 +59,7 @@ namespace Vulkan{
             stageInfo.module = shaderModule;
         }
 
-        template<>
-        void destroy(VkDevice device) {
-            vkDestroyShaderModule(device, shaderModule, nullptr);
-        }
+
 
     };
 
@@ -121,31 +123,95 @@ namespace Vulkan{
         }
     };
 
+    // Lesson 17
+    struct Vertex {
+        glm::vec3 pos;
+        glm::vec3 norm;
+        glm::vec2 texCoord;
+
+        static constexpr const VkVertexInputBindingDescription * getBindingDescription() {
+            VkVertexInputBindingDescription bindingDescription{};
+            bindingDescription.binding = 0;
+            bindingDescription.stride = sizeof(Vertex);
+            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            return &bindingDescription;
+        }
+
+        static constexpr std::array<VkVertexInputAttributeDescription, 3>
+        getAttributeDescriptions() {
+            std::array<VkVertexInputAttributeDescription, 3>
+                    attributeDescriptions{};
+
+            attributeDescriptions[0].binding = 0;
+            attributeDescriptions[0].location = 0;
+            attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+            attributeDescriptions[1].binding = 0;
+            attributeDescriptions[1].location = 1;
+            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[1].offset = offsetof(Vertex, norm);
+
+            attributeDescriptions[2].binding = 0;
+            attributeDescriptions[2].location = 2;
+            attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+            attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+
+            return attributeDescriptions;
+        }
+    };
+
     class VkVertexShader : public VkShader {
     protected:
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 
     public:
+
+
+
         VkVertexShader(
                 string filename,
                 VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
         ) : VkShader(filename) {
+
+
+
+            auto  attributes = Vertex::getAttributeDescriptions();
+
             stageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 
             vertexInputInfo = {};
             vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-            vertexInputInfo.vertexBindingDescriptionCount = 0;
-            vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-            vertexInputInfo.vertexAttributeDescriptionCount = 0;
-            vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+            vertexInputInfo.vertexBindingDescriptionCount = 1;
+            vertexInputInfo.pVertexBindingDescriptions = static_cast<const VkVertexInputBindingDescription *>(malloc(
+                    sizeof(VkVertexInputAttributeDescription))); // Optional
+
+            memcpy((void *) vertexInputInfo.pVertexBindingDescriptions, Vertex::getBindingDescription(), sizeof(VkVertexInputAttributeDescription));
+
+            vertexInputInfo.vertexAttributeDescriptionCount = attributes.size();
+            vertexInputInfo.pVertexAttributeDescriptions = static_cast<const VkVertexInputAttributeDescription *>(malloc(
+                    sizeof(VkVertexInputAttributeDescription) * attributes.size())); // Optional
+
+
+            memcpy((void *) vertexInputInfo.pVertexAttributeDescriptions, attributes.data(), sizeof(VkVertexInputAttributeDescription) * attributes.size());
 
             inputAssembly = {};
             inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
             inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
             inputAssembly.primitiveRestartEnable = VK_FALSE;
         }
+        ~VkVertexShader(){
+            VkShader::~VkShader();
+            free((void *) vertexInputInfo.pVertexAttributeDescriptions);
+            free((void *) vertexInputInfo.pVertexBindingDescriptions);
+        }
+
+        VkPipelineVertexInputStateCreateInfo getVertexInputInfo (){return vertexInputInfo;}
+
     };
+
 
 }
 #endif //DB_VULKANSHADERS_H

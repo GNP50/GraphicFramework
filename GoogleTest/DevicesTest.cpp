@@ -130,7 +130,7 @@ protected:
 
 
         pipeline = new VkPipeLine(*fragShader,*vertexShader,deviceRepository);
-        pipeline->createGraphicsPipeline(swapChain);
+        pipeline->createPipeline(swapChain);
 
         pipeline->createFrameBuffer(swapChain);
     }
@@ -139,8 +139,8 @@ protected:
     std::shared_ptr<VkPhyDevice> deviceRepository;
     VkSwapChain swapChain;
     VkPipeLine *pipeline;
-    VkShader *fragShader;
-    VkShader *vertexShader;
+    VkFragmentShader *fragShader;
+    VkVertexShader *vertexShader;
     Model *m;
 
 
