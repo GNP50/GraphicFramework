@@ -8,13 +8,15 @@
 #include "commonVulkanIncludes.h"
 #include "VulkanAppConfiguration.h"
 namespace Vulkan {
+    static  bool debug = false;
+
 //default debug caller
     static VKAPI_ATTR VkBool32 VKAPI_CALL defaultDebugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT messageType,
             const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
-
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        if(debug)
+            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 

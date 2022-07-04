@@ -70,14 +70,14 @@ namespace Vulkan {
         int getVertexSize(){
             uint32_t  toRet =0;
             for(auto obj:objects)
-                toRet += obj.getVertex().size()*3;
+                toRet += obj.getVertex().size();
             return toRet;
         }
 
         int getIndSize(){
             uint32_t  toRet =0;
             for(auto obj:objects)
-                toRet += obj.getIndicies().size()*3;
+                toRet += obj.getIndicies().size();
             return toRet;
         }
 
@@ -212,8 +212,8 @@ namespace Vulkan {
                 }
 
                 VkRenderPassBeginInfo renderPassInfo{};
-                VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 1.0f};
-                clearColor.color =  {1.0f, 0.0f, 0.0f, 1.0f};
+                VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+                clearColor.color =  {0.0f, 0.0f, 0.0f, 1.0f};
                 renderPassInfo.clearValueCount = 1;
                 renderPassInfo.pClearValues = &clearColor;
 
@@ -224,7 +224,7 @@ namespace Vulkan {
                 renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
                 std::array<VkClearValue, 2> clearValues{};
-                clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
+                clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
                 clearValues[1].depthStencil = {1.0f, 0};
 
                 renderPassInfo.clearValueCount =
@@ -244,21 +244,19 @@ namespace Vulkan {
 
                 VkDeviceSize offsets[] = {0};
 
-                 vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
-
-
-                vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
-                /**vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
+                vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+                vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
                                      VK_INDEX_TYPE_UINT32);
-                /**vkCmdBindDescriptorSets(commandBuffers[i],
+                /** todo decide how to handle
+                 kCmdBindDescriptorSets(commandBuffers[i],
                                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                                         pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
                                         0, nullptr);
-
+                **/
                 vkCmdDrawIndexed(commandBuffers[i],
                                  static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
-                **/vkCmdEndRenderPass(commandBuffers[i]);
+                vkCmdEndRenderPass(commandBuffers[i]);
                 if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
                     throw std::runtime_error("failed to record command buffer!");
                 }
@@ -299,28 +297,30 @@ namespace Vulkan {
 
 
         void drawFrame() {
-            vkWaitForFences(device, 1, &inFlightFences[currentFrame],
+            vkWaitForFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame],
                             VK_TRUE, UINT64_MAX);
 
             uint32_t imageIndex;
 
-            VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX,
+            VkResult result = vkAcquireNextImageKHR(swapChain->getChoosenDevice(), swapChain->getSwapChain(), UINT64_MAX,
                                                     imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
             if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-                recreateSwapChain();
+                //todo decide how to put
+                //recreateSwapChain();
                 return;
             } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
                 throw std::runtime_error("failed to acquire swap chain image!");
             }
 
             if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-                vkWaitForFences(device, 1, &imagesInFlight[imageIndex],
+                vkWaitForFences(swapChain->getChoosenDevice(), 1, &imagesInFlight[imageIndex],
                                 VK_TRUE, UINT64_MAX);
             }
             imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
-            updateUniformBuffer(imageIndex);
+            //todo decide how to put
+            //updateUniformBuffer(imageIndex);
 
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -336,9 +336,9 @@ namespace Vulkan {
             submitInfo.signalSemaphoreCount = 1;
             submitInfo.pSignalSemaphores = signalSemaphores;
 
-            vkResetFences(device, 1, &inFlightFences[currentFrame]);
+            vkResetFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame]);
 
-            if (vkQueueSubmit(graphicsQueue, 1, &submitInfo,
+            if (vkQueueSubmit(deviceRepository->graphicsQueue, 1, &submitInfo,
                               inFlightFences[currentFrame]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to submit draw command buffer!");
             }
@@ -348,19 +348,21 @@ namespace Vulkan {
             presentInfo.waitSemaphoreCount = 1;
             presentInfo.pWaitSemaphores = signalSemaphores;
 
-            VkSwapchainKHR swapChains[] = {swapChain};
+
+            VkSwapchainKHR swapChains[] = {swapChain->getSwapChain()};
             presentInfo.swapchainCount = 1;
             presentInfo.pSwapchains = swapChains;
             presentInfo.pImageIndices = &imageIndex;
             presentInfo.pResults = nullptr; // Optional
 
-            result = vkQueuePresentKHR(presentQueue, &presentInfo);
+            result = vkQueuePresentKHR(deviceRepository->presentQueue, &presentInfo);
 
+            /** todo decide how to handle
             if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
                 framebufferResized) {
                 framebufferResized = false;
                 recreateSwapChain();
-            } else if (result != VK_SUCCESS) {
+            } else **/if (result != VK_SUCCESS) {
                 throw std::runtime_error("failed to present swap chain image!");
             }
 

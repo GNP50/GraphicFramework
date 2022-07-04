@@ -318,11 +318,11 @@ protected:
     bool verbose = true;
     bool isCreated = false;
 public:
-    SwapChainFormat getSwapChainImageFormat(){return swapChainImageFormat;};
-    SwapChainExtend getSwapChainExtent(){return swapChainExtent;};
-    SwapChain getSwapChain(){return swapChain;};
-    std::vector<Images> getSwapChainImages(){return swapChainImages;};
-    std::vector<ImageView> getSwapChainImageViews(){return swapChainImageViews;};
+    SwapChainFormat const getSwapChainImageFormat(){return swapChainImageFormat;};
+    SwapChainExtend const getSwapChainExtent(){return swapChainExtent;};
+    SwapChain const getSwapChain(){return swapChain;};
+    std::vector<Images> const getSwapChainImages(){return swapChainImages;};
+    std::vector<ImageView> const getSwapChainImageViews(){return swapChainImageViews;};
 
 
 

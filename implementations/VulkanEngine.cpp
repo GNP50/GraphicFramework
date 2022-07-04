@@ -200,6 +200,7 @@ void VkEngine::setResizeWindowCallBack(void *newFunc) {
     this->framebufferResizeCallback = framebufferResizeCallback;
 };
 
+/**todo decide how to put into
 void VkEngine::updateUniformBuffer(uint32_t currentImage) {
     static auto startTime = std::chrono::high_resolution_clock::now();
     static float lastTime = 0.0f;
@@ -318,4 +319,4 @@ void VkEngine::updateUniformBuffer(uint32_t currentImage) {
                 sizeof(gubo), 0, &data);
     memcpy(data, &gubo, sizeof(gubo));
     vkUnmapMemory(device, globalUniformBuffersMemory[currentImage]);
-}
+}**/
