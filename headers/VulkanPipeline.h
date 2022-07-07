@@ -63,6 +63,10 @@ namespace Vulkan{
             this->deviceRepo = devicerepo;
         }
 
+        VkSampleCountFlagBits getMaxUsableSampleCount(VkSwapChain &swapchain) {
+            msaaSamples =   swapchain.getMaxUsableSampleCount();
+        }
+
         VkFormat findDepthFormat() {
             return findSupportedFormat({VK_FORMAT_D32_SFLOAT,
                                         VK_FORMAT_D32_SFLOAT_S8_UINT,
@@ -317,8 +321,9 @@ namespace Vulkan{
         }
 
 
-        void createPipeline(VkSwapChain& swapchain, bool transp = false,VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,VkCullModeFlags CM = VK_CULL_MODE_NONE) {
+        void createPipeline(VkSwapChain& swapchain, bool transp = false,VkCompareOp compareOp = VK_COMPARE_OP_LESS,VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,VkCullModeFlags CM = VK_CULL_MODE_NONE) {
 
+            this->getMaxUsableSampleCount(swapchain);
             createColorResources(swapchain);
             createDepthResources(swapchain);
             createRenderPass(swapchain);
@@ -326,6 +331,18 @@ namespace Vulkan{
             createShadersInfo();
             createViewPort(swapchain);
             createColorRasterizerMultisampling(transp,polyModel,CM);
+
+            depthStencil.sType =
+                    VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            depthStencil.depthTestEnable = VK_TRUE;
+            depthStencil.depthWriteEnable = VK_TRUE;
+            depthStencil.depthCompareOp = compareOp;
+            depthStencil.depthBoundsTestEnable = VK_FALSE;
+            depthStencil.minDepthBounds = 0.0f; // Optional
+            depthStencil.maxDepthBounds = 1.0f; // Optional
+            depthStencil.stencilTestEnable = VK_FALSE;
+            depthStencil.front = {}; // Optional
+            depthStencil.back = {}; // Optional
 
             pipelineInfo.sType =
                     VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

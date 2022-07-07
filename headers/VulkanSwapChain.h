@@ -321,6 +321,10 @@ namespace Vulkan{
 
             }
         }
+
+        VkSampleCountFlagBits getMaxUsableSampleCount(){
+            return deviceRepository->getMaxUsableSampleCount(choosenDevice);
+        }
     };
 }
 #endif //DB_VULKANSWAPCHAIN_H
