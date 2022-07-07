@@ -66,8 +66,8 @@ protected:
                 glm::vec3(0.5, 0.5,0.0),
                 glm::vec3(-0.5, 0.5,0.0)
         };
-        auto index = vector<glm::vec3>{
-                glm::vec3 (1,2,3)
+        auto index = vector<int>{
+                1,2,3
         };
 
         triangle.setVertex(vertex);

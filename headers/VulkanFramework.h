@@ -19,15 +19,15 @@ namespace Vulkan {
 
     class Object{
         vector<glm::vec3> vertex;
-        vector<glm::vec3> indicies;
+        vector<int> indicies;
     public:
         void setVertex(vector<glm::vec3> vertex);
-        void setIndicies(vector<glm::vec3> indicies);
+        void setIndicies(vector<int> indicies);
 
 
     public:
         const vector<glm::vec3> &getVertex() const;
-        const vector<glm::vec3> &getIndicies() const;
+        const vector<int> &getIndicies() const;
     };
 
     class Model{
@@ -94,9 +94,7 @@ namespace Vulkan {
                 i=0;
 
                 for(auto ind:toAdd.getIndicies()){
-                    indicies[i++] = ind.x;
-                    indicies[i++] = ind.y;
-                    indicies[i++] = ind.z;
+                    indicies[i++] = ind;
                 }
 
             }
@@ -212,8 +210,8 @@ namespace Vulkan {
                 }
 
                 VkRenderPassBeginInfo renderPassInfo{};
-                VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
-                clearColor.color =  {0.0f, 0.0f, 0.0f, 1.0f};
+                VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 1.0f};
+                clearColor.color =  {1.0f, 0.0f, 0.0f, 1.0f};
                 renderPassInfo.clearValueCount = 1;
                 renderPassInfo.pClearValues = &clearColor;
 
@@ -224,7 +222,7 @@ namespace Vulkan {
                 renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
                 std::array<VkClearValue, 2> clearValues{};
-                clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+                clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
                 clearValues[1].depthStencil = {1.0f, 0};
 
                 renderPassInfo.clearValueCount =
@@ -244,18 +242,24 @@ namespace Vulkan {
 
                 VkDeviceSize offsets[] = {0};
 
+                 vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
-                vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+
+                //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
                 vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0,
-                                     VK_INDEX_TYPE_UINT32);
-                /** todo decide how to handle
-                 kCmdBindDescriptorSets(commandBuffers[i],
+                                     VK_INDEX_TYPE_UINT16);
+                 //todo decide how to handle
+                 /**vkCmdBindDescriptorSets(commandBuffers[i],
                                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                                         pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
                                         0, nullptr);
+
+
                 **/
                 vkCmdDrawIndexed(commandBuffers[i],
                                  static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
+
                 vkCmdEndRenderPass(commandBuffers[i]);
                 if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
                     throw std::runtime_error("failed to record command buffer!");

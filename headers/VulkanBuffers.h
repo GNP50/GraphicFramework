@@ -196,10 +196,11 @@ namespace Vulkan{
 
         virtual void create() override {
             this->createBuffer();
+
             void *ppData;
             vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
 
-            memcpy(this->data.data(), ppData, (size_t) this->bufferSize);
+            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
             vkUnmapMemory(this->device, this->bufferMemory);
         };
 
@@ -211,9 +212,8 @@ namespace Vulkan{
     public:
 
         VkVertexBuffer(int size, int choosenDev) : VkGenericBuffer<BufferDataType>(size, choosenDev) {
-            this->usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            this->properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            this->usage =  VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
         }
 
@@ -228,6 +228,12 @@ namespace Vulkan{
             stagingBuffer.create();
             this->createBuffer();
 
+             void *ppData;
+            vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
+
+            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
+            vkUnmapMemory(this->device, this->bufferMemory);
+
             this->copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
         };
     };
@@ -239,7 +245,7 @@ namespace Vulkan{
         VkIndexBuffer(int size, int choosenDev) : VkGenericBuffer<BufferDataType>(size, choosenDev) {
             this->usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                           VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            this->properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
         }
 
