@@ -14,21 +14,10 @@
 #include "VulkanShaders.h"
 #include "VulkanSwapChain.h"
 #include "VulkanPipeline.h"
+#include "VkObject.h"
 
 namespace Vulkan {
 
-    class Object{
-        vector<glm::vec3> vertex;
-        vector<int> indicies;
-    public:
-        void setVertex(vector<glm::vec3> vertex);
-        void setIndicies(vector<int> indicies);
-
-
-    public:
-        const vector<glm::vec3> &getVertex() const;
-        const vector<int> &getIndicies() const;
-    };
 
     class Model{
         vector<Object> objects;
@@ -210,8 +199,8 @@ namespace Vulkan {
                 }
 
                 VkRenderPassBeginInfo renderPassInfo{};
-                VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 1.0f};
-                clearColor.color =  {1.0f, 0.0f, 0.0f, 1.0f};
+                VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+                clearColor.color =  {0.0f, 0.0f, 0.0f, 1.0f};
                 renderPassInfo.clearValueCount = 1;
                 renderPassInfo.pClearValues = &clearColor;
 
@@ -222,7 +211,7 @@ namespace Vulkan {
                 renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
                 std::array<VkClearValue, 2> clearValues{};
-                clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
+                clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
                 clearValues[1].depthStencil = {1.0f, 0};
 
                 renderPassInfo.clearValueCount =

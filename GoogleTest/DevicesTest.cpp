@@ -59,25 +59,15 @@ protected:
     }
 
     void createUniformBuffer(){
-        Object triangle = Object();
+        Object *wheel  = new BlenderObj("objs/wheel.obj");
 
-        auto vertex = vector<glm::vec3>{
-                glm::vec3(0.0, -0.5,0.0),
-                glm::vec3(0.5, 0.5,0.0),
-                glm::vec3(-0.5, 0.5,0.0)
-        };
-        auto index = vector<int>{
-                1,2,3
-        };
-
-        triangle.setVertex(vertex);
-        triangle.setIndicies(index);
+        wheel->create();
 
         m = new Model();
 
         m->setDeviceRepository(deviceRepository);
 
-        m->addObject(triangle);
+        m->addObject(*wheel);
         m->createBuffers();
 
 
@@ -130,7 +120,7 @@ protected:
 
 
         pipeline = new VkPipeLine(*fragShader,*vertexShader,deviceRepository);
-        pipeline->createPipeline(swapChain);
+        pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_POINT);
 
         pipeline->createFrameBuffer(swapChain);
     }

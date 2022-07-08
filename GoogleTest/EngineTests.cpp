@@ -25,6 +25,8 @@ protected:
 
 
     VkEngine* engine;
+
+
 };
 
 TEST_F(EngineTestFixture, CreateInstance){ // 1/1/1 -> 1/3/1
