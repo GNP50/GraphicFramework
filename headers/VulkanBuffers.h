@@ -7,6 +7,7 @@
 #include "commonVulkanIncludes.h"
 #include "VulkanDevices.h"
 #include "VulkanSwapChain.h"
+#include "stb_image.h"
 
 namespace Vulkan{
 
@@ -410,7 +411,24 @@ namespace Vulkan{
     };
 
     template<typename GlobalUniform>
-    class GlobalUniformDescriptionSet:public DescriptorSet<GlobalUniform> {
+    class GlobalUniformBuffer:public DescriptorSet<GlobalUniform>,VkGenericBuffer<GlobalUniform> {
+
+        GlobalUniformBuffer(int size, int choosenDev) : GlobalUniformBuffer<GlobalUniform>(size, choosenDev) {
+            this->usage =  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+            this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+        }
+
+        virtual void create() override {
+            this->createBuffer();
+            void *ppData;
+            vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
+
+            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
+            vkUnmapMemory(this->device, this->bufferMemory);
+
+        };
+
         void createDescriptorSet(VkSwapChain &swapchain) {
             DescriptorSet<GlobalUniform>::createDescriptorSet(swapchain);
             auto swapChainImages = swapchain.getSwapChainImages();
@@ -455,15 +473,20 @@ namespace Vulkan{
     };
 
 
-/**
-template<TextureData>
-class TextureDescriptorSet:public DescriptorSet<TextureData>{
 
-    TextureData TD;
+template<TextureData>
+class TextureDescriptorSet:public DescriptorSet<TextureData>,public VkGenericBuffer<TextureData>{
+
+    TextureData tx;
     const char* filename;
 
-    TextureDescriptorSet(const char* filename):filename(filename){
+    VkImageCreateInfo imageInfo{};
 
+    TextureDescriptorSet(const char* filename):filename(filename){
+        this->usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
 
     void transitionImageLayout(VkImage image, VkFormat format,
@@ -482,9 +505,11 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
         if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-            if (hasStencilComponent(format)) {
-                barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-            }
+            //todo understand what to do with this line
+
+            //if (hasStencilComponent(format)) {
+            //    barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            //}
         }else{
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         }
@@ -527,7 +552,28 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
         endSingleTimeCommands(commandBuffer);
     }
 
-    void createTextureImage() {
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t
+    width, uint32_t height, int layerCount) {
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = layerCount;
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {width, height, 1};
+
+        vkCmdCopyBufferToImage(commandBuffer, buffer, image,
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        endSingleTimeCommands(commandBuffer);
+    }
+
+    virtual void create() override{
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load(filename, &texWidth, &texHeight,
                                     &texChannels, STBI_rgb_alpha);
@@ -539,40 +585,33 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
                   << "x" << texHeight << ", ch: " << texChannels <<"\n";
 
         VkDeviceSize imageSize = texWidth * texHeight * 4;
-        TD.mipLevels = static_cast<uint32_t>(std::floor(
+        tx.mipLevels = static_cast<uint32_t>(std::floor(
                 std::log2(std::max(texWidth, texHeight)))) + 1;
 
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
+        VkStagingBuffer<TextureData> stagingBuffer(this->size, this->phyDeviceOff,
+                                                      vector<TextureData>(this->size));
 
-        createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     stagingBuffer, stagingBufferMemory);
-        void* data;
-        vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-        memcpy(data, pixels, static_cast<size_t>(imageSize));
-        vkUnmapMemory(device, stagingBufferMemory);
+        stagingBuffer.setData(this->data);
+        stagingBuffer.setPhysicalDevice(this->physicalDevice);
+
+
+        stagingBuffer.create();
 
         stbi_image_free(pixels);
 
-        createImage(texWidth, texHeight, TD.mipLevels,
+        createImage(texWidth, texHeight, tx.mipLevels,
                     VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
-                    VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, TD.textureImage,
-                    TD.textureImageMemory);
+                    VK_IMAGE_TILING_OPTIMAL, tx.textureImage,tx.textureImageMemory);
 
-        transitionImageLayout(TD.textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                              VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TD.mipLevels, 1);
-        copyBufferToImage(stagingBuffer, TD.textureImage,
+        transitionImageLayout(tx.textureImage, VK_FORMAT_R8G8B8A8_SRGB,
+                              VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tx.mipLevels, 1);
+        copyBufferToImage(stagingBuffer, tx.textureImage,
                           static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1);
 
-        generateMipmaps(TD.textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                        texWidth, texHeight, TD.mipLevels, 1);
+        generateMipmaps(tx.textureImage, VK_FORMAT_R8G8B8A8_SRGB,
+                        texWidth, texHeight, tx.mipLevels, 1);
 
-        vkDestroyBuffer(device, stagingBuffer, nullptr);
-        vkFreeMemory(device, stagingBufferMemory, nullptr);
+
     }
 
     void generateMipmaps(VkImage image, VkFormat imageFormat,
@@ -665,10 +704,8 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
 
     void createImage(uint32_t width, uint32_t height, uint32_t mipLevels,
                      VkSampleCountFlagBits numSamples, VkFormat format,
-                     VkImageTiling tiling, VkImageUsageFlags usage,
-                     VkMemoryPropertyFlags properties, VkImage& image,
+                     VkImageTiling tiling, VkImage& image,
                      VkDeviceMemory& imageMemory) {
-        VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
         imageInfo.extent.width = width;
@@ -686,7 +723,7 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
 
         VkResult result = vkCreateImage(device, &imageInfo, nullptr, &image);
         if (result != VK_SUCCESS) {
-            PrintVkError(result);
+            Terminal::getInstance().printnl(result);
             throw std::runtime_error("failed to create image!");
         }
 
@@ -706,8 +743,8 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
         vkBindImageMemory(device, image, imageMemory, 0);
     }
 
-    void createTextDescriptorSets(VkSwapChain swapchain){
-        DescriptorSet<TextureStruct>::createDescriptorSet(swapchain);
+    void createDescriptorSet(VkSwapChain swapchain){
+        DescriptorSet<TextureData>::createDescriptorSet(swapchain);
 
         auto swapChainImages = swapchain.getSwapChainImages();
 
@@ -731,12 +768,12 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = descriptorSets[k];
             bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(TextureStruct);
+            bufferInfo.range = sizeof(TextureData);
 
             VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = SText.TD.textureImageView;
-            imageInfo.sampler = SText.TD.textureSampler;
+            imageInfo.imageView = tx.textureImageView;
+            imageInfo.sampler = tx.textureSampler;
 
             std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -761,6 +798,6 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>{
                                    descriptorWrites.data(), 0, nullptr);
         }
     }
-};**/
+};
 }
 #endif //DB_VULKANBUFFERS_H
