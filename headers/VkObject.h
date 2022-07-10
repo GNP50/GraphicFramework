@@ -4,7 +4,7 @@
 
 #ifndef DB_VKOBJECT_H
 #define DB_VKOBJECT_H
-
+#include "commonVulkanIncludes.h"
 #include "VulkanFramework.h"
 
 namespace Vulkan{
@@ -14,6 +14,8 @@ namespace Vulkan{
         vector<glm::vec3> vertexes;
         vector<int> indicies;
         vector<glm::vec2> uvs;
+
+        vector<GlobalUniformBuffer<UniformBufferObject>> ubo;
 
     public:
         void setVertex(vector<glm::vec3> vertex);
@@ -39,7 +41,17 @@ namespace Vulkan{
                     indicies.push_back(i);
                 }
             }
+
+
+
         }
+
+        void addUbo(GlobalUniformBuffer<UniformBufferObject> &ubo){
+            this->ubo.push_back(ubo);
+        }
+
+
+
     };
 
 

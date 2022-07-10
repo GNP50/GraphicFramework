@@ -422,9 +422,9 @@ namespace Vulkan{
         virtual void create() override {
             this->createBuffer();
             void *ppData;
-            vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
+            vkMapMemory(this->device, this->bufferMemory, 0, VkGenericBuffer<GlobalUniform>::bufferSize, 0, &ppData);
 
-            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
+            memcpy(ppData,this->data.data(), (size_t) VkGenericBuffer<GlobalUniform>::bufferSize);
             vkUnmapMemory(this->device, this->bufferMemory);
 
         };
