@@ -12,7 +12,7 @@ using namespace std;
 using namespace Vulkan;
 
 
-class DeviceTestFixture : public ::testing::Test {
+class RenderTestFixture : public ::testing::Test {
 
 protected:
     virtual void SetUp() {
@@ -27,12 +27,7 @@ protected:
     }
 
 
-    void PrintAllDevicesName() {
-        vector<string> names = deviceRepository->getAllDevicesName();
-        for (auto name = begin(names); name != end(names); name++) {
-            cout << name->data() << endl;
-        }
-    }
+
 
     void ChooseADevice() {
         auto type = vector<VkPhysicalDeviceType>{
@@ -134,4 +129,3 @@ protected:
     const int w = 640, h = 480;
 
 }
-#include "RenderTest.h"

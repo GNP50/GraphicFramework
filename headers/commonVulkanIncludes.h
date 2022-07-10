@@ -5,6 +5,7 @@
 #ifndef DB_COMMONVULKANINCLUDES_H
 #define DB_COMMONVULKANINCLUDES_H
 
+
 #include<GraphicsFramework.h>
 #include <glm/vec3.hpp> // glm::vec3
 #include <glm/vec4.hpp> // glm::vec4
@@ -25,12 +26,13 @@
 #include <thread>
 
 //todo decide if it have to been general
+namespace Vulkan {
 
-struct SwapChainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
+    struct SwapChainSupportDetails {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
+
 };
-
-
 #endif //DB_COMMONVULKANINCLUDES_H

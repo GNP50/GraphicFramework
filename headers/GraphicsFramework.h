@@ -132,15 +132,7 @@ template<
         typename Scissor,
         typename SetLayoutBinding,
         typename SetLayoutCreateInfo,
-        typename SetLayout,
-        typename AttachmentDescription,
-        typename AttachmentReference,
-        typename SubpassDescription,
-        typename SubpassDependency,
-        typename RenderPassCreateInfo,
-        typename RenderPass,
-        typename Framebuffer
-        >
+        typename SetLayout>
 class GenericGraphicPipeline{
 protected:
     StageCreationInfo stageCreationInfo = {};
@@ -227,37 +219,8 @@ public:
         return graphicsPipeline;
     }
 
-    AttachmentDescription getDepthAttachment() const {
-        return depthAttachment;
-    }
 
-    AttachmentDescription getColorAttachment() const {
-        return colorAttachment;
-    }
 
-    AttachmentReference getColorAttachmentRef() const {
-        return colorAttachmentRef;
-    }
-
-    SubpassDescription getSubpass() const {
-        return subpass;
-    }
-
-    SubpassDependency getDependency() const {
-        return dependency;
-    }
-
-    RenderPassCreateInfo getRenderPassInfo() const {
-        return renderPassInfo;
-    }
-
-    RenderPass getRenderPass() const {
-        return renderPass;
-    }
-
-    const vector<Framebuffer> getSwapChainFramebuffers() const {
-        return swapChainFramebuffers;
-    }
 
 protected:
     VertexInputCreateInfo vertexInputInfo = {};
@@ -277,14 +240,7 @@ protected:
     SetLayout descriptorSetLayout = {};
     PipelineLayout pipelineLayout = {};
     GraphicPipeLine graphicsPipeline = {};
-    AttachmentDescription depthAttachment = {};
-    AttachmentDescription colorAttachment = {};
-    AttachmentReference colorAttachmentRef = {};
-    SubpassDescription subpass = {};
-    SubpassDependency dependency = {};
-    RenderPassCreateInfo renderPassInfo = {};
-    RenderPass renderPass = {};
-    std::vector<Framebuffer> swapChainFramebuffers;
+
 
 public:
     GenericGraphicPipeline(FragShader& fragShader, VertexShader& vertexShader):

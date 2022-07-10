@@ -9,6 +9,9 @@ file(GLOB DB_SRC CONFIGURE_DEPENDS "headers/*.h" "implementations/*.cpp")
 
 add_library(DB STATIC
         implementations/VulkanFramework.cpp
+        implementations/VulkanModel.cpp
+        implementations/VkObject.cpp
+        implementations/VulkanCommons.cpp
         implementations/VulkanDevices.cpp
         implementations/VulkanEngine.cpp
         implementations/VulkanAppConfiguration.cpp
