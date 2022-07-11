@@ -350,6 +350,8 @@ namespace Vulkan{
             return deviceRepository->getMaxUsableSampleCount(choosenDevice);
         }
 
+        vector<VkFramebuffer> getFramwBuffers(){return this->swapChainFramebuffers;}
+
         void createFrameBuffer(){
             auto swapChainImageViews = this->getSwapChainImageViews();
             auto swapChainExtent = this->getSwapChainExtent();

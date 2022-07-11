@@ -122,7 +122,6 @@ protected:
         pipeline = new VkPipeLine(*fragShader,*vertexShader,deviceRepository);
         pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_POINT);
 
-        pipeline->createFrameBuffer(swapChain);
     }
 
 
@@ -143,54 +142,6 @@ protected:
     const int w = 640,h = 480;
 };
 
-TEST_F(DeviceTestFixture, Assignment13){
-    // 1/1/1 -> 1/3/1
-    PrintAllDevicesName();
-    ChooseADevice();
-    createUniformBuffer();
-    delete m;
-
-    assert(choosenDevice==0);
-}
-
-TEST_F(DeviceTestFixture, Assignment14){ // 1/1/1 -> 1/3/1
-    ChooseADevice();
-    createUniformBuffer();
-    assert(choosenDevice==0);
-    setAndCreateSwapChain();
-    assert(choosenDeviceSwapChain!=-1);
-}
-
-TEST_F(DeviceTestFixture, PipeLineCreation){
-    ChooseADevice();
-    createUniformBuffer();
-    assert(choosenDevice==0);
-    createPipeline();
-    assert(1==1);
-}
-
-TEST_F(DeviceTestFixture, RendingTest){
-    ChooseADevice();
-    createUniformBuffer();
-    assert(choosenDevice==0);
-    createPipeline();
-
-
-
-    Render r = Render(
-            deviceRepository,
-            pipeline,
-            &swapChain,
-            m
-    );
-
-    r.createCommandPool();
-    r.createCommandBuffers();
-    r.createSyncObjects();
-
-    r.mainLoop();
-    assert(1==1);
-}
 
 
 

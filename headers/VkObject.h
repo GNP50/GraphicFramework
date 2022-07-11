@@ -5,7 +5,7 @@
 #ifndef DB_VKOBJECT_H
 #define DB_VKOBJECT_H
 #include "commonVulkanIncludes.h"
-#include "VulkanFramework.h"
+#include "VulkanBuffers.h"
 
 namespace Vulkan{
 

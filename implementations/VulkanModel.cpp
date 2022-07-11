@@ -18,5 +18,40 @@ void Render::createPipeline(VkSwapChain &swapChain) {
     pipeline = new VkPipeLine(*fragShader, *vertexShader, deviceRepository);
     pipeline->createPipelineWithPolyMode(swapChain, VK_POLYGON_MODE_POINT);
 
-    pipeline->createFrameBuffer(swapChain);
+
 }
+
+void Render::createCommandBuffers(VkCommandBuffer commandBuffer ) {
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      pipeLine->getGraphicsPipeline());
+
+    auto vBuff = model->getVertexBuffers();
+    auto iBuff = model->getIndexBuffers();
+
+    VkBuffer vertexBuffers[] = {vBuff};
+    VkBuffer indexBuffer = iBuff;
+
+    VkDeviceSize offsets[] = {0};
+
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+
+
+    //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0,
+                         VK_INDEX_TYPE_UINT16);
+    //todo decide how to handle
+    /**vkCmdBindDescriptorSets(commandBuffer,
+                           VK_PIPELINE_BIND_POINT_GRAPHICS,
+                           pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
+                           0, nullptr);
+
+
+   **/
+    vkCmdDrawIndexed(commandBuffer,
+                     static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
+
+
+}
+

@@ -53,8 +53,7 @@ void Enviroment::setAndCreateSwapChain() {
     swapChain.updateSwapImages();
     swapChain.createImageView();
 }
-void Enviroment::ChooseADevice(vector<VkPhysicalDeviceType> type = {
-        {VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU}}) {
+void Enviroment::ChooseADevice(vector<VkPhysicalDeviceType> type) {
 
 
 

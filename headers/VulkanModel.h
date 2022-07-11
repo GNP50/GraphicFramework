@@ -114,7 +114,6 @@ namespace Vulkan {
     };
     class Render{
         std::shared_ptr<VkPhyDevice> deviceRepository;
-        VkCommandPool commandPool;
         VkPipeLine *pipeLine;
         VkSwapChain *swapChain;
         Model *model;
@@ -148,7 +147,7 @@ namespace Vulkan {
 
         virtual void createSyncObjects();
         virtual void drawFrame(VkCommandBuffer commandBuffer);
-
+        void createCommandBuffers(VkCommandBuffer commandBuffer );
 
 
 

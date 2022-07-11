@@ -36,6 +36,7 @@ namespace Vulkan {
         std::vector<VkFence> inFlightFences;
         std::vector<VkFence> imagesInFlight;
 
+        VkCommandPool commandPool;
         std::vector<VkCommandBuffer> commandBuffers;
 
 
@@ -56,7 +57,7 @@ namespace Vulkan {
         void createSyncObjects();
         void drawFrame();
 
-        void Render::createCommandPool() {
+        void createCommandPool() {
             auto queueFamilyIndices =  deviceRepository->getUniqueIndicies<vector<uint32_t>>(
                     choosen
             );
@@ -72,44 +73,11 @@ namespace Vulkan {
                 throw std::runtime_error("failed to create command pool!");
             }
         }
-        void Render::createCommandBuffers(VkCommandBuffer commandBuffer ) {
-
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              pipeLine->getGraphicsPipeline());
-
-            auto vBuff = model->getVertexBuffers();
-            auto iBuff = model->getIndexBuffers();
-
-            VkBuffer vertexBuffers[] = {vBuff};
-            VkBuffer indexBuffer = iBuff;
-
-            VkDeviceSize offsets[] = {0};
-
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-
-
-            //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(3), 1, 0, 0);
-            vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0,
-                                 VK_INDEX_TYPE_UINT16);
-            //todo decide how to handle
-            /**vkCmdBindDescriptorSets(commandBuffer,
-                                   VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                   pipeLine->getPipelineLayout(), 0, 1, &descriptorSets[i],
-                                   0, nullptr);
-
-
-           **/
-            vkCmdDrawIndexed(commandBuffer,
-                             static_cast<uint32_t>(model->getIndicies().size()), 1, 0, 0, 0);
-
-
-        }
 
 
         void startRenderPass(){
             // Lesson 13
-            auto frameBuffers = swapChain.getSwapChainFramebuffers();
+            auto frameBuffers = swapChain.getFramwBuffers();
 
             commandBuffers.resize(frameBuffers.size());
 
@@ -146,8 +114,8 @@ namespace Vulkan {
                 renderPassInfo.pClearValues = &clearColor;
 
                 renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                renderPassInfo.renderPass = pipeLine->getRenderPass();
-                renderPassInfo.framebuffer = pipeLine->getSwapChainFramebuffers()[i];
+                renderPassInfo.renderPass = swapChain.getRenderPass();
+                renderPassInfo.framebuffer = swapChain.getFramwBuffers()[i];
                 renderPassInfo.renderArea.offset = {0, 0};
                 renderPassInfo.renderArea.extent = swapChain.getSwapChainExtent();
 
