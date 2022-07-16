@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include "VulkanBuffers.h"
 
 using namespace std;
 using namespace Vulkan;
@@ -42,7 +43,6 @@ protected:
             cout << name->data() << endl;
         }
     }
-
     void ChooseADevice(){
         auto type = vector<VkPhysicalDeviceType>  {{VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU}};
 
@@ -57,7 +57,6 @@ protected:
         choosenDevice = choosen;
 
     }
-
     void createUniformBuffer(){
         Object *wheel  = new BlenderObj("objs/wheel.obj");
 
@@ -73,7 +72,6 @@ protected:
 
 
     }
-
     void setAndCreateSwapChain(){
         swapChain.setDeviceRepository(deviceRepository);
 
@@ -107,7 +105,6 @@ protected:
         swapChain.updateSwapImages();
         swapChain.createImageView();
     }
-
     void createPipeline(){
         setAndCreateSwapChain();
         assert(choosenDeviceSwapChain!=-1);
@@ -120,10 +117,27 @@ protected:
 
 
         pipeline = new VkPipeLine(*fragShader,*vertexShader,deviceRepository);
-        pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_POINT);
+        //pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_POINT);
 
     }
 
+    void createDescriptorSet(){
+        pool = std::make_shared<DescriptorPool>
+                (std::make_shared<VkSwapChain>(swapChain),deviceRepository);
+
+
+        globalUniformBuffer = new GlobalUniformBuffer<TextureData>(deviceRepository);
+
+        TextureData textureData = {};
+        globalUniformBuffer->setData(textureData);
+        globalUniformBuffer->create();
+
+        pool->addDescriptorSet<TextureData>(*globalUniformBuffer);
+        pool->createDescriptorPool(swapChain);
+
+
+
+    }
 
     std::shared_ptr<VkPhyDevice> deviceRepository;
     VkSwapChain swapChain;
@@ -131,6 +145,9 @@ protected:
     VkFragmentShader *fragShader;
     VkVertexShader *vertexShader;
     Model *m;
+    std::shared_ptr<DescriptorPool> pool;
+
+    GlobalUniformBuffer<TextureData> *globalUniformBuffer;
 
 
     VkEngine* engine;
@@ -140,9 +157,35 @@ protected:
     int choosenDeviceSwapChain = -1;
 
     const int w = 640,h = 480;
+
+
 };
 
+TEST_F(DeviceTestFixture, Assignment13){
+    // 1/1/1 -> 1/3/1
+    PrintAllDevicesName();
+    ChooseADevice();
+    createUniformBuffer();
+    delete m;
+
+    assert(choosenDevice==0);
+}
+
+TEST_F(DeviceTestFixture, Assignment14){ // 1/1/1 -> 1/3/1
+    ChooseADevice();
+    createUniformBuffer();
+    assert(choosenDevice==0);
+    setAndCreateSwapChain();
+    assert(choosenDeviceSwapChain!=-1);
+}
 
 
+
+TEST_F(DeviceTestFixture,DecriptionSetTest){
+    ChooseADevice();
+    setAndCreateSwapChain();
+    createDescriptorSet();
+
+}
 
 #endif //DB_DEVICESTEST_H

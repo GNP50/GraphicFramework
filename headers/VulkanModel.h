@@ -113,14 +113,16 @@ namespace Vulkan {
         auto getVerticies() { return vertex; };
     };
     class Render{
+    protected:
         std::shared_ptr<VkPhyDevice> deviceRepository;
         VkPipeLine *pipeLine;
-        VkSwapChain *swapChain;
+        std::shared_ptr<VkSwapChain> swapChain;
         Model *model;
 
+        DescriptorPool descrPool;
 
-
-
+        string vertexPath = "shaders/Vertex.spv";
+        string fragmPath = "shaders/Fragment.spv";
 
         //vulkan objects
         VkPipeLine *pipeline;
@@ -128,13 +130,15 @@ namespace Vulkan {
         VkVertexShader *vertexShader;
 
 
+        Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):
+            deviceRepository(repo),
+            swapChain(swap),
+            descrPool(DescriptorPool(swapChain,deviceRepository)){
+
+        }
     public:
-        Render(std::shared_ptr<VkPhyDevice>deviceRepo,VkPipeLine *pipeLine,VkSwapChain *swapChain,Model* model){
+        Render(std::shared_ptr<VkPhyDevice>deviceRepo,VkPipeLine *pipeLine,std::shared_ptr<VkSwapChain> swapChain,Model* model): Render(deviceRepository,swapChain){
             this->pipeLine = pipeLine;
-
-            deviceRepository = deviceRepo;
-
-            this->swapChain = swapChain;
             this->model = model;
         }
 
@@ -145,8 +149,7 @@ namespace Vulkan {
 
         virtual void createPipeline(VkSwapChain &swapChain);
 
-        virtual void createSyncObjects();
-        virtual void drawFrame(VkCommandBuffer commandBuffer);
+
         void createCommandBuffers(VkCommandBuffer commandBuffer );
 
 

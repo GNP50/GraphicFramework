@@ -8,15 +8,16 @@ using namespace Vulkan;
 
 void Render::createPipeline(VkSwapChain &swapChain) {
 
-    fragShader = new VkFragmentShader("shaders/Fragment.spv");
-    vertexShader = new VkVertexShader("shaders/Vertex.spv");
+    fragShader = new VkFragmentShader(vertexPath);
+    vertexShader = new VkVertexShader(fragmPath);
 
     fragShader->create(swapChain.getChoosenDevice());
     vertexShader->create(swapChain.getChoosenDevice());
 
 
     pipeline = new VkPipeLine(*fragShader, *vertexShader, deviceRepository);
-    pipeline->createPipelineWithPolyMode(swapChain, VK_POLYGON_MODE_POINT);
+    descrPool.createDescriptorPool(swapChain);
+    pipeline->createPipelineWithPolyMode(swapChain, descrPool.getDescriptorSetLayout(),VK_POLYGON_MODE_POINT);
 
 
 }

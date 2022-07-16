@@ -28,7 +28,7 @@ namespace Vulkan {
 
         vector<Vulkan::Render> renders;
         std::shared_ptr<VkPhyDevice> deviceRepository;
-        VkSwapChain swapChain;
+        std::shared_ptr<VkSwapChain> swapChain;
 
         //Synchronization objects
         std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -75,9 +75,10 @@ namespace Vulkan {
         }
 
 
+
         void startRenderPass(){
             // Lesson 13
-            auto frameBuffers = swapChain.getFramwBuffers();
+            auto frameBuffers = swapChain->getFramwBuffers();
 
             commandBuffers.resize(frameBuffers.size());
 
@@ -87,7 +88,7 @@ namespace Vulkan {
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
-            VkResult result = vkAllocateCommandBuffers(swapChain.getChoosenDevice(), &allocInfo,
+            VkResult result = vkAllocateCommandBuffers(swapChain->getChoosenDevice(), &allocInfo,
                                                        commandBuffers.data());
             if (result != VK_SUCCESS) {
                 Terminal::getInstance().printnl(result);
@@ -114,10 +115,10 @@ namespace Vulkan {
                 renderPassInfo.pClearValues = &clearColor;
 
                 renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                renderPassInfo.renderPass = swapChain.getRenderPass();
-                renderPassInfo.framebuffer = swapChain.getFramwBuffers()[i];
+                renderPassInfo.renderPass = swapChain->getRenderPass();
+                renderPassInfo.framebuffer = swapChain->getFramwBuffers()[i];
                 renderPassInfo.renderArea.offset = {0, 0};
-                renderPassInfo.renderArea.extent = swapChain.getSwapChainExtent();
+                renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
                 std::array<VkClearValue, 2> clearValues{};
                 clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -154,22 +155,28 @@ namespace Vulkan {
             ChooseADevice();
             setAndCreateSwapChain();
             createSyncObjects();
-
+            createCommandPool();
         }
 
+
+        shared_ptr<VkPhyDevice> getRepository(){
+            return deviceRepository;
+        }
+
+        std::shared_ptr<VkSwapChain> getSwapChain(){return swapChain;}
 
         void createRender(){
             startRenderPass();
         }
-        void addRender(Vulkan::Render &render){
-            this->renders.push_back(render);
+        void addRender(Render &r){
+             this->renders.push_back(r);
         }
         void mainLoop() {
             while (deviceRepository->getEngine().mainLoop()) {
                 drawFrame();
             }
 
-            vkDeviceWaitIdle(swapChain.getChoosenDevice());
+            vkDeviceWaitIdle(swapChain->getChoosenDevice());
         }
 
     };

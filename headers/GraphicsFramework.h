@@ -129,10 +129,7 @@ template<
         typename FragShader,
         typename VertexShader,
         typename ViewPort,
-        typename Scissor,
-        typename SetLayoutBinding,
-        typename SetLayoutCreateInfo,
-        typename SetLayout>
+        typename Scissor>
 class GenericGraphicPipeline{
 protected:
     StageCreationInfo stageCreationInfo = {};
@@ -195,22 +192,6 @@ public:
         return pipelineInfo;
     }
 
-    SetLayoutBinding getUboLayoutBinding() const {
-        return uboLayoutBinding;
-    }
-
-    SetLayoutBinding getSamplerLayoutBinding() const {
-        return samplerLayoutBinding;
-    }
-
-    SetLayoutCreateInfo getLayoutInfo() const {
-        return layoutInfo;
-    }
-
-    SetLayout getDescriptorSetLayout() const {
-        return descriptorSetLayout;
-    }
-
     PipelineLayout getPipelineLayout() const {
         return pipelineLayout;
     }
@@ -234,10 +215,7 @@ protected:
     LayoutCreateInfo pipelineLayoutInfo = {};
     DepthStencilStateCreateInfo depthStencil = {};
     PipelineCreateInfo pipelineInfo = {};
-    SetLayoutBinding uboLayoutBinding = {};
-    SetLayoutBinding samplerLayoutBinding = {};
-    SetLayoutCreateInfo layoutInfo = {};
-    SetLayout descriptorSetLayout = {};
+
     PipelineLayout pipelineLayout = {};
     GraphicPipeLine graphicsPipeline = {};
 

@@ -18,10 +18,11 @@ void Enviroment::SetUp() {
     engine = new VkEngine(w, h, configuration);
 
     deviceRepository = std::make_shared<VkPhyDevice>(*engine);
+    swapChain = std::make_shared<VkSwapChain>(*(new VkSwapChain()));
 
 }
 void Enviroment::setAndCreateSwapChain() {
-    swapChain.setDeviceRepository(deviceRepository);
+    swapChain->setDeviceRepository(deviceRepository);
 
     auto cap = VkSurfaceCapabilitiesKHR();
     cap.maxImageCount = 1;
@@ -40,18 +41,18 @@ void Enviroment::setAndCreateSwapChain() {
             },
     };
 
-    swapChain.getFirstSuitable(formats);
-    swapChain.getFirstSuitable(presentMode);
-    swapChain.getFirstSuitable(cap);
-    choosenDeviceSwapChain = *swapChain.getPerfectCriteriaMatcher().begin();
+    swapChain->getFirstSuitable(formats);
+    swapChain->getFirstSuitable(presentMode);
+    swapChain->getFirstSuitable(cap);
+    choosenDeviceSwapChain = *swapChain->getPerfectCriteriaMatcher().begin();
 
 
     int off = choosenDeviceSwapChain;
     auto extend = VkExtent2D{static_cast<uint32_t>(w), static_cast<uint32_t>(h)};
 
-    swapChain.createSwapChain(off, formats[0], presentMode[0], extend);
-    swapChain.updateSwapImages();
-    swapChain.createImageView();
+    swapChain->createSwapChain(off, formats[0], presentMode[0], extend);
+    swapChain->updateSwapImages();
+    swapChain->createImageView();
 }
 void Enviroment::ChooseADevice(vector<VkPhysicalDeviceType> type) {
 
@@ -79,7 +80,7 @@ void Enviroment::createSyncObjects() {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    imagesInFlight.resize(swapChain.getSwapChainImages().size(), VK_NULL_HANDLE);
+    imagesInFlight.resize(swapChain->getSwapChainImages().size(), VK_NULL_HANDLE);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -89,11 +90,11 @@ void Enviroment::createSyncObjects() {
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        VkResult result1 = vkCreateSemaphore(swapChain.getChoosenDevice(), &semaphoreInfo, nullptr,
+        VkResult result1 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
                                              &imageAvailableSemaphores[i]);
-        VkResult result2 = vkCreateSemaphore(swapChain.getChoosenDevice(), &semaphoreInfo, nullptr,
+        VkResult result2 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
                                              &renderFinishedSemaphores[i]);
-        VkResult result3 = vkCreateFence(swapChain.getChoosenDevice(), &fenceInfo, nullptr,
+        VkResult result3 = vkCreateFence(swapChain->getChoosenDevice(), &fenceInfo, nullptr,
                                          &inFlightFences[i]);
         if (result1 != VK_SUCCESS ||
             result2 != VK_SUCCESS ||
@@ -106,12 +107,12 @@ void Enviroment::createSyncObjects() {
     }
 }
 void Enviroment::drawFrame() {
-    vkWaitForFences(swapChain.getChoosenDevice(), 1, &inFlightFences[currentFrame],
+    vkWaitForFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame],
                     VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
 
-    VkResult result = vkAcquireNextImageKHR(swapChain.getChoosenDevice(), swapChain.getSwapChain(), UINT64_MAX,
+    VkResult result = vkAcquireNextImageKHR(swapChain->getChoosenDevice(), swapChain->getSwapChain(), UINT64_MAX,
                                             imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -123,7 +124,7 @@ void Enviroment::drawFrame() {
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-        vkWaitForFences(swapChain.getChoosenDevice(), 1, &imagesInFlight[imageIndex],
+        vkWaitForFences(swapChain->getChoosenDevice(), 1, &imagesInFlight[imageIndex],
                         VK_TRUE, UINT64_MAX);
     }
     imagesInFlight[imageIndex] = inFlightFences[currentFrame];
@@ -145,7 +146,7 @@ void Enviroment::drawFrame() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(swapChain.getChoosenDevice(), 1, &inFlightFences[currentFrame]);
+    vkResetFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame]);
 
     if (vkQueueSubmit(deviceRepository->graphicsQueue, 1, &submitInfo,
                       inFlightFences[currentFrame]) != VK_SUCCESS) {
@@ -158,7 +159,7 @@ void Enviroment::drawFrame() {
     presentInfo.pWaitSemaphores = signalSemaphores;
 
 
-    VkSwapchainKHR swapChains[] = {swapChain.getSwapChain()};
+    VkSwapchainKHR swapChains[] = {swapChain->getSwapChain()};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
@@ -172,6 +173,7 @@ void Enviroment::drawFrame() {
         framebufferResized = false;
         recreateSwapChain();
     } else **/if (result != VK_SUCCESS) {
+        return;
         throw std::runtime_error("failed to present swap chain image!");
     }
 

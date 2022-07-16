@@ -289,7 +289,6 @@ namespace Vulkan{
 
     };
 
-
     template<typename UniformType>
     class DescriptorSet{
     protected:
@@ -299,17 +298,18 @@ namespace Vulkan{
         VkDescriptorSetAllocateInfo allocInfo{};
         VkDescriptorSetLayout descriptorLayout {};
         vector<VkUniformBuffer<UniformType>> descriptorSets;
-        vector<VkGenericBuffer<UniformType>> buffers;
+        VkDescriptorSetLayoutBinding layout;
 
         int bufferSize;
-        int binding;
+        int binding = -1;
         const VkDescriptorType type;
 
 
     public:
         DescriptorSet(const VkDescriptorType type):type(type){
-
         }
+
+        VkDescriptorSetLayoutBinding  getLayout(){return layout;}
 
         void createDescriptorSet(VkSwapChain &swapchain){
             bufferSize = sizeof(UniformType)*swapchain.getSwapChainImages().size();
@@ -323,6 +323,7 @@ namespace Vulkan{
 
         void setBindings(int i){
             binding = i;
+            layout.binding = i;
         }
 
         void createAllocateInfo(VkSwapChain &swapchain){
@@ -350,26 +351,49 @@ namespace Vulkan{
     };
 
     class DescriptorPool{
+
         std::shared_ptr<VkDescriptorPool> descriptorPool;
         std::vector<VkDescriptorPoolSize> poolSizes{};
         VkDescriptorPoolCreateInfo poolInfo{};
+        VkDescriptorSetLayout descriptorSetLayout = {};
 
 
         std::shared_ptr<VkPhyDevice> device;
         std::shared_ptr<VkSwapChain> swapchain;
+        vector<VkDescriptorSetLayoutBinding> bindings;
 
         int added = 0;
 
-        DescriptorPool(shared_ptr<VkSwapChain> swapchain,
-                       shared_ptr<VkPhyDevice> device):
-                        swapchain(swapchain),
-                        device(device){
+
+        void createDescriptorSetLayout(VkSwapChain& swapChain) {
+
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+            layoutInfo.pBindings = bindings.data();
+
+            VkResult result = vkCreateDescriptorSetLayout(swapChain.getChoosenDevice(), &layoutInfo,
+                                                          nullptr, &descriptorSetLayout);
+            if (result != VK_SUCCESS) {
+                Terminal::getInstance().printnl(result);
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
 
         }
 
+    public:
         ~DescriptorPool(){
             vkDestroyDescriptorPool(swapchain->getChoosenDevice(), *descriptorPool, nullptr);
         }
+
+        DescriptorPool(shared_ptr<VkSwapChain> swapchain,
+                       shared_ptr<VkPhyDevice> device):
+                swapchain(swapchain),
+                device(device){
+            descriptorPool = {};
+        }
+
+        VkDescriptorSetLayout* getDescriptorSetLayout(){return &descriptorSetLayout;};
 
         template<typename DescriptorType>
         void addDescriptorSet(DescriptorSet<DescriptorType> &descriptorSet){
@@ -382,6 +406,9 @@ namespace Vulkan{
             poolSizes.push_back(toAdd);
             descriptorSet.setDescriptorPool(descriptorPool);
             descriptorSet.setBindings(added);
+
+            bindings.push_back(descriptorSet.getLayout());
+
             added++;
         }
         void createDescriptorPool(VkSwapChain &swapchain) {
@@ -393,12 +420,19 @@ namespace Vulkan{
             poolInfo.pPoolSizes = poolSizes.data();
             poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size() * (0 + 2));
 
+            VkDescriptorPool app = {};
+
             VkResult result = vkCreateDescriptorPool(swapchain.getChoosenDevice(), &poolInfo, nullptr,
-                                                     descriptorPool.get());
+                                                     &app);
+
+            descriptorPool = std::make_shared<VkDescriptorPool>(app);
+
             if (result != VK_SUCCESS) {
                 Terminal::getInstance().printnl(result);
                 throw std::runtime_error("failed to create descriptor pool!");
             }
+
+            createDescriptorSetLayout(swapchain);
         }
 
 
@@ -411,12 +445,26 @@ namespace Vulkan{
     };
 
     template<typename GlobalUniform>
-    class GlobalUniformBuffer:public DescriptorSet<GlobalUniform>,VkGenericBuffer<GlobalUniform> {
+    class GlobalUniformBuffer:public DescriptorSet<GlobalUniform>,protected VkGenericBuffer<GlobalUniform> {
 
-        GlobalUniformBuffer(int size, int choosenDev) : GlobalUniformBuffer<GlobalUniform>(size, choosenDev) {
+    public:
+        GlobalUniformBuffer(std::shared_ptr<VkPhyDevice> deviceRepo) :
+        VkGenericBuffer<GlobalUniform>(sizeof(GlobalUniform), *deviceRepo->getPerfectCriteriaMatcher().begin()),
+        DescriptorSet<GlobalUniform>(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
             this->usage =  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
             this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
+            VkGenericBuffer<GlobalUniform>::setPhysicalDevice(deviceRepo);
+            VkGenericBuffer<GlobalUniform>::setLogicalDevice();
+
+            DescriptorSet<GlobalUniform>::layout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            DescriptorSet<GlobalUniform>::layout.descriptorCount = 1;
+            DescriptorSet<GlobalUniform>::layout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            DescriptorSet<GlobalUniform>::layout.pImmutableSamplers = nullptr;
+        }
+
+        void setData(GlobalUniform data){
+            VkGenericBuffer<GlobalUniform>::setData(vector<GlobalUniform>{{data}});
         }
 
         virtual void create() override {

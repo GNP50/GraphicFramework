@@ -306,9 +306,13 @@ namespace Vulkan{
             choosenDevice = off;
             isCreated = true;
 
+            updateSwapImages();
             createColorResources();
             createDepthResources();
             createRenderPass();
+
+            createImageView();
+            createFrameBuffer();
         }
 
         void updateSwapImages(){
