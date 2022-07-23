@@ -68,10 +68,8 @@ namespace Vulkan {
             poolInfo.flags = 0; // Optional
 
             VkResult result = vkCreateCommandPool(deviceRepository->getLogicalDevice(choosen), &poolInfo, nullptr, &commandPool);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create command pool!");
-            }
+            Terminal::getInstance().printOnCondition("to create command pool",result!=VK_SUCCESS,result);
+
         }
 
 
@@ -90,10 +88,9 @@ namespace Vulkan {
 
             VkResult result = vkAllocateCommandBuffers(swapChain->getChoosenDevice(), &allocInfo,
                                                        commandBuffers.data());
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to allocate command buffers!");
-            }
+
+
+            Terminal::getInstance().printOnCondition("to create command buffers",result!=VK_SUCCESS,result);
 
             // Lesson 22.5 --- Draw calls
             // This is where the commands that actually draw something on screen are!
@@ -132,12 +129,12 @@ namespace Vulkan {
                                      VK_SUBPASS_CONTENTS_INLINE);
 
                 for(auto render:this->renders)
-                    render.createCommandBuffers(commandBuffers[i]);
+                    render.createCommandBuffers(commandBuffers[i],i);
 
                 vkCmdEndRenderPass(commandBuffers[i]);
-                if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-                    throw std::runtime_error("failed to record command buffer!");
-                }
+
+                Terminal::getInstance().printOnCondition("to create record command buffers",result!=VK_SUCCESS,result);
+
             }
         };
 

@@ -21,6 +21,7 @@ namespace Vulkan{
             VkDeviceMemory,
             VkDevice, VkPhyDevice, BufferDataType> {
     protected:
+        bool created = false;
         VkCommandPool commandPool;
         int phyDeviceOff;
         VkBufferCreateInfo create_info{};
@@ -42,10 +43,9 @@ namespace Vulkan{
 
             VkResult result =
                     vkCreateBuffer(this->device, &create_info, nullptr, &this->buffer);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().print(result);
-                Terminal::getInstance().print("\tfailed to create vertex buffer!");
-            }
+
+            Terminal::getInstance().printOnCondition("to create buffer",result!=VK_SUCCESS,result);
+
 
             VkMemoryRequirements memRequirements;
             vkGetBufferMemoryRequirements(this->device, this->buffer, &memRequirements);
@@ -58,12 +58,15 @@ namespace Vulkan{
 
             result = vkAllocateMemory(this->device, &allocInfo, nullptr,
                                       &this->bufferMemory);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().print(result);
-                Terminal::getInstance().print("\tfailed to allocate vertex buffer memory!");
-            }
 
-            vkBindBufferMemory(this->device, this->buffer, this->bufferMemory, 0);
+
+            Terminal::getInstance().printOnCondition("to allocate buffer memory!",result!=VK_SUCCESS,result);
+
+
+            result = vkBindBufferMemory(this->device, this->buffer, this->bufferMemory, 0);
+            Terminal::getInstance().printOnCondition("to bind buffer memory!",result!=VK_SUCCESS,result);
+
+            created = true;
         };
 
         virtual uint32_t findMemoryType(uint32_t typeFilter,
@@ -88,20 +91,15 @@ namespace Vulkan{
             this->device = nullptr;
         }
 
-        VkGenericBuffer(const VkGenericBuffer &toCopy) {
-            VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
-            VkBufferCopy copyRegion{};
-            copyRegion.srcOffset = 0; // Optional copyRegion.dstOffset = 0; // Optional
-            copyRegion.size = this->size;
-            vkCmdCopyBuffer(commandBuffer, toCopy.buffer, this->buffer, 1, &copyRegion);
-
-            endSingleTimeCommands(commandBuffer);
-        }
 
         ~VkGenericBuffer() {
-            vkDestroyBuffer(this->device, this->buffer, nullptr);
-            vkFreeMemory(this->device, this->bufferMemory, nullptr);
+
+            /** todo handle better (create a tresh class where put lambda to destroy everything at the end)if(this->device !=NULL && created){
+                vkDestroyBuffer(this->device, this->buffer, nullptr);
+                vkFreeMemory(this->device, this->bufferMemory, nullptr);
+
+            }**/
         }
 
         VkCommandBuffer beginSingleTimeCommands() {
@@ -163,10 +161,17 @@ namespace Vulkan{
                 Terminal::getInstance().printnl(result, BackGroudColor::red, ForeGroudColor::red);
                 throw std::runtime_error("failed to create command pool!");
             }
+
         }
 
         virtual void create() override {
+            this->createBuffer();
 
+            void *ppData;
+            vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
+
+            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
+            vkUnmapMemory(this->device, this->bufferMemory);
         }
 
         void setPhysicalDevice(std::shared_ptr<VkPhyDevice> phyDevice){
@@ -280,7 +285,7 @@ namespace Vulkan{
     public:
 
         VkUniformBuffer(int size, int choosenDev) : VkGenericBuffer<BufferDataType>(size, choosenDev) {
-            this->usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            this->usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
             this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
@@ -290,7 +295,18 @@ namespace Vulkan{
             VkStagingBuffer<BufferDataType> stagingBuffer(this->size, this->phyDeviceOff,
                                                           vector<BufferDataType>(this->size));
 
+            stagingBuffer.setData(this->data);
+            stagingBuffer.setPhysicalDevice(this->physicalDevice);
+
+
+            stagingBuffer.create();
             this->createBuffer();
+
+            void *ppData;
+            vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
+
+            memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
+            vkUnmapMemory(this->device, this->bufferMemory);
 
             this->copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
         };
@@ -304,10 +320,16 @@ namespace Vulkan{
         VkDescriptorSetLayoutBinding layoutBinding;
         const VkDescriptorType type;
         const VkStructureType write_type;
-        const VkDescriptorBufferInfo buffer_info = {};
+        VkDescriptorBufferInfo buffer_info = {};
         int binding = -1;
+        vector<VkBuffer> buffers;
+    public:
+        const vector<VkBuffer> &getBuffers() const {
+            return buffers;
+        }
 
     public:
+
         const VkStructureType &getWriteType() const {
             return write_type;
         }
@@ -349,7 +371,7 @@ namespace Vulkan{
 
     class DescriptorPool{
 
-        std::shared_ptr<VkDescriptorPool> descriptorPool;
+        VkDescriptorPool descriptorPool{};
         std::vector<VkDescriptorPoolSize> poolSizes{};
         VkDescriptorPoolCreateInfo poolInfo{};
         VkDescriptorSetLayout descriptorSetLayout = {};
@@ -359,11 +381,18 @@ namespace Vulkan{
         std::shared_ptr<VkSwapChain> swapchain;
 
         std::vector<VkWriteDescriptorSet> descriptorWrites;
-        std::vector<std::shared_ptr<VkDescriptorBufferInfo>> createInfos;
+        std::vector<vector<std::shared_ptr<VkDescriptorBufferInfo>>> createInfos;
 
         vector<VkDescriptorSetLayoutBinding> bindings;
         vector<VkDescriptorSetLayout> layouts;
         vector<VkDescriptorSet> descriptorSets;
+
+    public:
+        const vector<VkDescriptorSet> &getDescriptorSets() const {
+            return descriptorSets;
+        }
+
+    private:
 
         int added = 0;
 
@@ -378,40 +407,16 @@ namespace Vulkan{
 
             VkResult result = vkCreateDescriptorSetLayout(swapChain.getChoosenDevice(), &layoutInfo,
                                                           nullptr, &descriptorSetLayout);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create descriptor set layout!");
-            }
 
-            auto swapChainImages = swapChain.getSwapChainImages();
-            layouts.resize(swapChainImages.size()*bindings.size());
-            VkDescriptorSetAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocInfo.descriptorPool = *descriptorPool;
-            allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
-            allocInfo.pSetLayouts = layouts.data();
-
-            descriptorSets.resize(layouts.size());
-            result = vkAllocateDescriptorSets(swapChain.getChoosenDevice(), &allocInfo,
-                                                       descriptorSets.data());
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to allocate descriptor sets!");
-            }
-
-            for(int i=0;i<added;i++) {
-                descriptorWrites[i].dstSet =descriptorSets[i];
-            }
-
-                for(int j=0;j<swapChainImages.size();j++){
+            Terminal::getInstance().printOnCondition("to create description set layout",result!=VK_SUCCESS,result);
 
 
-                }
         }
+
 
     public:
         ~DescriptorPool(){
-            vkDestroyDescriptorPool(swapchain->getChoosenDevice(), *descriptorPool, nullptr);
+            vkDestroyDescriptorPool(swapchain->getChoosenDevice(), descriptorPool, nullptr);
         }
 
         DescriptorPool(shared_ptr<VkSwapChain> swapchain,
@@ -435,23 +440,33 @@ namespace Vulkan{
 
             bindings.push_back(descriptorSet.getLayoutBinding());
 
-            VkWriteDescriptorSet toPush;
+            VkWriteDescriptorSet toPush{};
 
             toPush.sType = descriptorSet.getWriteType();
-            toPush.dstBinding = 0;
+            toPush.dstBinding = added;
             toPush.dstArrayElement = 0;
             toPush.descriptorType = descriptorSet.getType();
             toPush.descriptorCount =  1;
 
             VkDescriptorBufferInfo *createInfo = new VkDescriptorBufferInfo{};
             memcpy(createInfo,&descriptorSet.getBufferInfo(),sizeof(VkDescriptorBufferInfo));
-            createInfos.push_back(std::make_shared<VkDescriptorBufferInfo>(*createInfo));
 
+            auto buffers = vector<std::shared_ptr<VkDescriptorBufferInfo>>();
+            auto returnedBuff= descriptorSet.getBuffers();
+            for(int i=0;i<returnedBuff.size();i++) {
+                auto toAdd = std::make_shared<VkDescriptorBufferInfo>(*createInfo);
+                toAdd->buffer = returnedBuff[i];
+                buffers.push_back(toAdd);
+            }
+
+            createInfos.push_back(buffers);
 
             toPush.pBufferInfo = createInfo;
             descriptorWrites.push_back(toPush);
 
             added++;
+
+            Terminal::getInstance().printOnCondition("description set layout added",false,"");
         }
         void createDescriptorPool(VkSwapChain &swapchain) {
             auto swapChainImages = swapchain.getSwapChainImages();
@@ -462,19 +477,42 @@ namespace Vulkan{
             poolInfo.pPoolSizes = poolSizes.data();
             poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size() * (0 + 2));
 
-            VkDescriptorPool app = {};
+
 
             VkResult result = vkCreateDescriptorPool(swapchain.getChoosenDevice(), &poolInfo, nullptr,
-                                                     &app);
+                                                     &descriptorPool);
 
-            descriptorPool = std::make_shared<VkDescriptorPool>(app);
 
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create descriptor pool!");
-            }
+            Terminal::getInstance().printOnCondition("to create description pool",result!=VK_SUCCESS,result);
 
             createDescriptorSetLayout(swapchain);
+        }
+        void allocateDescriptorSets(VkSwapChain& swapChain){
+            auto swapChainImages = swapChain.getSwapChainImages();
+            layouts.resize(swapChainImages.size()*bindings.size(),descriptorSetLayout);
+
+            VkDescriptorSetAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = descriptorPool;
+            allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
+            allocInfo.pSetLayouts = layouts.data();
+
+            descriptorSets.resize(layouts.size());
+            auto result = vkAllocateDescriptorSets(swapChain.getChoosenDevice(), &allocInfo,
+                                              descriptorSets.data());
+
+            Terminal::getInstance().printOnCondition("to allocate description set layout",result!=VK_SUCCESS,result);
+
+            for(int i=0;i<added;i++)
+                descriptorWrites[i].dstSet =descriptorSets[i];
+
+            for(int i=0;i<added;i++)
+            for(int j=0;j<swapChainImages.size();j++) {
+                descriptorWrites[i].pBufferInfo = createInfos[i][j].get();
+                vkUpdateDescriptorSets(swapChain.getChoosenDevice(), static_cast<uint32_t>(descriptorWrites.size()),
+                                       descriptorWrites.data(), 0, nullptr);
+            }
+
         }
 
 
@@ -482,6 +520,11 @@ namespace Vulkan{
         VkDescriptorSetLayout getLayout(int binding){
             return this->layouts[binding];
         }
+
+        VkDescriptorSetLayout& getLayouts(){
+            return descriptorSetLayout;
+        }
+
     };
 
     struct UniformBufferObject {
@@ -493,7 +536,7 @@ namespace Vulkan{
     template<typename GlobalUniform>
     class UniformBuffer: public DescriptorSet<GlobalUniform>{
 
-        vector<VkGenericBuffer<GlobalUniform>> buffers;
+
 
 
     public:
@@ -506,6 +549,8 @@ namespace Vulkan{
             DescriptorSet<GlobalUniform>::layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
         }
+
+
         void createBuffers(VkSwapChain &swapchain,GlobalUniform &data){
             auto images = swapchain.getSwapChainImages();
 
@@ -514,22 +559,26 @@ namespace Vulkan{
                     .get()->getPerfectCriteriaMatcher()
                     .begin();
 
-            for(int i=0;i<images.size();i++){
 
-                buffers.push_back(VkGenericBuffer<GlobalUniform>(sizeof (GlobalUniform),choosen));
-                buffers[i].setPhysicalDevice(swapchain.getDeviceRepository());
-                buffers[i].setLogicalDevice();
 
-                buffers[i].setUsage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-                buffers[i].setProperties(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            for(int i=0;i<images.size();i++) {
+                auto buff = VkUniformBuffer<GlobalUniform>(sizeof (GlobalUniform),choosen);
+                buff.setPhysicalDevice(swapchain.getDeviceRepository());
+                buff.setLogicalDevice();
 
-                buffers[i].setData(vector<GlobalUniform> {{data}});
-                buffers[i].create();
+                buff.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+                buff.setProperties(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
+                buff.setData(vector<GlobalUniform> {{data}});
+                buff.create();
+
+                this->buffers.push_back(buff.getBuffer());
             }
 
-            //this->buffer_info = buffers[0].getCreateInfo();
-
+            //at 0 offset
+            this->buffer_info.offset = 0;
+            //of the size of a camera data struct
+            this->buffer_info.range = sizeof(GlobalUniform);
 
         }
 
@@ -796,10 +845,7 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>,public VkGenericBuf
         imageInfo.flags = 0; // Optional
 
         VkResult result = vkCreateImage(device, &imageInfo, nullptr, &image);
-        if (result != VK_SUCCESS) {
-            Terminal::getInstance().printnl(result);
-            throw std::runtime_error("failed to create image!");
-        }
+        Terminal::getInstance().printOnCondition("to create image",result!=VK_SUCCESS,result);
 
         VkMemoryRequirements memRequirements;
         vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -809,10 +855,9 @@ class TextureDescriptorSet:public DescriptorSet<TextureData>,public VkGenericBuf
         allocInfo.allocationSize = memRequirements.size;
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
                                                    properties);
-        if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) !=
-            VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate image memory!");
-        }
+
+        result = vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory);
+        Terminal::getInstance().printOnCondition("to allocate image memory",result!=VK_SUCCESS,result);
 
         vkBindImageMemory(device, image, imageMemory, 0);
     }

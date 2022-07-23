@@ -94,14 +94,9 @@ void Enviroment::createSyncObjects() {
                                              &renderFinishedSemaphores[i]);
         VkResult result3 = vkCreateFence(swapChain->getChoosenDevice(), &fenceInfo, nullptr,
                                          &inFlightFences[i]);
-        if (result1 != VK_SUCCESS ||
-            result2 != VK_SUCCESS ||
-            result3 != VK_SUCCESS) {
-            Terminal::getInstance().printnl(result1);
-            Terminal::getInstance().printnl(result2);
-            Terminal::getInstance().printnl(result3);
-            throw std::runtime_error("failed to create synchronization objects for a frame!!");
-        }
+        Terminal::getInstance().printOnCondition("to create image semaphores " + i,result1!=VK_SUCCESS,result1);
+        Terminal::getInstance().printOnCondition("to create render finish semaphores" + i,result2!=VK_SUCCESS,result2);
+        Terminal::getInstance().printOnCondition("to create in flight fences " + i,result3!=VK_SUCCESS,result3);
     }
 }
 void Enviroment::drawFrame() {
@@ -116,10 +111,11 @@ void Enviroment::drawFrame() {
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         //todo decide how to put
         //recreateSwapChain();
+
         return;
-    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        throw std::runtime_error("failed to acquire swap chain image!");
     }
+    Terminal::getInstance().printOnCondition("to aquire swapchain image",result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
+
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(swapChain->getChoosenDevice(), 1, &imagesInFlight[imageIndex],
@@ -146,10 +142,11 @@ void Enviroment::drawFrame() {
 
     vkResetFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame]);
 
-    if (vkQueueSubmit(deviceRepository->graphicsQueue, 1, &submitInfo,
-                      inFlightFences[currentFrame]) != VK_SUCCESS) {
-        throw std::runtime_error("failed to submit draw command buffer!");
-    }
+    result = vkQueueSubmit(deviceRepository->graphicsQueue, 1, &submitInfo,
+                      inFlightFences[currentFrame]);
+    Terminal::getInstance().printOnCondition("to create submit command queue at frame "+currentFrame,result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
+
+
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

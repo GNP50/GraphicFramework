@@ -128,6 +128,12 @@ namespace Vulkan {
         VkFragmentShader *fragShader;
         VkVertexShader *vertexShader;
 
+    public:
+        VkFragmentShader *getFragShader() const;
+        VkVertexShader *getVertexShader() const;
+
+    protected:
+
 
         Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):
             deviceRepository(repo),
@@ -149,7 +155,7 @@ namespace Vulkan {
         virtual void createPipeline(VkSwapChain &swapChain);
 
 
-        void createCommandBuffers(VkCommandBuffer commandBuffer );
+        void createCommandBuffers(VkCommandBuffer commandBuffer,int i);
 
 
 

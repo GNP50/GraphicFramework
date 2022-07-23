@@ -8,7 +8,7 @@
 #include "commonVulkanIncludes.h"
 #include "VulkanAppConfiguration.h"
 namespace Vulkan {
-    static  bool debug = false;
+    static  bool debug = true;
 
 //default debug caller
     static VKAPI_ATTR VkBool32 VKAPI_CALL defaultDebugCallback(
@@ -138,11 +138,10 @@ namespace Vulkan {
 
         virtual void setupDebugCallback() override {
             setupDebugMessenger();
-            if (CreateDebugUtilsMessengerEXT(&createInfo) != VK_SUCCESS)
-                Terminal::getInstance().print(
-                        "failed to set up debug messenger!",
-                        BackGroudColor::yellow,
-                        ForeGroudColor::red);
+            VkResult  result = CreateDebugUtilsMessengerEXT(&createInfo);
+
+            Terminal::getInstance().printOnCondition("to create debug callback",result!=VK_SUCCESS,result);
+
         }
 
         void updateUniformBuffer(uint32_t currentImage);

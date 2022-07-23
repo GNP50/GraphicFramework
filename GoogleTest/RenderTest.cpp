@@ -18,7 +18,12 @@ protected:
     virtual void SetUp() {
         enviroment = new Enviroment("triangle test");
 
-
+        auto triangle = new Triangle(
+                vec3(0.5,0.5,0),
+                vec3(-0.5,-0.5,0),
+                vec3(0.5,-0.5,0),
+                *enviroment
+        );
         enviroment->createRender();
     }
 

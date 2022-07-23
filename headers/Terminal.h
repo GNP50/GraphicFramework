@@ -56,6 +56,14 @@ public:
         printnl(toPrint,backcolor,foreGroudColor,"");
     }
 
+    void printOnCondition(string message,bool condition,auto toPrint){
+        if (condition) {
+            printnl(toPrint,BackGroudColor::yellow,ForeGroudColor::red);
+            throw std::runtime_error("failed to "+message);
+        }else{
+            printnl("Success: "+message,BackGroudColor::black,ForeGroudColor::green);
+        }
+    }
 };
 
 

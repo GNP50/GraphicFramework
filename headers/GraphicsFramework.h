@@ -211,6 +211,11 @@ public:
         return descriptorSetLayout;
     }
 
+    SetLayout setDescriptorSetLayout(SetLayout &layout){
+        descriptorSetLayout = layout;
+    }
+
+
     PipelineLayout getPipelineLayout() const {
         return pipelineLayout;
     }

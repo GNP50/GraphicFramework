@@ -52,9 +52,10 @@ namespace Vulkan{
             createInfo.codeSize = this->data.size();
             createInfo.pCode = reinterpret_cast<const uint32_t *>(this->data.data());
 
-            if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create shader module!");
-            }
+            VkResult result  = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) ;
+
+            Terminal::getInstance().printOnCondition("to create shader module ",result!=VK_SUCCESS,result);
+
 
             stageInfo.module = shaderModule;
         }

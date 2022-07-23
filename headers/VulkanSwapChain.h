@@ -19,13 +19,13 @@ namespace Vulkan{
         std::shared_ptr<VkPhyDevice> deviceRepository;
         int choosenDevice = 0;
         std::vector<VkFramebuffer> swapChainFramebuffers;
-        VkImage colorImage;
-        VkDeviceMemory colorImageMemory;
-        VkImageView colorImageView;
+        VkImage colorImage = {};
+        VkDeviceMemory colorImageMemory = {};
+        VkImageView colorImageView = {};
 
-        VkImage depthImage;
-        VkDeviceMemory depthImageMemory;
-        VkImageView depthImageView;
+        VkImage depthImage = {};
+        VkDeviceMemory depthImageMemory{};
+        VkImageView depthImageView{};
 
         VkAttachmentDescription depthAttachment = {};
         VkAttachmentDescription colorAttachment = {};
@@ -299,9 +299,9 @@ namespace Vulkan{
             createInfo.oldSwapchain = VK_NULL_HANDLE;
             deviceRepository->createLogicalDevice(off);
 
-            if (vkCreateSwapchainKHR(deviceRepository->getLogicalDevice(off), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create swap chain!");
-            }
+            auto result = vkCreateSwapchainKHR(deviceRepository->getLogicalDevice(off), &createInfo, nullptr, &swapChain);
+            Terminal::getInstance().printOnCondition("to create swap chain",result!=VK_SUCCESS,result);
+
 
             choosenDevice = off;
             isCreated = true;
@@ -343,9 +343,9 @@ namespace Vulkan{
                 createInfo.subresourceRange.baseArrayLayer = 0;
                 createInfo.subresourceRange.layerCount = 1;
 
-                if (vkCreateImageView(deviceRepository->getLogicalDevice(choosenDevice), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-                    throw std::runtime_error("failed to create image views!");
-                }
+                auto result = vkCreateImageView(deviceRepository->getLogicalDevice(choosenDevice), &createInfo, nullptr, &swapChainImageViews[i]);
+
+                Terminal::getInstance().printOnCondition("to create image views",result!=VK_SUCCESS,result);
 
             }
         }
@@ -381,10 +381,10 @@ namespace Vulkan{
 
                 VkResult result = vkCreateFramebuffer(getChoosenDevice(), &framebufferInfo, nullptr,
                                                       &swapChainFramebuffers[i]);
-                if (result != VK_SUCCESS) {
-                    Terminal::getInstance().printnl(result);
-                    throw std::runtime_error("failed to create framebuffer!");
-                }
+
+                Terminal::getInstance().printOnCondition("to create framebuffer",result!=VK_SUCCESS,result);
+
+
             }
 
 
@@ -429,25 +429,24 @@ namespace Vulkan{
             );
 
             VkResult result = vkCreateImage(device, &imageInfo, nullptr, &image);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create image!");
-            }
+            Terminal::getInstance().printOnCondition("to create image",result!=VK_SUCCESS,result);
+
 
             VkMemoryRequirements memRequirements;
-            vkGetImageMemoryRequirements(device, image, &memRequirements);
+             vkGetImageMemoryRequirements(device, image, &memRequirements);
+            Terminal::getInstance().printOnCondition("to bind image memory",result!=VK_SUCCESS,result);
 
             VkMemoryAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             allocInfo.allocationSize = memRequirements.size;
             allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
                                                        properties);
-            if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to allocate image memory!");
-            }
 
-            vkBindImageMemory(device, image, imageMemory, 0);
+            result = vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory);
+            Terminal::getInstance().printOnCondition("to allocat image memory",result!=VK_SUCCESS,result);
+
+            result = vkBindImageMemory(device, image, imageMemory, 0);
+            Terminal::getInstance().printOnCondition("to bind image memory",result!=VK_SUCCESS,result);
         }
 
         VkRenderPass getRenderPass(){return renderPass;}
@@ -491,10 +490,8 @@ namespace Vulkan{
 
             VkResult result = vkCreateImageView(device, &viewInfo, nullptr,
                                                 &imageView);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create image view!");
-            }
+            Terminal::getInstance().printOnCondition("to create image view",result!=VK_SUCCESS,result);
+
             return imageView;
         }
 
@@ -617,10 +614,8 @@ namespace Vulkan{
 
             VkResult result = vkCreateRenderPass(getChoosenDevice(), &renderPassInfo, nullptr,
                                                  &renderPass);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create render pass!");
-            }
+            Terminal::getInstance().printOnCondition("to create render pass",result!=VK_SUCCESS,result);
+
         }
 
 

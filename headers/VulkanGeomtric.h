@@ -33,10 +33,13 @@ namespace Vulkan {
             model->addObject(*obj);
             model->createBuffers();
 
+
+
         }
     public:
         NonTexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):Render(repo,swap){
             ubo =  new UniformBuffer<UniformBufferObject>();
+            ubo->createBuffers(*swap,hostUbo);
 
             descrPool->addDescriptorSet<UniformBufferObject>(*ubo);
 

@@ -166,36 +166,6 @@ namespace Vulkan{
             colorBlending.blendConstants[3] = 0.0f; // Optional
         }
         void createDescriptorSetLayout(VkSwapChain& swapChain) {
-            VkDescriptorSetLayoutBinding uboLayoutBinding{};
-            uboLayoutBinding.binding = 0;
-            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            uboLayoutBinding.descriptorCount = 1;
-            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-            uboLayoutBinding.pImmutableSamplers = nullptr;
-
-            VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-            samplerLayoutBinding.binding = 1;
-            samplerLayoutBinding.descriptorType =
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            samplerLayoutBinding.descriptorCount = 1;
-            samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-            samplerLayoutBinding.pImmutableSamplers = nullptr;
-
-            std::array<VkDescriptorSetLayoutBinding, 2> bindings =
-                    {uboLayoutBinding, samplerLayoutBinding};
-
-            VkDescriptorSetLayoutCreateInfo layoutInfo{};
-            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-            layoutInfo.pBindings = bindings.data();
-
-            VkResult result = vkCreateDescriptorSetLayout(swapChain.getChoosenDevice(), &layoutInfo,
-                                                          nullptr, &descriptorSetLayout);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create descriptor set layout!");
-            }
-
 
             createDescriptorLayout(swapChain);
         }
@@ -206,6 +176,8 @@ namespace Vulkan{
             this->createPipeline(swapchain,polyModel,VK_COMPARE_OP_LESS,VK_POLYGON_MODE_FILL,VK_CULL_MODE_NONE);
         }
         void createPipeline(VkSwapChain& swapchain, bool transp = false,VkCompareOp compareOp = VK_COMPARE_OP_LESS,VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,VkCullModeFlags CM = VK_CULL_MODE_NONE) {
+            msaaSamples = swapchain.getMaxUsableSampleCount();
+
             createDescriptorSetLayout(swapchain);
             createShadersInfo();
             createViewPort(swapchain);
@@ -241,11 +213,8 @@ namespace Vulkan{
 
             VkResult result = vkCreateGraphicsPipelines(swapchain.getChoosenDevice(), VK_NULL_HANDLE, 1,
                                                &pipelineInfo, nullptr, &graphicsPipeline);
-            if (result != VK_SUCCESS) {
-                Terminal::getInstance().printnl(result);
-                throw std::runtime_error("failed to create graphics pipeline!");
-            }
 
+            Terminal::getInstance().printOnCondition("to create the pipeline",result!=VK_SUCCESS,result);
             fragmentShader.destroy(swapchain.getChoosenDevice());
             vertexShader.destroy(swapchain.getChoosenDevice());
 

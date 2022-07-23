@@ -61,10 +61,8 @@ VkDevice VkPhyDevice::createLogicalDevice(int off) {
     VkDevice device;
     VkResult result = vkCreateDevice(this->devices[off], &createInfo, nullptr, &device);
 
-    if (result != VK_SUCCESS) {
-        Terminal::getInstance().print(result);
-        throw std::runtime_error("failed to create logical device!");
-    }
+    Terminal::getInstance().printOnCondition("to create logical device",result!=VK_SUCCESS,result);
+
 
     vkGetDeviceQueue(device, uniqueQueueFamilies[0], 0, &graphicsQueue);
     vkGetDeviceQueue(device, uniqueQueueFamilies[1], 0, &presentQueue);

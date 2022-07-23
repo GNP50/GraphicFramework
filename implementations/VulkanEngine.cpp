@@ -89,10 +89,9 @@ void VkEngine::setInstance() {
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
     setupDebugCallback();
-    if (result != VK_SUCCESS) {
-        printError(result);
-        throw std::runtime_error("failed to create instance!");
-    }
+
+
+    Terminal::getInstance().printOnCondition("to create instance",result!=VK_SUCCESS,result);
 
 }
 
@@ -109,9 +108,9 @@ void VkEngine::initWindow(int w, int h) {
 };
 
 void VkEngine::createSurface() {
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface)
-        != VK_SUCCESS)
-        Terminal::getInstance().printnl("failed to create window surface!");
+    auto result= glfwCreateWindowSurface(instance, window, nullptr, &surface);
+    Terminal::getInstance().printOnCondition("to create window surface",result!=VK_SUCCESS,result);
+
 }
 
 std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {

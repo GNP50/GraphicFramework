@@ -129,7 +129,7 @@ protected:
         globalUniformBuffer->createBuffers(swapChain,textureData);
 
         pool->addDescriptorSet<TextureData>(*globalUniformBuffer);
-        //pool->createDescriptorPool(swapChain);
+        pool->createDescriptorPool(swapChain);
 
 
 
