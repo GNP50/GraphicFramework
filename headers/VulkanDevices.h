@@ -70,10 +70,10 @@ namespace Vulkan{
                 for (const auto reqExtension: requiredExtensions) {
                     string second(reqExtension.extensionName);
                     if (first == second && reqExtension.specVersion == extension.specVersion) {
-                        continue;
-                    } else {
-                        found = false;
+                        found = true;
                         break;
+                    } else {
+
                     }
                 }
                 if (!found)

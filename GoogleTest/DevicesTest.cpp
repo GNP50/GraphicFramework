@@ -115,10 +115,6 @@ protected:
         fragShader->create(deviceRepository->getLogicalDevice(choosenDevice));
         vertexShader->create(deviceRepository->getLogicalDevice(choosenDevice));
 
-
-        pipeline = new VkPipeLine(*fragShader,*vertexShader,deviceRepository);
-        //pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_POINT);
-
     }
 
     void createDescriptorSet(){
@@ -126,14 +122,14 @@ protected:
                 (std::make_shared<VkSwapChain>(swapChain),deviceRepository);
 
 
-        globalUniformBuffer = new GlobalUniformBuffer<TextureData>(deviceRepository);
+        globalUniformBuffer = new UniformBuffer<TextureData>();
 
         TextureData textureData = {};
-        globalUniformBuffer->setData(textureData);
-        globalUniformBuffer->create();
+
+        globalUniformBuffer->createBuffers(swapChain,textureData);
 
         pool->addDescriptorSet<TextureData>(*globalUniformBuffer);
-        pool->createDescriptorPool(swapChain);
+        //pool->createDescriptorPool(swapChain);
 
 
 
@@ -141,13 +137,13 @@ protected:
 
     std::shared_ptr<VkPhyDevice> deviceRepository;
     VkSwapChain swapChain;
-    VkPipeLine *pipeline;
+
     VkFragmentShader *fragShader;
     VkVertexShader *vertexShader;
     Model *m;
     std::shared_ptr<DescriptorPool> pool;
 
-    GlobalUniformBuffer<TextureData> *globalUniformBuffer;
+    UniformBuffer<TextureData> *globalUniformBuffer;
 
 
     VkEngine* engine;

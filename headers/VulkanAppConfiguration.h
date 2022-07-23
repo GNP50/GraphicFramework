@@ -34,7 +34,7 @@ namespace Vulkan{
 
         virtual void setRequiredExtension(bool enableValidationLayers) override;
 
-        virtual VkApplicationInfo &returnObj() {
+        virtual VkApplicationInfo &returnObj() override{
 
 
             appRappresentation.sType = this->structureType;

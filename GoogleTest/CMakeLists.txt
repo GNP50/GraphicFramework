@@ -1,9 +1,20 @@
 project(Google_tests)
-add_subdirectory(lib/googletest)
-include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        # Specify the commit you depend on and update it regularly.
+        URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+
+
 
 # adding the Google_Tests_run target
-add_executable(Google_Tests_run
+add_executable(GraphicsFrameworkTests
         EngineTests.cpp
         DevicesTest.cpp
         RenderTest.cpp
@@ -11,4 +22,6 @@ add_executable(Google_Tests_run
         )
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
-target_link_libraries(Google_Tests_run gtest gtest_main DB)
+target_link_libraries(GraphicsFrameworkTests gtest_main DB)
+
+add_test(NAME GraphicsFrameworkTests COMMAND GraphicsFrameworkTests)

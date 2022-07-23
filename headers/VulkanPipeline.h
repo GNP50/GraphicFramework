@@ -9,8 +9,8 @@
 #include "VulkanShaders.h"
 #include "VulkanSwapChain.h"
 
-namespace Vulkan {
-    class VkPipeLine : public GenericGraphicPipeline<
+namespace Vulkan{
+    class VkPipeLine:public GenericGraphicPipeline<
             VkPipeline,
             VkPipelineLayout,
             VkPipelineShaderStageCreateInfo,
@@ -26,7 +26,13 @@ namespace Vulkan {
             VkFragmentShader,
             VkVertexShader,
             VkViewport,
-            VkRect2D> {
+            VkRect2D,
+            VkDescriptorSetLayoutBinding,
+            VkDescriptorSetLayoutCreateInfo,
+            VkDescriptorSetLayout
+            >{
+
+
 
 
     public:
@@ -40,32 +46,31 @@ namespace Vulkan {
         VkPipelineViewportStateCreateInfo viewportState{};
         VkPipelineShaderStageCreateInfo shaderStages[2];
 
-        VkPipeLine(VkFragmentShader &fragShader, VkVertexShader &vertexShader, std::shared_ptr<VkPhyDevice> devicerepo)
-                : GenericGraphicPipeline(
-                fragShader, vertexShader) {
+        VkPipeLine(VkFragmentShader& fragShader, VkVertexShader& vertexShader,std::shared_ptr<VkPhyDevice>devicerepo) : GenericGraphicPipeline(
+                 fragShader, vertexShader) {
             this->deviceRepo = devicerepo;
         }
 
-        void createDescriptorLayout(VkSwapChain &swapChain, VkDescriptorSetLayout *descriptorSetLayout
-        ) {
+        void createDescriptorLayout(VkSwapChain& swapChain) {
             pipelineLayoutInfo.sType =
                     VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount = 1;
-            pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
+            pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
             pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
             pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-            VkResult result = vkCreatePipelineLayout(swapChain.getChoosenDevice(), &pipelineLayoutInfo, nullptr,
-                                                     &pipelineLayout);
+            VkResult  result = vkCreatePipelineLayout(swapChain.getChoosenDevice(), &pipelineLayoutInfo, nullptr,
+                                            &pipelineLayout);
             if (result != VK_SUCCESS) {
                 Terminal::getInstance().printnl(result);
                 throw std::runtime_error("failed to create pipeline layout!");
             }
         }
 
-        void inline createShadersInfo() {
+        void inline createShadersInfo(){
             shaderStages[0] = vertexShader.getStageCreateInfo();
             shaderStages[1] = fragmentShader.getStageCreateInfo();
+
 
 
             vertexInputInfo = vertexShader.getVertexInputInfo();
@@ -81,7 +86,7 @@ namespace Vulkan {
 
         }
 
-        void createViewPort(VkSwapChain &swapchain) {
+        void createViewPort(VkSwapChain& swapchain){
             viewport.x = 0.0f;
             viewport.y = 0.0f;
             viewport.width = (float) swapchain.getSwapChainExtent().width;
@@ -103,8 +108,7 @@ namespace Vulkan {
 
         }
 
-        void createColorRasterizerMultisampling(bool transp = false, VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,
-                                                VkCullModeFlags CM = VK_CULL_MODE_NONE) {
+        void createColorRasterizerMultisampling(bool transp = false,VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,VkCullModeFlags CM = VK_CULL_MODE_NONE){
             rasterizer.sType =
                     VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasterizer.depthClampEnable = VK_FALSE;
@@ -161,23 +165,51 @@ namespace Vulkan {
             colorBlending.blendConstants[2] = 0.0f; // Optional
             colorBlending.blendConstants[3] = 0.0f; // Optional
         }
+        void createDescriptorSetLayout(VkSwapChain& swapChain) {
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
 
-        void createPipelineWithPolyMode(VkSwapChain &swapchain, VkDescriptorSetLayout *descriptorSetLayout,
-                                        VkPolygonMode polyModel) {
-            this->createPipeline(swapchain, descriptorSetLayout, polyModel, VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL,
-                                 VK_CULL_MODE_NONE);
+            VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+            samplerLayoutBinding.binding = 1;
+            samplerLayoutBinding.descriptorType =
+                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            samplerLayoutBinding.descriptorCount = 1;
+            samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            samplerLayoutBinding.pImmutableSamplers = nullptr;
+
+            std::array<VkDescriptorSetLayoutBinding, 2> bindings =
+                    {uboLayoutBinding, samplerLayoutBinding};
+
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+            layoutInfo.pBindings = bindings.data();
+
+            VkResult result = vkCreateDescriptorSetLayout(swapChain.getChoosenDevice(), &layoutInfo,
+                                                          nullptr, &descriptorSetLayout);
+            if (result != VK_SUCCESS) {
+                Terminal::getInstance().printnl(result);
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+
+
+            createDescriptorLayout(swapChain);
         }
 
-        void createPipeline(VkSwapChain &swapchain, VkDescriptorSetLayout *descriptorSetLayout, bool transp = false,
-                            VkCompareOp compareOp = VK_COMPARE_OP_LESS, VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,
-                            VkCullModeFlags CM = VK_CULL_MODE_NONE) {
-            msaaSamples = swapchain.getMaxUsableSampleCount();
 
-            createDescriptorLayout(swapchain, descriptorSetLayout);
+
+        void createPipelineWithPolyMode(VkSwapChain& swapchain,  VkPolygonMode polyModel){
+            this->createPipeline(swapchain,polyModel,VK_COMPARE_OP_LESS,VK_POLYGON_MODE_FILL,VK_CULL_MODE_NONE);
+        }
+        void createPipeline(VkSwapChain& swapchain, bool transp = false,VkCompareOp compareOp = VK_COMPARE_OP_LESS,VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,VkCullModeFlags CM = VK_CULL_MODE_NONE) {
+            createDescriptorSetLayout(swapchain);
             createShadersInfo();
             createViewPort(swapchain);
-            createColorRasterizerMultisampling(transp, polyModel, CM);
-
+            createColorRasterizerMultisampling(transp,polyModel,CM);
 
             depthStencil.sType =
                     VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -208,7 +240,7 @@ namespace Vulkan {
             pipelineInfo.basePipelineIndex = -1; // Optional
 
             VkResult result = vkCreateGraphicsPipelines(swapchain.getChoosenDevice(), VK_NULL_HANDLE, 1,
-                                                        &pipelineInfo, nullptr, &graphicsPipeline);
+                                               &pipelineInfo, nullptr, &graphicsPipeline);
             if (result != VK_SUCCESS) {
                 Terminal::getInstance().printnl(result);
                 throw std::runtime_error("failed to create graphics pipeline!");
@@ -284,6 +316,42 @@ namespace Vulkan {
 
             endSingleTimeCommands(commandBuffer);
         }**/
+
+
+    };
+
+    class VkPhongPipeline:VkPipeLine{
+        void createDescriptorLayout(VkSwapChain& swapChain) {
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+
+            VkDescriptorSetLayoutBinding globalUboLayoutBinding{};
+            globalUboLayoutBinding.binding = 1;
+            globalUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            globalUboLayoutBinding.descriptorCount = 1;
+            globalUboLayoutBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+            globalUboLayoutBinding.pImmutableSamplers = nullptr;
+
+            std::array<VkDescriptorSetLayoutBinding, 2> bindings =
+                    {uboLayoutBinding, globalUboLayoutBinding};
+
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+            layoutInfo.pBindings = bindings.data();
+
+            VkResult result = vkCreateDescriptorSetLayout(swapChain.getChoosenDevice(), &layoutInfo,
+                                                          nullptr, &descriptorSetLayout);
+            if (result != VK_SUCCESS) {
+                Terminal::getInstance().printnl(result);
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+        }
+
 
 
     };

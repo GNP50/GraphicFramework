@@ -160,7 +160,7 @@ protected:
 
 public:
 
-    void createIndiciesList(){
+    void createIndiciesList() override{
         SliceGeometric::createIndiciesList();
         int l = this->indiciesList.size();
 
@@ -211,7 +211,7 @@ protected:
 
 public:
 
-    void createIndiciesList(){
+    void createIndiciesList() override{
 #pragma omp for
         for(int j=1;j<this->cloves+1;j++){
             indiciesList.push_back(j%this->cloves == 0? this->cloves: j);

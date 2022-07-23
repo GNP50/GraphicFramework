@@ -129,7 +129,10 @@ template<
         typename FragShader,
         typename VertexShader,
         typename ViewPort,
-        typename Scissor>
+        typename Scissor,
+        typename SetLayoutBinding,
+        typename SetLayoutCreateInfo,
+        typename SetLayout>
 class GenericGraphicPipeline{
 protected:
     StageCreationInfo stageCreationInfo = {};
@@ -192,6 +195,22 @@ public:
         return pipelineInfo;
     }
 
+    SetLayoutBinding getUboLayoutBinding() const {
+        return uboLayoutBinding;
+    }
+
+    SetLayoutBinding getSamplerLayoutBinding() const {
+        return samplerLayoutBinding;
+    }
+
+    SetLayoutCreateInfo getLayoutInfo() const {
+        return layoutInfo;
+    }
+
+    SetLayout getDescriptorSetLayout() const {
+        return descriptorSetLayout;
+    }
+
     PipelineLayout getPipelineLayout() const {
         return pipelineLayout;
     }
@@ -215,7 +234,10 @@ protected:
     LayoutCreateInfo pipelineLayoutInfo = {};
     DepthStencilStateCreateInfo depthStencil = {};
     PipelineCreateInfo pipelineInfo = {};
-
+    SetLayoutBinding uboLayoutBinding = {};
+    SetLayoutBinding samplerLayoutBinding = {};
+    SetLayoutCreateInfo layoutInfo = {};
+    SetLayout descriptorSetLayout = {};
     PipelineLayout pipelineLayout = {};
     GraphicPipeLine graphicsPipeline = {};
 
@@ -400,6 +422,21 @@ protected:
 
     ConfigurationFlags usage;
     BufferType buffer;
+public:
+    ConfigurationFlags getUsage() const {
+        return usage;
+    }
+
+    PropertyFlags getProperties() const {
+        return properties;
+    }
+
+    void setProperties(PropertyFlags properties) {
+        Buffer::properties = properties;
+    }
+
+
+protected:
     PropertyFlags properties;
     DeviceMemory bufferMemory;
     Device device;

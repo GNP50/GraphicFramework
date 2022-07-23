@@ -115,11 +115,10 @@ namespace Vulkan {
     class Render{
     protected:
         std::shared_ptr<VkPhyDevice> deviceRepository;
-        VkPipeLine *pipeLine;
         std::shared_ptr<VkSwapChain> swapChain;
         Model *model;
 
-        DescriptorPool descrPool;
+        DescriptorPool *descrPool;
 
         string vertexPath = "shaders/Vertex.spv";
         string fragmPath = "shaders/Fragment.spv";
@@ -133,12 +132,12 @@ namespace Vulkan {
         Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):
             deviceRepository(repo),
             swapChain(swap),
-            descrPool(DescriptorPool(swapChain,deviceRepository)){
+            descrPool(new DescriptorPool(swapChain,deviceRepository)){
 
         }
     public:
         Render(std::shared_ptr<VkPhyDevice>deviceRepo,VkPipeLine *pipeLine,std::shared_ptr<VkSwapChain> swapChain,Model* model): Render(deviceRepository,swapChain){
-            this->pipeLine = pipeLine;
+            this->pipeline = pipeLine;
             this->model = model;
         }
 

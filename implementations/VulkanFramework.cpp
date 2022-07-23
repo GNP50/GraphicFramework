@@ -65,8 +65,6 @@ void Enviroment::ChooseADevice(vector<VkPhysicalDeviceType> type) {
 
     choosen = *deviceRepository->getPerfectCriteriaMatcher().begin();
     deviceRepository->createLogicalDevice(choosen);
-    choosenDevice = choosen;
-
 }
 void Enviroment::createUniformBuffer() {
     for(auto render:renders) {
@@ -173,8 +171,8 @@ void Enviroment::drawFrame() {
         framebufferResized = false;
         recreateSwapChain();
     } else **/if (result != VK_SUCCESS) {
-        return;
         throw std::runtime_error("failed to present swap chain image!");
+        return;
     }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;

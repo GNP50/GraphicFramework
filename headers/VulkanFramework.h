@@ -43,7 +43,7 @@ namespace Vulkan {
         VkEngine *engine;
         VkAppConfiguration configuration;
 
-        int choosenDevice = -1;
+
         int choosenDeviceSwapChain = -1;
         string name;
 

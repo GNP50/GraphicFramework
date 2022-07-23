@@ -15,7 +15,7 @@ namespace Vulkan{
         vector<int> indicies;
         vector<glm::vec2> uvs;
 
-        vector<GlobalUniformBuffer<UniformBufferObject>> ubo;
+        vector<UniformBuffer<UniformBufferObject>> ubo;
 
     public:
         void setVertex(vector<glm::vec3> vertex);
@@ -44,10 +44,6 @@ namespace Vulkan{
 
 
 
-        }
-
-        void addUbo(GlobalUniformBuffer<UniformBufferObject> &ubo){
-            this->ubo.push_back(ubo);
         }
 
 

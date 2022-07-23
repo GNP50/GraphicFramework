@@ -13,7 +13,7 @@ using namespace glm;
 namespace Vulkan {
 
     class NonTexturedRender:public Render{
-        GlobalUniformBuffer<UniformBufferObject> *ubo;
+        UniformBuffer<UniformBufferObject> *ubo;
         UniformBufferObject hostUbo = {
                 glm::mat4 (1.0f),
                 glm::mat4 (1.0f),
@@ -36,11 +36,10 @@ namespace Vulkan {
         }
     public:
         NonTexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):Render(repo,swap){
-            ubo =  new GlobalUniformBuffer<UniformBufferObject>(deviceRepository);
-            ubo->setData(hostUbo);
-            descrPool.addDescriptorSet<UniformBufferObject>(*ubo);
+            ubo =  new UniformBuffer<UniformBufferObject>();
 
-            createPipeline(*this->swapChain);
+            descrPool->addDescriptorSet<UniformBufferObject>(*ubo);
+
         }
     };
     class Triangle : public NonTexturedRender {
@@ -59,6 +58,8 @@ namespace Vulkan {
             vector<int> ind = {{1,2,3}};
 
             NonTexturedRender::setVertexesAndIndicies(app,ind);
+            createPipeline(*this->swapChain);
+
             env.addRender(*this);
         }
     };
