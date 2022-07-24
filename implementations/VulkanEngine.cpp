@@ -133,7 +133,7 @@ bool VkEngine::mainLoop() {
     if(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        std::this_thread::sleep_for(2000ms);
+        std::this_thread::sleep_for(100ms);
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             return false;

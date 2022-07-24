@@ -13,9 +13,12 @@
 #include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
 #include <glm/ext/matrix_clip_space.hpp> // glm::perspective
 #include <glm/ext/scalar_constants.hpp> // glm::pi
+#include <glm/gtx/io.hpp>
+
 
 #define GLFW_INCLUDE_VULKAN
 
+#include <iostream>
 #include <map>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>

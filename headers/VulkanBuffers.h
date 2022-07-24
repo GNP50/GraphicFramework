@@ -36,6 +36,9 @@ namespace Vulkan{
 
     public:
         virtual void createBuffer() override {
+            if(created)
+                return;
+
             create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
             create_info.size = static_cast<VkDeviceSize>(this->bufferSize);
             create_info.usage = this->usage;
@@ -285,30 +288,20 @@ namespace Vulkan{
     public:
 
         VkUniformBuffer(int size, int choosenDev) : VkGenericBuffer<BufferDataType>(size, choosenDev) {
-            this->usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            this->usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
             this->properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
         }
 
         virtual void create() override {
-            VkStagingBuffer<BufferDataType> stagingBuffer(this->size, this->phyDeviceOff,
-                                                          vector<BufferDataType>(this->size));
 
-            stagingBuffer.setData(this->data);
-            stagingBuffer.setPhysicalDevice(this->physicalDevice);
-
-
-            stagingBuffer.create();
             this->createBuffer();
-
             void *ppData;
             vkMapMemory(this->device, this->bufferMemory, 0, this->bufferSize, 0, &ppData);
 
             memcpy(ppData,this->data.data(), (size_t) this->bufferSize);
             vkUnmapMemory(this->device, this->bufferMemory);
-
-            this->copyBuffer(stagingBuffer.getBuffer(), this->buffer, this->bufferSize);
         };
 
 
@@ -503,12 +496,12 @@ namespace Vulkan{
 
             Terminal::getInstance().printOnCondition("to allocate description set layout",result!=VK_SUCCESS,result);
 
-            for(int i=0;i<added;i++)
-                descriptorWrites[i].dstSet =descriptorSets[i];
 
-            for(int i=0;i<added;i++)
             for(int j=0;j<swapChainImages.size();j++) {
-                descriptorWrites[i].pBufferInfo = createInfos[i][j].get();
+                for(int i=0;i<added;i++) {
+                    descriptorWrites[i].dstSet =descriptorSets[j];
+                    descriptorWrites[i].pBufferInfo = createInfos[i][j].get();
+                }
                 vkUpdateDescriptorSets(swapChain.getChoosenDevice(), static_cast<uint32_t>(descriptorWrites.size()),
                                        descriptorWrites.data(), 0, nullptr);
             }
@@ -536,6 +529,7 @@ namespace Vulkan{
     template<typename GlobalUniform>
     class UniformBuffer: public DescriptorSet<GlobalUniform>{
 
+        vector<VkUniformBuffer<GlobalUniform>*> vkBuffers;
 
 
 
@@ -562,17 +556,15 @@ namespace Vulkan{
 
 
             for(int i=0;i<images.size();i++) {
-                auto buff = VkUniformBuffer<GlobalUniform>(sizeof (GlobalUniform),choosen);
-                buff.setPhysicalDevice(swapchain.getDeviceRepository());
-                buff.setLogicalDevice();
+                auto buff = new VkUniformBuffer<GlobalUniform>(sizeof (GlobalUniform),choosen);
+                vkBuffers.push_back(buff);
+                buff->setPhysicalDevice(swapchain.getDeviceRepository());
+                buff->setLogicalDevice();
 
-                buff.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-                buff.setProperties(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                buff->setData(vector<GlobalUniform> {{data}});
+                buff->create();
 
-                buff.setData(vector<GlobalUniform> {{data}});
-                buff.create();
-
-                this->buffers.push_back(buff.getBuffer());
+                this->buffers.push_back(buff->getBuffer());
             }
 
             //at 0 offset
@@ -582,6 +574,12 @@ namespace Vulkan{
 
         }
 
+        void updateData(GlobalUniform &data) {
+            for (int i = 0; i < vkBuffers.size(); i++) {
+                vkBuffers[i]->setData(vector<GlobalUniform>{{data}});
+                vkBuffers[i]->create();
+            }
+        }
     };
 
 

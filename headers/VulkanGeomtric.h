@@ -7,18 +7,17 @@
 #include "commonVulkanIncludes.h"
 #include "VulkanModel.h"
 #include "VulkanFramework.h"
+#include "customTransf.hpp"
 
 using namespace glm;
 
 namespace Vulkan {
 
     class NonTexturedRender:public Render{
+        float angle = 0.0;
+
         UniformBuffer<UniformBufferObject> *ubo;
-        UniformBufferObject hostUbo = {
-                glm::mat4 (1.0f),
-                glm::mat4 (1.0f),
-                glm::mat4 (1.0f)
-        };
+        UniformBufferObject hostUbo{};
 
     protected:
 
@@ -44,6 +43,19 @@ namespace Vulkan {
             descrPool->addDescriptorSet<UniformBufferObject>(*ubo);
 
         }
+
+        virtual void update() override{
+            auto rotation = TransfBuff::instance()
+                    ->addZRotation(angle)
+                    .doTransformations<glm::mat4>();
+
+            hostUbo.mvpMat = rotation;
+            hostUbo.mMat = rotation;
+            hostUbo.nMat = rotation;
+            ubo->updateData(hostUbo);
+            angle += glm::pi<float>();
+
+        }
     };
     class Triangle : public NonTexturedRender {
     public:
@@ -63,7 +75,7 @@ namespace Vulkan {
             NonTexturedRender::setVertexesAndIndicies(app,ind);
             createPipeline(*this->swapChain);
 
-            env.addRender(*this);
+            env.addRender(this);
         }
     };
 

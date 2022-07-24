@@ -68,7 +68,7 @@ void Enviroment::ChooseADevice(vector<VkPhysicalDeviceType> type) {
 }
 void Enviroment::createUniformBuffer() {
     for(auto render:renders) {
-        render.createBuffer(*this->deviceRepository);
+        render->createBuffer(*this->deviceRepository);
     }
 
 

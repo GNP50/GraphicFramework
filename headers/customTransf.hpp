@@ -1,15 +1,11 @@
 //
 // Created by Pierluigi Carlino on 19/04/22.
 //
+#ifndef CUSTOM_TRANSFORMATION
+#define CUSTOM_TRANSFORMATION
 
-#include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <math.h>
+#include "commonVulkanIncludes.h"
 
-#include <glm/gtx/io.hpp>
-#include <iostream>
-#include <map>
 
 enum Screen{
     top,
@@ -454,3 +450,5 @@ public:
         return instance;
     }
 };
+
+#endif

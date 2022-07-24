@@ -26,7 +26,7 @@ namespace Vulkan {
         int choosen;
         int currentFrame = 0;
 
-        vector<Vulkan::Render> renders;
+        vector<Vulkan::Render*> renders;
         std::shared_ptr<VkPhyDevice> deviceRepository;
         std::shared_ptr<VkSwapChain> swapChain;
 
@@ -129,11 +129,15 @@ namespace Vulkan {
                                      VK_SUBPASS_CONTENTS_INLINE);
 
                 for(auto render:this->renders)
-                    render.createCommandBuffers(commandBuffers[i],i);
+                    render->createCommandBuffers(commandBuffers[i],i);
 
                 vkCmdEndRenderPass(commandBuffers[i]);
 
-                Terminal::getInstance().printOnCondition("to create record command buffers",result!=VK_SUCCESS,result);
+                Terminal::getInstance().printOnCondition("to create record command buffers "+i,result!=VK_SUCCESS,result);
+
+                result = vkEndCommandBuffer(commandBuffers[i]);
+                Terminal::getInstance().printOnCondition("to end command buffer "+i,result!=VK_SUCCESS,result);
+
 
             }
         };
@@ -165,12 +169,15 @@ namespace Vulkan {
         void createRender(){
             startRenderPass();
         }
-        void addRender(Render &r){
+        void addRender(Render* r){
              this->renders.push_back(r);
         }
         void mainLoop() {
             while (deviceRepository->getEngine().mainLoop()) {
                 drawFrame();
+
+                for(auto render:renders)
+                    render->update();
             }
 
             vkDeviceWaitIdle(swapChain->getChoosenDevice());

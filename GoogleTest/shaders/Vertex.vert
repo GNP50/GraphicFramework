@@ -8,7 +8,7 @@ vec3(0.0, 1.0, 0.0),
 vec3(0.0, 0.0, 1.0)
 );
 
-layout(set = 0,binding = 0) uniform UniformBufferObject {
+layout(binding = 0) uniform UniformBufferObject {
     mat4 mvpMat;
     mat4 mMat;
     mat4 nMat;

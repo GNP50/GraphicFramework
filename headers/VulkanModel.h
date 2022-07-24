@@ -131,6 +131,7 @@ namespace Vulkan {
     public:
         VkFragmentShader *getFragShader() const;
         VkVertexShader *getVertexShader() const;
+        virtual void update() {};
 
     protected:
 
