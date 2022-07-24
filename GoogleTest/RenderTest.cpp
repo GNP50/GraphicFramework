@@ -21,7 +21,7 @@ protected:
         auto triangle = new Triangle(
                 vec3(0.5,0.5,0),
                 vec3(-0.5,-0.5,0),
-                vec3(0.5,-0.5,0),
+                vec3(0.5,-0.5,0),"textures/triangle.png",
                 *enviroment
         );
         enviroment->createRender();

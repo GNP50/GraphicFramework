@@ -21,6 +21,9 @@ add_library(DB STATIC
         headers/Terminal.h
         headers/VulkanFramework.h
         headers/GraphicsFramework.h
+        headers/stb_image.h
+        headers/stb_image_write.h
+
 
         )
 

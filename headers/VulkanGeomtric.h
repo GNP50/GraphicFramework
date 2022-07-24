@@ -13,11 +13,14 @@ using namespace glm;
 
 namespace Vulkan {
 
-    class NonTexturedRender:public Render{
+    class TexturedRender:public Render{
         float angle = 0.0;
 
         UniformBuffer<UniformBufferObject> *ubo;
         UniformBufferObject hostUbo{};
+
+        TextureBuffer<stbi_uc *> *texture;
+
 
     protected:
 
@@ -36,12 +39,13 @@ namespace Vulkan {
 
         }
     public:
-        NonTexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):Render(repo,swap){
+        TexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,string textPath):Render(repo,swap){
             ubo =  new UniformBuffer<UniformBufferObject>();
             ubo->createBuffers(*swap,hostUbo);
 
             descrPool->addDescriptorSet<UniformBufferObject>(*ubo);
 
+            texture = new TextureBuffer<stbi_uc *>(textPath);
         }
 
         virtual void update() override{
@@ -57,13 +61,13 @@ namespace Vulkan {
 
         }
     };
-    class Triangle : public NonTexturedRender {
+    class Triangle : public TexturedRender {
     public:
         Triangle(vec3 first,
                  vec3 second,
-                 vec3 third,
+                 vec3 third,const string textPath,
                  Enviroment &env,
-                 bool textured = false):NonTexturedRender(env.getRepository(),env.getSwapChain())
+                 bool textured = false):TexturedRender(env.getRepository(),env.getSwapChain(),textPath)
         {
             vector<glm::vec3> app = vector<vec3>();
             app.push_back(first);
@@ -72,7 +76,7 @@ namespace Vulkan {
 
             vector<int> ind = {{1,2,3}};
 
-            NonTexturedRender::setVertexesAndIndicies(app,ind);
+            TexturedRender::setVertexesAndIndicies(app,ind);
             createPipeline(*this->swapChain);
 
             env.addRender(this);
