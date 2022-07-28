@@ -81,9 +81,9 @@ namespace Vulkan {
 
             vector<int> ind = {{1,2,3}};
 
-            textCoords.push_back(glm::vec2(0.0,0.5));
-            textCoords.push_back(glm::vec2(0.5,0.5));
             textCoords.push_back(glm::vec2(0.0,0.0));
+            textCoords.push_back(glm::vec2(1,1));
+            textCoords.push_back(glm::vec2(0.0,1));
 
             TexturedRender::setVertexesAndIndicies(app,ind);
             createPipeline(*this->swapChain);

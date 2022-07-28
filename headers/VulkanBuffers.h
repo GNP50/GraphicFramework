@@ -354,6 +354,7 @@ namespace Vulkan {
             this->createCommandPool();
             createTextureImage();
             createImageView(VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_VIEW_TYPE_2D, 1);
+            createTextureSampler();
 
         };
 
@@ -369,10 +370,11 @@ namespace Vulkan {
                     std::log2(std::max(texWidth, texHeight)))) + 1;
 
             //create staging buffer
-            VkStagingBuffer<BufferDataType> stagingBuffer(imageSize, this->phyDeviceOff,
-                                                          vector<BufferDataType>(imageSize));
+            VkStagingBuffer<stbi_uc> stagingBuffer(imageSize, this->phyDeviceOff,
+                                                          vector<stbi_uc>(imageSize));
 
-            stagingBuffer.setData(vector<BufferDataType>{{pixels}});
+           vector<stbi_uc> data(pixels,pixels+imageSize*sizeof(stbi_uc));
+            stagingBuffer.setData(data);
             stagingBuffer.setPhysicalDevice(this->physicalDevice);
 
 
@@ -394,7 +396,6 @@ namespace Vulkan {
             generateMipmaps(textData.textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                             texWidth, texHeight, textData.mipLevels, 1);
 
-            createTextureSampler();
             stbi_image_free(pixels);
 
         };
