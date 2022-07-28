@@ -729,7 +729,7 @@ namespace Vulkan {
         VkDescriptorPool descriptorPool{};
         std::vector<VkDescriptorPoolSize> poolSizes{};
         VkDescriptorPoolCreateInfo poolInfo{};
-        VkDescriptorSetLayout descriptorSetLayout = {};
+        VkDescriptorSetLayout descriptorSetLayout{};
 
 
         std::shared_ptr<VkPhyDevice> device;
@@ -844,7 +844,7 @@ namespace Vulkan {
 
             Terminal::getInstance().printOnCondition("to create description pool", result != VK_SUCCESS, result);
 
-            createDescriptorSetLayout(swapchain);
+            this->createDescriptorSetLayout(swapchain);
         }
 
         void allocateDescriptorSets(VkSwapChain &swapChain) {
