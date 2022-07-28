@@ -41,6 +41,8 @@ namespace Vulkan{
         template<>
         void destroy(VkDevice device){
             vkDestroyShaderModule(device,shaderModule,NULL);
+            Terminal::getInstance().printDestroy(" destroy shader module ");
+
         }
 
         template<>

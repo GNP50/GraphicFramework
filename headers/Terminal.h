@@ -64,6 +64,11 @@ public:
             printnl("Success: "+message,BackGroudColor::black,ForeGroudColor::green);
         }
     }
+
+    void printDestroy(string message){
+            printnl("Success: "+message,BackGroudColor::red,ForeGroudColor::black);
+    }
+
 };
 
 

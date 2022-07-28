@@ -20,6 +20,8 @@ namespace Vulkan{
             VkQueueFlagBits
     > {
     protected:
+        vector<function<void()>> destroyBufferQueue;
+
         virtual bool isDevicesSuitable(vector<VkPhysicalDevice> devices) override;
 
         virtual bool isFeatureSupported(int offset) override;
@@ -245,6 +247,23 @@ namespace Vulkan{
             return VK_SAMPLE_COUNT_1_BIT;
         }
 
+
+        void destroy(){
+
+            for(auto f:destroyBufferQueue)
+                f();
+            destroyBufferQueue.resize(0);
+
+            for(int i=0;i<this->logicalDevices.size();i++){
+                vkDestroyDevice(this->logicalDevices[i], nullptr);
+                Terminal::getInstance().printDestroy(" destroy logical device  " + i);
+
+            }
+        }
+
+        void registerBuffer(function<void()> destroyBuff){
+            this->destroyBufferQueue.push_back(destroyBuff);
+        }
     };
 
 }

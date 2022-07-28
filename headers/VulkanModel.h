@@ -49,6 +49,7 @@ namespace Vulkan {
             indBuffer->create();
         }
 
+
     protected:
         int getVertexSize() {
             uint32_t toRet = 0;
@@ -162,6 +163,11 @@ namespace Vulkan {
         void createCommandBuffers(VkCommandBuffer commandBuffer,int i);
 
 
+        void destroy(){
+            pipeline->destroy(*swapChain);
+            descrPool->destroy();
+            delete this->model;
+        }
 
     };
 };

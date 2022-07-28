@@ -27,6 +27,8 @@ namespace Vulkan {
         VkCommandPool commandPool;
         int phyDeviceOff;
         VkBufferCreateInfo create_info{};
+        bool couldDelete = true;
+
     public:
         const VkBufferCreateInfo &getCreateInfo() const {
             return create_info;
@@ -71,6 +73,18 @@ namespace Vulkan {
             result = vkBindBufferMemory(this->device, this->buffer, this->bufferMemory, 0);
             Terminal::getInstance().printOnCondition("to bind buffer memory!", result != VK_SUCCESS, result);
 
+            if(couldDelete)
+            this->physicalDevice->registerBuffer([=](){
+                vkDestroyBuffer(this->device,this->buffer, nullptr);
+                Terminal::getInstance().printDestroy("to destroy  buffer ");
+
+                vkFreeMemory(this->device,this->bufferMemory, nullptr);
+                Terminal::getInstance().printDestroy("to free memory   buffer ");
+
+                vkDestroyCommandPool(this->device,this->commandPool, nullptr);
+                Terminal::getInstance().printDestroy("to free buffer command pool");
+
+            });
             created = true;
         };
 
@@ -199,7 +213,9 @@ namespace Vulkan {
             this->device = this->physicalDevice->getLogicalDevice(off);
         }
 
-
+        void destroy(){
+            vkDestroyBuffer(this->device,this->buffer,nullptr);
+        }
 
 
     };
@@ -216,11 +232,16 @@ namespace Vulkan {
                                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
             this->data = data;
+            this->couldDelete = false;
         }
 
         ~VkStagingBuffer(){
             vkDestroyBuffer(this->device, getBuffer(), nullptr);
             vkFreeMemory(this->device, this->bufferMemory, nullptr);
+            vkDestroyCommandPool(this->device,this->commandPool, nullptr);
+
+            Terminal::getInstance().printDestroy(" staging buffer destroied ");
+
         }
 
         virtual void setBufferSize(uint64_t size){
@@ -357,6 +378,7 @@ namespace Vulkan {
             createTextureSampler();
 
         };
+
 
         void createTextureImage() {
             stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight,
@@ -658,6 +680,17 @@ namespace Vulkan {
 
         }
 
+        void destroy(){
+            vkDestroySampler(this->device,textData.textureSampler, nullptr);
+            Terminal::getInstance().printDestroy(" destroy texture sampler ");
+
+            vkDestroyImage(this->device,textData.textureImage, nullptr);
+            Terminal::getInstance().printDestroy(" destroy texture image ");
+
+            vkDestroyImageView(this->device,textData.textureImageView, nullptr);
+            Terminal::getInstance().printDestroy(" destroy texture image view ");
+
+        }
     };
 
 
@@ -891,6 +924,14 @@ namespace Vulkan {
             return descriptorSetLayout;
         }
 
+        void destroy(){
+            vkDestroyDescriptorSetLayout(swapchain->getChoosenDevice(),descriptorSetLayout, nullptr);
+            Terminal::getInstance().printDestroy(" destroy descriptor set layour " );
+
+            vkDestroyDescriptorPool(swapchain->getChoosenDevice(),descriptorPool, nullptr);
+            Terminal::getInstance().printDestroy(" destroy descriptor pool ");
+
+        }
     };
 
     struct UniformBufferObject {

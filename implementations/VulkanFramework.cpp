@@ -99,6 +99,28 @@ void Enviroment::createSyncObjects() {
         Terminal::getInstance().printOnCondition("to create in flight fences " + i,result3!=VK_SUCCESS,result3);
     }
 }
+
+void Enviroment::destroy(){
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(swapChain->getChoosenDevice(),imageAvailableSemaphores[i],nullptr);
+        vkDestroySemaphore(swapChain->getChoosenDevice(),renderFinishedSemaphores[i],nullptr);
+        Terminal::getInstance().printDestroy(string("semaphore " + i) + "destroyed");
+
+        vkDestroyFence(swapChain->getChoosenDevice(),inFlightFences[i], nullptr);
+        Terminal::getInstance().printDestroy(string("fligth fence " + i) + "destroyed");
+
+    }
+
+    swapChain->destroy();
+
+    for(auto render:renders)
+        render->destroy();
+
+
+    vkDestroyCommandPool(swapChain->getChoosenDevice(),commandPool, nullptr);
+    Terminal::getInstance().printDestroy(" destroyed command pool " );
+    deviceRepository->destroy();
+}
 void Enviroment::drawFrame() {
     vkWaitForFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame],
                     VK_TRUE, UINT64_MAX);

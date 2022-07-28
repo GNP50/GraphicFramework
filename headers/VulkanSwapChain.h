@@ -300,7 +300,7 @@ namespace Vulkan{
             deviceRepository->createLogicalDevice(off);
 
             auto result = vkCreateSwapchainKHR(deviceRepository->getLogicalDevice(off), &createInfo, nullptr, &swapChain);
-            Terminal::getInstance().printOnCondition("to create swap chain",result!=VK_SUCCESS,result);
+            Terminal::getInstance().printOnCondition("to create swap chain in swapchain ",result!=VK_SUCCESS,result);
 
 
             choosenDevice = off;
@@ -345,7 +345,7 @@ namespace Vulkan{
 
                 auto result = vkCreateImageView(deviceRepository->getLogicalDevice(choosenDevice), &createInfo, nullptr, &swapChainImageViews[i]);
 
-                Terminal::getInstance().printOnCondition("to create image views",result!=VK_SUCCESS,result);
+                Terminal::getInstance().printOnCondition("to create image views in swapchain " ,result!=VK_SUCCESS,result);
 
             }
         }
@@ -382,7 +382,7 @@ namespace Vulkan{
                 VkResult result = vkCreateFramebuffer(getChoosenDevice(), &framebufferInfo, nullptr,
                                                       &swapChainFramebuffers[i]);
 
-                Terminal::getInstance().printOnCondition("to create framebuffer",result!=VK_SUCCESS,result);
+                Terminal::getInstance().printOnCondition("to create framebuffer in swapchain ",result!=VK_SUCCESS,result);
 
 
             }
@@ -490,7 +490,7 @@ namespace Vulkan{
 
             VkResult result = vkCreateImageView(device, &viewInfo, nullptr,
                                                 &imageView);
-            Terminal::getInstance().printOnCondition("to create image view",result!=VK_SUCCESS,result);
+            Terminal::getInstance().printOnCondition("to create image view in swapchain ",result!=VK_SUCCESS,result);
 
             return imageView;
         }
@@ -614,10 +614,45 @@ namespace Vulkan{
 
             VkResult result = vkCreateRenderPass(getChoosenDevice(), &renderPassInfo, nullptr,
                                                  &renderPass);
-            Terminal::getInstance().printOnCondition("to create render pass",result!=VK_SUCCESS,result);
+            Terminal::getInstance().printOnCondition("to create render pass in swapchain ",result!=VK_SUCCESS,result);
 
         }
 
+
+        void destroy(){
+
+            vkDestroyRenderPass(getChoosenDevice(),renderPass, nullptr);
+            Terminal::getInstance().printDestroy(" destroy render pass in swapchain ");
+
+            vkDestroyImage(getChoosenDevice(),colorImage, nullptr);
+            vkFreeMemory(getChoosenDevice(), colorImageMemory, nullptr);
+            Terminal::getInstance().printDestroy("destroy color image in swapchain ");
+            vkDestroyImageView(getChoosenDevice(),colorImageView, nullptr);
+            Terminal::getInstance().printDestroy(" destroy color image view buffer in swapchain ");
+
+            vkDestroyImage(getChoosenDevice(),depthImage, nullptr);
+            vkFreeMemory(getChoosenDevice(), depthImageMemory, nullptr);
+            vkDestroyImageView(getChoosenDevice(),depthImageView, nullptr);
+            Terminal::getInstance().printDestroy(" destroy depth image view buffer in swapchain ");
+
+
+            for(int i=0;i<swapChainFramebuffers.size();i++){
+                vkDestroyFramebuffer(getChoosenDevice(),swapChainFramebuffers[i], nullptr);
+                Terminal::getInstance().printDestroy(" destroy frame buffer in swapchain ");
+
+            }
+
+
+            for(int i=0;i<swapChainImageViews.size();i++){
+                vkDestroyImageView(getChoosenDevice(),swapChainImageViews[i], nullptr);
+                Terminal::getInstance().printDestroy(" destroy image view buffer in swapchain ");
+
+            }
+
+            vkDestroySwapchainKHR(getChoosenDevice(),swapChain, nullptr);
+            Terminal::getInstance().printDestroy(" destroy   swapchain ");
+
+        }
 
     };
 }

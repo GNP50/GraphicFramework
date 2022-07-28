@@ -56,6 +56,7 @@ namespace Vulkan {
         void setAndCreateSwapChain();
         void createSyncObjects();
         void drawFrame();
+        void destroy();
 
         void createCommandPool() {
             auto queueFamilyIndices =  deviceRepository->getUniqueIndicies<vector<uint32_t>>(
@@ -181,6 +182,7 @@ namespace Vulkan {
             }
 
             vkDeviceWaitIdle(swapChain->getChoosenDevice());
+            this->destroy();
         }
 
     };
