@@ -1871,7 +1871,7 @@ bool Model::operator==(const Model &other) const {
          this->lights == other.lights && this->materials == other.materials &&
          this->meshes == other.meshes && this->nodes == other.nodes &&
          this->samplers == other.samplers && this->scenes == other.scenes &&
-         this->skins == other.skins && this->textures == other.textures;
+         this->skins == other.skins && this->textures== other.textures;
 }
 bool Node::operator==(const Node &other) const {
   return this->camera == other.camera && this->children == other.children &&

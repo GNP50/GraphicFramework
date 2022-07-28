@@ -15,9 +15,13 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 0) out vec3 col;
+layout(location = 1) in vec3 norm;
+layout(location = 2) in vec2 textCoords;
+
+
+layout(location = 0) out vec2 col;
 
 void main() {
     gl_Position = ubo.mvpMat*vec4(inPosition,1.0);
-    col = colors[gl_VertexIndex%3];
+    col = textCoords;
 }

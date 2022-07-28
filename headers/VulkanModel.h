@@ -70,7 +70,10 @@ namespace Vulkan {
 
             for (auto toAdd: objects) {
                 int i = 0;
+                auto textCoords = toAdd.getTextCoords();
                 for (auto vert: toAdd.getVertex()) {
+
+                    vertex[i].texCoord = textCoords.size() > 0 ? textCoords[i%textCoords.size()] : glm::vec2(0.0f);
                     vertex[i++].pos = vert;
                 }
 

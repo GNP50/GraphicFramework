@@ -23,12 +23,15 @@ namespace Vulkan {
 
 
     protected:
+        vector<glm::vec2> textCoords;
 
 
         void setVertexesAndIndicies(vector<glm::vec3> &vert,vector<int> &ind){
             Object *obj = new Object();
             obj->setVertex(vert);
             obj->setIndicies(ind);
+            obj->setTextCoords(textCoords);
+
 
             this->model = new Model();
             model->setDeviceRepository(this->deviceRepository);
@@ -46,6 +49,8 @@ namespace Vulkan {
             descrPool->addDescriptorSet<UniformBufferObject>(*ubo);
 
             texture = new TextureBuffer<stbi_uc *>(textPath);
+            texture->createBuffers(*swap);
+            descrPool->addDescriptorSet<stbi_uc *>(*texture);
         }
 
         virtual void update() override{
@@ -75,6 +80,10 @@ namespace Vulkan {
             app.push_back(third);
 
             vector<int> ind = {{1,2,3}};
+
+            textCoords.push_back(glm::vec2(0.0,0.5));
+            textCoords.push_back(glm::vec2(0.5,0.5));
+            textCoords.push_back(glm::vec2(0.0,0.0));
 
             TexturedRender::setVertexesAndIndicies(app,ind);
             createPipeline(*this->swapChain);
