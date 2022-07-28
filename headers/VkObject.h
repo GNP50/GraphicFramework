@@ -12,6 +12,7 @@ namespace Vulkan{
     class Object{
     protected:
         vector<glm::vec3> vertexes;
+        vector<glm::vec2> textCoords;
         vector<int> indicies;
         vector<glm::vec2> uvs;
 
@@ -20,11 +21,12 @@ namespace Vulkan{
     public:
         void setVertex(vector<glm::vec3> vertex);
         void setIndicies(vector<int> indicies);
-
+        void setTextCoords(vector<glm::vec2> coords);
         virtual void loadData(){};
     public:
         const vector<glm::vec3> &getVertex() const;
         const vector<int> &getIndicies() const;
+        const vector<glm::vec2> &getTextCoords() const;
 
         void create(bool points = false){
             this->loadData();

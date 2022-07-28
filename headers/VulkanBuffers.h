@@ -8,10 +8,7 @@
 #include "VulkanDevices.h"
 #include "VulkanSwapChain.h"
 
-#ifndef STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#endif
 
 #include "string.h"
 
@@ -226,6 +223,9 @@ namespace Vulkan {
             vkFreeMemory(this->device, this->bufferMemory, nullptr);
         }
 
+        virtual void setBufferSize(uint64_t size){
+            this->bufferSize = size;
+        }
 
         virtual void create() override {
             this->createBuffer();
@@ -351,6 +351,7 @@ namespace Vulkan {
         const TextureData &getTextureData(){return textData;}
 
         virtual void create() override {
+            this->createCommandPool();
             createTextureImage();
             createImageView(VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_VIEW_TYPE_2D, 1);
 
@@ -359,7 +360,8 @@ namespace Vulkan {
         void createTextureImage() {
             stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight,
                                         &texChannels, STBI_rgb_alpha);
-            Terminal::getInstance().printOnCondition("to load pixels for texture " + path,pixels,"");
+            if (stbi_failure_reason()) std::cout << stbi_failure_reason();
+            Terminal::getInstance().printOnCondition("to load pixels for texture " + path,pixels == NULL,"");
 
 
             VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -367,13 +369,16 @@ namespace Vulkan {
                     std::log2(std::max(texWidth, texHeight)))) + 1;
 
             //create staging buffer
-            VkStagingBuffer<BufferDataType> stagingBuffer(this->size, this->phyDeviceOff,
+            VkStagingBuffer<BufferDataType> stagingBuffer(imageSize, this->phyDeviceOff,
                                                           vector<BufferDataType>(imageSize));
+
             stagingBuffer.setData(vector<BufferDataType>{{pixels}});
             stagingBuffer.setPhysicalDevice(this->physicalDevice);
+
+
+            stagingBuffer.setBufferSize(imageSize);
             stagingBuffer.create();
 
-            stbi_image_free(pixels);
 
             createImage(
                         VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
@@ -389,6 +394,8 @@ namespace Vulkan {
             generateMipmaps(textData.textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                             texWidth, texHeight, textData.mipLevels, 1);
 
+            createTextureSampler();
+            stbi_image_free(pixels);
 
         };
 
@@ -698,8 +705,7 @@ namespace Vulkan {
                       const VkStructureType write_type
         ) : type(type), write_type(write_type) {
             layoutBinding.descriptorCount = 1;
-
-
+            layoutBinding.descriptorType = type;
             // we use it from the vertex shader
             layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         }
@@ -714,6 +720,7 @@ namespace Vulkan {
 
         }
 
+        void setStage(VkShaderStageFlags stage){layoutBinding.stageFlags = stage;}
     };
 
     class DescriptorPool {
@@ -827,7 +834,7 @@ namespace Vulkan {
             poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
             poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
             poolInfo.pPoolSizes = poolSizes.data();
-            poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size() * (0 + 2));
+            poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size() * poolSizes.size());
 
 
             VkResult result = vkCreateDescriptorPool(swapchain.getChoosenDevice(), &poolInfo, nullptr,
@@ -841,7 +848,7 @@ namespace Vulkan {
 
         void allocateDescriptorSets(VkSwapChain &swapChain) {
             auto swapChainImages = swapChain.getSwapChainImages();
-            layouts.resize(swapChainImages.size() * bindings.size(), descriptorSetLayout);
+            layouts.resize(swapChainImages.size(), descriptorSetLayout);
 
             VkDescriptorSetAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -955,7 +962,7 @@ namespace Vulkan {
                     .begin();
 
 
-            new  VkUniformBuffer<BufferDataType>(sizeof(BufferDataType), choosen);
+            return new  VkUniformBuffer<BufferDataType>(sizeof(BufferDataType), choosen);
         }
 
     };
@@ -965,18 +972,25 @@ namespace Vulkan {
         string path;
     public:
         TextureBuffer(string path): GenericBufferHandler<BufferDataType, VkTextureMapper<BufferDataType>>(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),path(path){
-
+            this->setStage(VK_SHADER_STAGE_FRAGMENT_BIT);
         }
 
-    protected:
-        virtual void createBuffers(VkSwapChain &swapchain,BufferDataType &dataType){
+        virtual void createBuffers(VkSwapChain &swapchain){
             auto buff = createBuffer(swapchain);
+            buff->setPhysicalDevice(swapchain.getDeviceRepository());
+            buff->setLogicalDevice();
+
+            buff->create();
             this->imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
             auto texture = buff->getTextureData();
 
             this->imageInfo.imageView = texture.textureImageView;
             this->imageInfo.sampler = texture.textureSampler;
+        }
+    protected:
+        virtual void createBuffers(VkSwapChain &swapchain,BufferDataType &dataType){
+
 
         }
 
@@ -987,7 +1001,7 @@ namespace Vulkan {
                     .begin();
 
 
-            new VkTextureMapper<BufferDataType>(sizeof(BufferDataType), choosen,path);
+            return new VkTextureMapper<BufferDataType>(sizeof(BufferDataType), choosen,path);
         }
     };
 

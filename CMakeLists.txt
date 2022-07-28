@@ -17,6 +17,7 @@ add_library(DB STATIC
         implementations/VulkanAppConfiguration.cpp
         implementations/Terminal.cpp
         implementations/GraphicsFramework.cpp
+        implementations/VulkanBuffers.cpp
 
         headers/Terminal.h
         headers/VulkanFramework.h
