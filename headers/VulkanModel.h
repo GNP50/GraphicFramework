@@ -135,7 +135,18 @@ namespace Vulkan {
     public:
         VkFragmentShader *getFragShader() const;
         VkVertexShader *getVertexShader() const;
-        virtual void update() {};
+        virtual void update(GLFWwindow *window) {
+
+        };
+
+
+        void recreate(shared_ptr<VkSwapChain> swap ){
+            swapChain = swap;
+
+            descrPool->destroy();
+            delete descrPool;
+            descrPool = new DescriptorPool(swapChain,deviceRepository);
+        }
 
     protected:
 
@@ -146,6 +157,10 @@ namespace Vulkan {
             descrPool(new DescriptorPool(swapChain,deviceRepository)){
 
         }
+
+
+
+
     public:
         Render(std::shared_ptr<VkPhyDevice>deviceRepo,VkPipeLine *pipeLine,std::shared_ptr<VkSwapChain> swapChain,Model* model): Render(deviceRepository,swapChain){
             this->pipeline = pipeLine;

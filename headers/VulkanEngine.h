@@ -6,6 +6,7 @@
 #define DB_VULKANENGINE_H
 
 #include "commonVulkanIncludes.h"
+
 #include "VulkanAppConfiguration.h"
 namespace Vulkan {
     static  bool debug = true;
@@ -92,8 +93,30 @@ namespace Vulkan {
             this->createSurface();
         }
 
+        template<typename Render>
+        bool mainLoop(vector<Render> renders){
+        if(!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
 
-        virtual void setAppConfig(VkAppConfiguration config) override;
+            std::this_thread::sleep_for(100ms);
+
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+                return false;
+            }
+
+            for(auto render:renders)
+                render->update(window);
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+
+
+    virtual void setAppConfig(VkAppConfiguration config) override;
 
         virtual void setInstance() override;
 
@@ -106,7 +129,6 @@ namespace Vulkan {
 
         virtual void setResizeWindowCallBack(void *newFunc) override;
 
-        bool mainLoop() override;
 
         virtual bool checkValidationLayerSupport() override;
 
@@ -179,7 +201,9 @@ namespace Vulkan {
                 const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
 
 
-    private:
+
+
+
     };
 }
 

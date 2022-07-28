@@ -238,7 +238,6 @@ namespace Vulkan {
         ~VkStagingBuffer(){
             vkDestroyBuffer(this->device, getBuffer(), nullptr);
             vkFreeMemory(this->device, this->bufferMemory, nullptr);
-            vkDestroyCommandPool(this->device,this->commandPool, nullptr);
 
             Terminal::getInstance().printDestroy(" staging buffer destroied ");
 

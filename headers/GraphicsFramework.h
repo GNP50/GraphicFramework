@@ -551,7 +551,6 @@ public:
 
     virtual void setResizeWindowCallBack(void *newFunc) = 0;
 
-    virtual bool mainLoop() = 0;
 
     //debug helper
     virtual void setupDebugMessenger(void (*callBack)()) = 0;

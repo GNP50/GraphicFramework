@@ -174,11 +174,9 @@ namespace Vulkan {
              this->renders.push_back(r);
         }
         void mainLoop() {
-            while (deviceRepository->getEngine().mainLoop()) {
+            while (deviceRepository->getEngine().mainLoop(renders)) {
                 drawFrame();
 
-                for(auto render:renders)
-                    render->update();
             }
 
             vkDeviceWaitIdle(swapChain->getChoosenDevice());

@@ -32,6 +32,8 @@ namespace Vulkan{
             this->loadData();
 
             this->setVertex(vertexes);
+            this->setTextCoords(uvs);
+
             if(!points)
                 this->setIndicies(indicies);
             else{
@@ -56,6 +58,9 @@ namespace Vulkan{
     class BlenderObj : public Object{
 
         string filename;
+        vector<glm::vec2> file_uv;
+        vector<glm::vec3> file_vert;
+        vector<glm::vec<3,uint>> file_ind;
 
 
         virtual void loadData() override{
@@ -73,14 +78,21 @@ namespace Vulkan{
                         parseTextureUV(line);
 
             }
+
+            int j=1;
+            for(auto i:file_ind){
+                vertexes.push_back(file_vert[i.x]);
+                uvs.push_back(file_uv[i.y]);
+                indicies.push_back(j++);
+            }
         }
 
         void parseVertex(string vertex){
             auto vertexes = splitLine(vertex,' ');
-            this->vertexes.push_back(glm::vec3{
+            this->file_vert.push_back(glm::vec3{
                     std::stof(vertexes[1]),
                     std::stof(vertexes[2]),
-                    std::stof(vertexes[3])});
+                    std::stof(vertexes[3])-2.0f});
         }
 
         void parseIndex(string index){
@@ -92,14 +104,17 @@ namespace Vulkan{
 
             for(auto ind:indexes) {
                 auto inds = splitLine(ind,'/');
-                this->indicies.push_back(std::stoi(inds[0]));
+                this->file_ind.push_back(glm::vec<3,uint>(
+                        std::stoi(inds[0]),
+                        std::stoi(inds[1]),
+                        std::stoi(inds[2])));
             }
 
         }
 
         void parseTextureUV(string uv){
             auto uvs = splitLine(uv,' ');
-            this->uvs.push_back(glm::vec2{
+            this->file_uv.push_back(glm::vec2{
                     std::stof(uvs[1]),
                     std::stof(uvs[2])});
         }

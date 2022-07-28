@@ -43,7 +43,6 @@ TEST_F(WindowTestFixture, Assignment12){ // 1/1/1 -> 1/3/1
     for(auto ext:configuration.extension)
         cout<<ext<<"\n";
 
-    while(engine->mainLoop());
 }
 
 #endif //DB_WINDOWSTESTS_H

@@ -22,6 +22,11 @@ void Enviroment::SetUp() {
 
 }
 void Enviroment::setAndCreateSwapChain() {
+    if(swapChain != nullptr) {
+        swapChain  = std::make_shared<VkSwapChain>(*(new VkSwapChain()));
+    }
+
+
     swapChain->setDeviceRepository(deviceRepository);
 
     auto cap = VkSurfaceCapabilitiesKHR();
@@ -145,8 +150,7 @@ void Enviroment::drawFrame() {
     }
     imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
-    //todo decide how to put
-    //updateUniformBuffer(imageIndex);
+
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -166,6 +170,11 @@ void Enviroment::drawFrame() {
 
     result = vkQueueSubmit(deviceRepository->graphicsQueue, 1, &submitInfo,
                       inFlightFences[currentFrame]);
+
+    if(result == VK_SUBOPTIMAL_KHR){
+        this->swapChain->destroy();
+        this->setAndCreateSwapChain();
+    }
     Terminal::getInstance().printOnCondition("to create submit command queue at frame "+currentFrame,result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
 
 
@@ -184,15 +193,10 @@ void Enviroment::drawFrame() {
 
     result = vkQueuePresentKHR(deviceRepository->presentQueue, &presentInfo);
 
-    /** todo decide how to handle
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
-        framebufferResized) {
-        framebufferResized = false;
-        recreateSwapChain();
-    } else **/if (result != VK_SUCCESS) {
-        throw std::runtime_error("failed to present swap chain image!");
-        return;
-    }
+    /**if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ) {
+        this->swapChain->destroy();
+        this->setAndCreateSwapChain();
+    }**/
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }

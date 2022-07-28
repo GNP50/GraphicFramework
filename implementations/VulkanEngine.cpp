@@ -1,5 +1,6 @@
 #include "VulkanEngine.h"
 
+
 using namespace Vulkan;
 
 void VkEngine::setAppConfig(VkAppConfiguration config = VkAppConfiguration()) {
@@ -129,59 +130,10 @@ std::vector<const char *> VkEngine::getRequiredInstanceExtensions() {
 }
 
 
-bool VkEngine::mainLoop() {
-    if(!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-
-        std::this_thread::sleep_for(100ms);
-
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
 
 
 
 void VkEngine::cleanup() {
-    /*
-
-cleanupSwapChain();
-
-for (size_t i = 0; i < Scene.size(); i++) {
-    vkDestroySampler(device, Scene[i].TD.textureSampler, nullptr);
-    vkDestroyImageView(device, Scene[i].TD.textureImageView, nullptr);
-    vkDestroyImage(device, Scene[i].TD.textureImage, nullptr);
-    vkFreeMemory(device, Scene[i].TD.textureImageMemory, nullptr);
-
-    vkDestroyBuffer(device, Scene[i].MD.indexBuffer, nullptr);
-    vkFreeMemory(device, Scene[i].MD.indexBufferMemory, nullptr);
-
-    vkDestroyBuffer(device, Scene[i].MD.vertexBuffer, nullptr);
-    vkFreeMemory(device, Scene[i].MD.vertexBufferMemory, nullptr);
-}
-
-vkDestroyDescriptorSetLayout(device, PhongDescriptorSetLayout, nullptr);
-
-for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-    vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-    vkDestroyFence(device, inFlightFences[i], nullptr);
-}
-
-vkDestroyCommandPool(device, commandPool, nullptr);
-
-vkDestroyDevice(device, nullptr);
-
-if (enableValidationLayers) {
-    DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-}*/
-
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 
@@ -200,123 +152,4 @@ void VkEngine::setResizeWindowCallBack(void *newFunc) {
     this->framebufferResizeCallback = framebufferResizeCallback;
 };
 
-/**todo decide how to put into
-void VkEngine::updateUniformBuffer(uint32_t currentImage) {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-    static float lastTime = 0.0f;
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>
-            (currentTime - startTime).count();
-    float deltaT = time - lastTime;
-    lastTime = time;
-
-    static float debounce = time;
-
-
-
-
-    const float ROT_SPEED = glm::radians(60.0f);
-    const float MOVE_SPEED = 1.25f;
-    const float MOUSE_RES = 500.0f;
-
-    static double old_xpos = 0, old_ypos = 0;
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    double m_dx = xpos - old_xpos;
-    double m_dy = ypos - old_ypos;
-    old_xpos = xpos; old_ypos = ypos;
-//std::cout << xpos << " " << ypos << " " << m_dx << " " << m_dy << "\n";
-
-    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
-    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        CamAng.y += m_dx * ROT_SPEED / MOUSE_RES;
-        CamAng.x += m_dy * ROT_SPEED / MOUSE_RES;
-    }
-
-    if(glfwGetKey(window, GLFW_KEY_LEFT)) {
-        CamAng.y += deltaT * ROT_SPEED;
-    }
-    if(glfwGetKey(window, GLFW_KEY_RIGHT)) {
-        CamAng.y -= deltaT * ROT_SPEED;
-    }
-    if(glfwGetKey(window, GLFW_KEY_UP)) {
-        CamAng.x += deltaT * ROT_SPEED;
-    }
-    if(glfwGetKey(window, GLFW_KEY_DOWN)) {
-        CamAng.x -= deltaT * ROT_SPEED;
-    }
-    if(glfwGetKey(window, GLFW_KEY_Q)) {
-        CamAng.z -= deltaT * ROT_SPEED;
-    }
-    if(glfwGetKey(window, GLFW_KEY_E)) {
-        CamAng.z += deltaT * ROT_SPEED;
-    }
-
-    glm::mat3 CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.y, glm::vec3(0.0f, 1.0f, 0.0f))) *
-                       glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.x, glm::vec3(1.0f, 0.0f, 0.0f))) *
-                       glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.z, glm::vec3(0.0f, 0.0f, 1.0f)));
-
-
-    if(glfwGetKey(window, GLFW_KEY_A)) {
-        CamPos -= MOVE_SPEED * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                     glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(1,0,0,1)) * deltaT;
-    }
-    if(glfwGetKey(window, GLFW_KEY_D)) {
-        CamPos += MOVE_SPEED * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                     glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(1,0,0,1)) * deltaT;
-    }
-    if(glfwGetKey(window, GLFW_KEY_S)) {
-        CamPos += MOVE_SPEED * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                     glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0,0,1,1)) * deltaT;
-    }
-    if(glfwGetKey(window, GLFW_KEY_W)) {
-        CamPos -= MOVE_SPEED * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                     glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0,0,1,1)) * deltaT;
-    }
-    if(glfwGetKey(window, GLFW_KEY_F)) {
-        CamPos -= MOVE_SPEED * glm::vec3(0,1,0) * deltaT;
-    }
-    if(glfwGetKey(window, GLFW_KEY_R)) {
-        CamPos += MOVE_SPEED * glm::vec3(0,1,0) * deltaT;
-    }
-// std::cout << "Cam Pos: " << CamPos[0] << " " << CamPos[1] << " " << CamPos[2] << "\n";
-
-    glm::mat4 CamMat = glm::translate(glm::transpose(glm::mat4(CamDir)), -CamPos);
-
-    glm::mat4 Prj = glm::perspective(glm::radians(45.0f),
-                                     width / (float) heigth,
-                                     0.1f, 50.0f);
-    Prj[1][1] *= -1;
-
-    {
-        int j = 0;
-        UniformBufferObject ubo{};
-        glm::vec3 delta;
-
-        ubo.mMat = glm::mat4(1);
-
-        ubo.mvpMat = Prj * CamMat * ubo.mMat;
-        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-
-        int i = j * swapChainImages.size() + currentImage;
-
-        void* data;
-        vkMapMemory(, uniformBuffersMemory[i], 0,
-                    sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(device, uniformBuffersMemory[i]);
-    }
-
-    // updates global uniforms
-    GlobalUniformBufferObject gubo{};
-    gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)), sin(glm::radians(135.0f)), 0.0f);
-    gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    gubo.eyePos = CamPos;
-
-    void* data;
-    vkMapMemory(device, globalUniformBuffersMemory[currentImage], 0,
-                sizeof(gubo), 0, &data);
-    memcpy(data, &gubo, sizeof(gubo));
-    vkUnmapMemory(device, globalUniformBuffersMemory[currentImage]);
-}**/
