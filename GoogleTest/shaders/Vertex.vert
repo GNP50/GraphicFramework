@@ -22,6 +22,6 @@ layout(location = 2) in vec2 textCoords;
 layout(location = 0) out vec2 col;
 
 void main() {
-    gl_Position = ubo.mvpMat*vec4(inPosition,1.0);
+    gl_Position = ubo.mvpMat*ubo.mMat*vec4(inPosition,1.0);
     col = textCoords;
 }

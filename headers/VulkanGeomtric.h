@@ -60,6 +60,9 @@ namespace Vulkan {
             texture->createBuffers(*swap);
             descrPool->addDescriptorSet<stbi_uc *>(*texture);
 
+            hostUbo.mvpMat = ProjectBuffer::instance(1.0,-1.0,10.0f)->
+                    cabinetProj(this->a);
+
         }
 
         void recreate(shared_ptr<VkSwapChain> swap ){
@@ -81,7 +84,7 @@ namespace Vulkan {
             }else if (glfwGetKey(window, GLFW_KEY_Q)){
                 angle -=speed;
             }else if (glfwGetKey(window, GLFW_KEY_W)){
-                angle +=speed;
+                angle +=3.0f;
             }
 
 
@@ -91,7 +94,6 @@ namespace Vulkan {
                     .doTransformations<glm::mat4>();
 
             hostUbo.mMat = m;
-            hostUbo.mvpMat = m;
             hostUbo.nMat = m;
 
             ubo->updateData(hostUbo);

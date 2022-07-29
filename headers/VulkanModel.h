@@ -132,6 +132,9 @@ namespace Vulkan {
         VkFragmentShader *fragShader;
         VkVertexShader *vertexShader;
 
+        float a;
+
+
     public:
         VkFragmentShader *getFragShader() const;
         VkVertexShader *getVertexShader() const;
@@ -155,6 +158,9 @@ namespace Vulkan {
             deviceRepository(repo),
             swapChain(swap),
             descrPool(new DescriptorPool(swapChain,deviceRepository)){
+
+            auto swapChainExtent = swapChain->getSwapChainExtent();
+            a = swapChainExtent.width / (float) swapChainExtent.height;
 
         }
 
