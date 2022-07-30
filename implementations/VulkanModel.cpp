@@ -18,7 +18,7 @@ void Render::createPipeline(VkSwapChain &swapChain) {
     pipeline = new VkPipeLine(*fragShader, *vertexShader, deviceRepository);
     descrPool->createDescriptorPool(swapChain);
     pipeline->setDescriptorSetLayout(descrPool->getLayouts());
-    pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_POINT);
+    pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_FILL);
 
     descrPool->allocateDescriptorSets(swapChain);
 
@@ -39,7 +39,7 @@ void Render::createCommandBuffers(VkCommandBuffer commandBuffer,int i) {
 
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0,
-                         VK_INDEX_TYPE_UINT16);
+                         VK_INDEX_TYPE_UINT32);
     auto descriptorsets = descrPool->getDescriptorSets();
 
 

@@ -36,7 +36,7 @@ namespace Vulkan {
             this->copyData();
 
             vertexBuffer = new VkVertexBuffer<Vertex>(vertex.size() * 3, this->choosenDevice);
-            indBuffer = new VkIndexBuffer<int>(indicies.size() * 3, this->choosenDevice);
+            indBuffer = new VkIndexBuffer<int>(indicies.size() , this->choosenDevice);
 
             vertexBuffer->setPhysicalDevice(deviceRepository);
             indBuffer->setPhysicalDevice(deviceRepository);
@@ -133,7 +133,8 @@ namespace Vulkan {
         VkVertexShader *vertexShader;
 
         float a;
-
+        float f = 15.0;
+        float n = 1.0f;
 
     public:
         VkFragmentShader *getFragShader() const;
@@ -142,6 +143,8 @@ namespace Vulkan {
 
         };
 
+
+        void setF(float f){this->f = f;}
 
         void recreate(shared_ptr<VkSwapChain> swap ){
             swapChain = swap;

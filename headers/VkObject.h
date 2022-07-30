@@ -13,19 +13,19 @@ namespace Vulkan{
     protected:
         vector<glm::vec3> vertexes;
         vector<glm::vec2> textCoords;
-        vector<int> indicies;
+        vector<uint32_t> indicies;
         vector<glm::vec2> uvs;
 
         vector<UniformBuffer<UniformBufferObject>> ubo;
 
     public:
         void setVertex(vector<glm::vec3> vertex);
-        void setIndicies(vector<int> indicies);
+        void setIndicies(vector<uint32_t> indicies);
         void setTextCoords(vector<glm::vec2> coords);
         virtual void loadData(){};
     public:
         const vector<glm::vec3> &getVertex() const;
-        const vector<int> &getIndicies() const;
+        const vector<uint32_t> &getIndicies() const;
         const vector<glm::vec2> &getTextCoords() const;
 
         void create(bool points = false){
@@ -62,12 +62,16 @@ namespace Vulkan{
         vector<glm::vec3> file_vert;
         vector<glm::vec<3,uint>> file_ind;
 
+        const int triangle_in_a_face = 2;
 
         virtual void loadData() override{
             std::ifstream file(filename);
             std::string line;
             while (std::getline(file, line))
             {
+                if(line.empty())
+                    continue;
+
                 auto start = splitLine(line,' ')[0];
 
                 if(start == "v")
@@ -79,11 +83,29 @@ namespace Vulkan{
 
             }
 
-            int j=1;
-            for(auto i:file_ind){
-                vertexes.push_back(file_vert[i.x]);
-                uvs.push_back(file_uv[i.y]);
-                indicies.push_back(j++);
+            int f=0;
+            for(int i=0;i<file_ind.size();i+=3*triangle_in_a_face-2){
+                    for(int j=0;j<3;j++){
+                        auto ind_to_select = file_ind[i+j];
+                        vertexes.push_back(file_vert[ind_to_select.x]);
+                        uvs.push_back(file_uv[ind_to_select.y]);
+                        indicies.push_back(f++);
+                    }
+
+                    auto ind_to_select = file_ind[i+2];
+                    vertexes.push_back(file_vert[ind_to_select.x]);
+                    uvs.push_back(file_uv[ind_to_select.y]);
+                    indicies.push_back(f++);
+
+                    ind_to_select = file_ind[i+3];
+                    vertexes.push_back(file_vert[ind_to_select.x]);
+                    uvs.push_back(file_uv[ind_to_select.y]);
+                    indicies.push_back(f++);
+
+                    ind_to_select = file_ind[i];
+                    vertexes.push_back(file_vert[ind_to_select.x]);
+                    uvs.push_back(file_uv[ind_to_select.y]);
+                    indicies.push_back(f++);
             }
         }
 
@@ -92,7 +114,8 @@ namespace Vulkan{
             this->file_vert.push_back(glm::vec3{
                     std::stof(vertexes[1]),
                     std::stof(vertexes[2]),
-                    std::stof(vertexes[3])-2.0f});
+                    std::stof(vertexes[3])}
+                    );
         }
 
         void parseIndex(string index){
@@ -105,9 +128,9 @@ namespace Vulkan{
             for(auto ind:indexes) {
                 auto inds = splitLine(ind,'/');
                 this->file_ind.push_back(glm::vec<3,uint>(
-                        std::stoi(inds[0]),
-                        std::stoi(inds[1]),
-                        std::stoi(inds[2])));
+                        std::stoi(inds[0])-1,
+                        std::stoi(inds[1])-1,
+                        std::stoi(inds[2])-1));
             }
 
         }

@@ -336,7 +336,7 @@ public:
     glm::mat4  perspectiveProj(
             float tetha ,
             float ration,
-            std::map<Screen,float> mapping
+            std::map<Screen,float> mapping = {}
     ) {
 
         float t,b,r,l;

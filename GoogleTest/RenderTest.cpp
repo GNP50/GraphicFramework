@@ -18,20 +18,23 @@ protected:
     virtual void SetUp() {
         enviroment = new Enviroment("triangle test");
 
-        new Triangle(
-                vec3(0.5,0.5,0),
-                vec3(-0.5,-0.5,0),
-                vec3(0.5,-0.5,0),"textures/triangle.png",
-                *enviroment
-        );
+        //new BlenderRender("objs/triangle.obj","textures/triangle.png",*enviroment);
+        //new Sky("textures/triangle.png",*enviroment);
+        new BlenderRender("objs/legofriends.obj","objs/paesaggio.png",*enviroment);
+        /**
+            new Triangle(
+                      vec3(-1,-1,0),
+                      vec3(1,-1,0),
+                      vec3(1,1,0),"textures/triangle.png",
+                      *enviroment
+              );
 
-
-        new Triangle(
-                vec3(0.4,0.1,0),
-                vec3(-0.4,-0.1,0),
-                vec3(0.4,-0.1,0),"textures/triangle.png",
-                *enviroment
-        );
+              new Triangle(
+                      vec3(0.4,0.1,0),
+                      vec3(-0.4,-0.1,0),
+                      vec3(0.4,-0.1,0),"textures/triangle.png",
+                      *enviroment
+              );**/
 
 
         enviroment->createRender();

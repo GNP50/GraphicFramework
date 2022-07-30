@@ -173,7 +173,7 @@ namespace Vulkan{
 
 
         void createPipelineWithPolyMode(VkSwapChain& swapchain,  VkPolygonMode polyModel){
-            this->createPipeline(swapchain,polyModel,VK_COMPARE_OP_LESS,VK_POLYGON_MODE_FILL,VK_CULL_MODE_NONE);
+            this->createPipeline(swapchain,false,VK_COMPARE_OP_LESS,polyModel,VK_CULL_MODE_NONE);
         }
         void createPipeline(VkSwapChain& swapchain, bool transp = false,VkCompareOp compareOp = VK_COMPARE_OP_LESS,VkPolygonMode polyModel = VK_POLYGON_MODE_FILL,VkCullModeFlags CM = VK_CULL_MODE_NONE) {
             msaaSamples = swapchain.getMaxUsableSampleCount();
