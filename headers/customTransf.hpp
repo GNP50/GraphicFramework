@@ -230,12 +230,7 @@ public:
     static TransfBuff* instance();
 };
 
-TransfBuff* TransfBuff::instance(){
-    static TransfBuff *instance;
-    instance = new TransfBuff();
 
-    return instance;
-}
 
 
 class ProjectBuffer{
@@ -383,22 +378,13 @@ public:
 };
 
 
-ProjectBuffer* ProjectBuffer::instance(
-        float w = 1.0f,
-        float n = 1.0f,
-        float f = 1.0f
-){
-    static ProjectBuffer *instance;
-    instance = new ProjectBuffer(w,n,f);
 
-    return instance;
-}
 
-class Camera{
+class Camera_{
 private:
     glm::vec3 position;
 public:
-    Camera(glm::vec3 position){
+    Camera_(glm::vec3 position){
         this->position = position;
     }
 
@@ -443,9 +429,9 @@ public:
         return glm::inverse(toRet);
     }
 
-    static Camera* instance(glm::vec3 position){
-        static Camera *instance;
-        instance = new Camera(position);
+    static Camera_* instance(glm::vec3 position){
+        static Camera_ *instance;
+        instance = new Camera_(position);
 
         return instance;
     }

@@ -64,3 +64,7 @@ VkVertexShader *Render::getVertexShader() const {
     return vertexShader;
 }
 
+void Render::setN(float n) {
+    Render::n = n;
+}
+

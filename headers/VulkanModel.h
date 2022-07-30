@@ -120,6 +120,8 @@ namespace Vulkan {
     protected:
         std::shared_ptr<VkPhyDevice> deviceRepository;
         std::shared_ptr<VkSwapChain> swapChain;
+        std::shared_ptr<UniformBuffer<UniformBufferObject>> gubo;
+
         Model *model;
 
         DescriptorPool *descrPool;
@@ -135,6 +137,8 @@ namespace Vulkan {
         float a;
         float f = 15.0;
         float n = 1.0f;
+    public:
+        void setN(float n);
 
     public:
         VkFragmentShader *getFragShader() const;
@@ -157,21 +161,26 @@ namespace Vulkan {
     protected:
 
 
-        Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap):
+        Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,shared_ptr<UniformBuffer<UniformBufferObject>> gubo):
             deviceRepository(repo),
             swapChain(swap),
-            descrPool(new DescriptorPool(swapChain,deviceRepository)){
+            descrPool(new DescriptorPool(swapChain,deviceRepository)),gubo(gubo){
 
             auto swapChainExtent = swapChain->getSwapChainExtent();
             a = swapChainExtent.width / (float) swapChainExtent.height;
 
+            descrPool->addDescriptorSet(*gubo);
         }
 
 
 
 
     public:
-        Render(std::shared_ptr<VkPhyDevice>deviceRepo,VkPipeLine *pipeLine,std::shared_ptr<VkSwapChain> swapChain,Model* model): Render(deviceRepository,swapChain){
+        Render(std::shared_ptr<VkPhyDevice>deviceRepo,
+               VkPipeLine *pipeLine,std::shared_ptr<VkSwapChain> swapChain,
+               Model* model,
+               shared_ptr<UniformBuffer<UniformBufferObject>> gubo):
+               Render(deviceRepository,swapChain,gubo){
             this->pipeline = pipeLine;
             this->model = model;
         }

@@ -57,21 +57,7 @@ protected:
         choosenDevice = choosen;
 
     }
-    void createUniformBuffer(){
-        Object *wheel  = new BlenderObj("objs/wheel.obj");
 
-        wheel->create();
-
-        m = new Model();
-
-        m->setDeviceRepository(deviceRepository);
-
-        m->addObject(*wheel);
-        m->createBuffers();
-
-
-
-    }
     void setAndCreateSwapChain(){
         swapChain.setDeviceRepository(deviceRepository);
 
@@ -156,7 +142,7 @@ protected:
 
 
 };
-
+/**
 TEST_F(DeviceTestFixture, Assignment13){
     // 1/1/1 -> 1/3/1
     PrintAllDevicesName();
@@ -173,7 +159,7 @@ TEST_F(DeviceTestFixture, Assignment14){ // 1/1/1 -> 1/3/1
     assert(choosenDevice==0);
     setAndCreateSwapChain();
     assert(choosenDeviceSwapChain!=-1);
-}
+}**/
 
 
 

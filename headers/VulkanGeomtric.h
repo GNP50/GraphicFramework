@@ -16,16 +16,15 @@ namespace Vulkan {
     class TexturedRender:public Render{
         float angle = 0.0;
         float speed = 0.1;
-        vec3 ds = vec3 (0.0,0.0,0.0);
 
-        UniformBuffer<UniformBufferObject> *ubo;
-        UniformBufferObject hostUbo{};
+
         Object *obj;
         TextureBuffer<stbi_uc *> *texture;
 
 
     protected:
         vector<glm::vec2> textCoords;
+
 
 
         void setVertexesAndIndicies(vector<glm::vec3> &vert,vector<uint32_t> &ind){
@@ -50,17 +49,17 @@ namespace Vulkan {
             return new Object();
         }
     public:
-        TexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,string textPath):Render(repo,swap){
-            ubo =  new UniformBuffer<UniformBufferObject>();
-            ubo->createBuffers(*swap,hostUbo);
+        TexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,
+                       string textPath,
+                       shared_ptr<UniformBuffer<UniformBufferObject>> gubo):Render(repo,swap,gubo){
 
-            descrPool->addDescriptorSet<UniformBufferObject>(*ubo);
+
+            descrPool->addDescriptorSet<UniformBufferObject>(*gubo);
 
             texture = new TextureBuffer<stbi_uc *>(textPath);
             texture->createBuffers(*swap);
             descrPool->addDescriptorSet<stbi_uc *>(*texture);
 
-            hostUbo.mvpMat = ProjectBuffer::instance(1.0f,this->n,this->f)->perspectiveProj(glm::pi<float>()/6,a);
 
         }
 
@@ -72,30 +71,6 @@ namespace Vulkan {
 
         virtual void update(GLFWwindow *window) override{
 
-            if (glfwGetKey(window, GLFW_KEY_UP)) {
-                ds.z +=speed;
-            }else if (glfwGetKey(window, GLFW_KEY_DOWN)){
-                ds.z -=speed;
-            }else if (glfwGetKey(window, GLFW_KEY_LEFT)){
-                ds.x +=speed;
-            }else if (glfwGetKey(window, GLFW_KEY_RIGHT)){
-                ds.x -=speed;
-            }else if (glfwGetKey(window, GLFW_KEY_Q)){
-                angle -=speed;
-            }else if (glfwGetKey(window, GLFW_KEY_W)){
-                angle +=3.0f;
-            }
-
-
-            mat4 m = TransfBuff::instance()
-                    ->addTranslation(ds-vec3(0.f,0.f,this->n))
-                    ->addZRotation(angle)
-                    .doTransformations<glm::mat4>();
-
-            hostUbo.mMat = m;
-            hostUbo.nMat = m;
-
-            ubo->updateData(hostUbo);
         }
     };
     class Triangle : public TexturedRender {
@@ -103,7 +78,7 @@ namespace Vulkan {
         Triangle(vec3 first,
                  vec3 second,
                  vec3 third,const string textPath,
-                 Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath)
+                 Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
         {
             vector<glm::vec3> app = vector<vec3>();
             app.push_back(first);
@@ -126,19 +101,19 @@ namespace Vulkan {
         }
     };
 
-    class Sky:public TexturedRender{
+    class Sky: public TexturedRender{
     public:
         Sky(const string textPath,
-                Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath)
+                Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
         {
             vector<glm::vec3> app = vector<vec3>();
-            this->f = 0;
-            app.push_back({1,1,-this->f});
-            app.push_back({1,-1,-this->f});
-            app.push_back({-1,-1,-this->f});
-            app.push_back({-1,1,-this->f});
 
-            vector<uint32_t> ind = {1,2,3,3,1,4};
+            app.push_back({1,1,0});
+            app.push_back({1,-1,0.0});
+            app.push_back({-1,-1,0.0});
+            app.push_back({-1,1,0.0});
+
+            vector<uint32_t> ind = {0,1,2,2,0,3};
 
             createObject();
             textCoords.push_back({0.0,0.0});
@@ -154,7 +129,7 @@ namespace Vulkan {
             env.addRender(this);
         }
 
-        //virtual void update(GLFWwindow *window) override{}
+        virtual void update(GLFWwindow *window) override {}
     };
     class BlenderRender : public TexturedRender{
         string obj_path;
@@ -170,7 +145,7 @@ namespace Vulkan {
 
     public:
         BlenderRender(string obj,string textPath,
-                      Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath)
+                      Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
         {
             obj_path = obj;
             this->createObject();
