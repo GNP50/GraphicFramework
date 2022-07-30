@@ -26,7 +26,7 @@ protected:
         enviroment->addCamera(camera);
         enviroment->addCamera(camera2);
 
-        new BlenderRender("objs/landscape.obj","objs/landscape.png",*enviroment);
+        new BlenderRender("objs/landscape.obj","textures/terra.jpeg",*enviroment);
         //new Sky("textures/triangle.png",*enviroment);
         //new BlenderRender("objs/legofriends.obj","objs/paesaggio.png",*enviroment);
 /**

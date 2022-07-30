@@ -116,9 +116,10 @@ namespace Vulkan {
 
 
 
-        const int MAX_FRAMES_IN_FLIGHT = 2;
         int choosen;
         int currentFrame = 0;
+
+        std::map<int,vector<int>> objCameraAttached;
 
 
         shared_ptr<UniformBuffer<UniformBufferObject>> gubo;

@@ -80,9 +80,9 @@ void Enviroment::createUniformBuffer() {
 }
 void Enviroment::createSyncObjects() {
 
-    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    imageAvailableSemaphores.resize(swapChain->getSwapChainImages().size());
+    renderFinishedSemaphores.resize(swapChain->getSwapChainImages().size());
+    inFlightFences.resize(swapChain->getSwapChainImages().size());
     imagesInFlight.resize(swapChain->getSwapChainImages().size(), VK_NULL_HANDLE);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
@@ -90,9 +90,11 @@ void Enviroment::createSyncObjects() {
 
     VkFenceCreateInfo fenceInfo{};
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < swapChain->getSwapChainImages().size(); i++) {
+        fenceInfo.flags = i == 0 ? VK_FENCE_CREATE_SIGNALED_BIT : VK_FENCE_CREATE_FLAG_BITS_MAX_ENUM;
+
+
         VkResult result1 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
                                              &imageAvailableSemaphores[i]);
         VkResult result2 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
@@ -106,7 +108,7 @@ void Enviroment::createSyncObjects() {
 }
 
 void Enviroment::destroy(){
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < swapChain->getSwapChainImages().size(); i++) {
         vkDestroySemaphore(swapChain->getChoosenDevice(),imageAvailableSemaphores[i],nullptr);
         vkDestroySemaphore(swapChain->getChoosenDevice(),renderFinishedSemaphores[i],nullptr);
         Terminal::getInstance().printDestroy(string("semaphore " + i) + "destroyed");
@@ -141,7 +143,7 @@ void Enviroment::drawFrame() {
 
         return;
     }
-    Terminal::getInstance().printOnCondition("to aquire swapchain image",result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
+    //Terminal::getInstance().printOnCondition("to aquire swapchain image " + to_string(imageIndex),result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
 
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -162,6 +164,7 @@ void Enviroment::drawFrame() {
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+
     VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -174,8 +177,10 @@ void Enviroment::drawFrame() {
     if(result == VK_SUBOPTIMAL_KHR){
         this->swapChain->destroy();
         this->setAndCreateSwapChain();
-    }
-    Terminal::getInstance().printOnCondition("to create submit command queue at frame "+currentFrame,result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
+    }else if(result != VK_SUCCESS)
+        return;
+
+    //Terminal::getInstance().printOnCondition("to create submit command queue at frame "+to_string(currentFrame),result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
 
 
 
@@ -198,7 +203,7 @@ void Enviroment::drawFrame() {
         this->setAndCreateSwapChain();
     }**/
 
-    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    currentFrame = (currentFrame + 1) % inFlightFences.size();
 }
 
 

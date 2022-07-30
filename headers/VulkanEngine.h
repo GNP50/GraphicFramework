@@ -98,7 +98,7 @@ namespace Vulkan {
         if(!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
-            std::this_thread::sleep_for(100ms);
+            std::this_thread::sleep_for(33ms);
 
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
                 return false;
