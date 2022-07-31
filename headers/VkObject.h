@@ -51,6 +51,13 @@ namespace Vulkan{
         }
 
 
+        template<typename Info,typename InfoExtracter>
+        void useInformation(std::function<void()> infoExtractFunc,InfoExtracter extracter ){
+            extracter.extractInfo(this);
+            Info& information = extracter.getInfo();
+
+            infoExtractFunc(information);
+        }
 
     };
 
@@ -161,6 +168,110 @@ namespace Vulkan{
         }
 
 
+    };
+
+    template<typename Information>
+    class ObjectInformationExtracter{
+    protected:
+        Information info;
+    public:
+        virtual void extractInfo(Object &object) = 0;
+        Information& getInfo(){return info;}
+    };
+
+    struct GroundInformation{
+            float w;
+            float h;
+            float h_step;
+            float w_step;
+
+            float** f_mapping;
+
+        int getMappingW(){return std::ceil(w/this->w_step);}
+        int getMappingH(){return std::ceil(h/this->h_step);}
+
+        void destroyMapping(){
+            const int w = getMappingW();
+            #pragma omp parallel for num_threads(MAX)
+            for(int i=0;i<w;i++){
+                free(this->f_mapping[i]);
+            }
+
+            free(this->f_mapping);
+        }
+    };
+
+    class GroundInformationExtracter:public ObjectInformationExtracter<GroundInformation>{
+    public:
+        virtual void extracInfo(Object &object){
+            float max_x = std::numeric_limits<float>::min();
+            float max_z = std::numeric_limits<float>::min();
+
+            float min_x = std::numeric_limits<float>::max();
+            float min_z = std::numeric_limits<float>::max();
+
+            float min_x_step = std::numeric_limits<float>::max();
+            float min_z_step = std::numeric_limits<float>::max();
+
+#pragma region ExtractInformationToBuildTheMatrixGround
+
+            auto vertexes = object.getVertex();
+            for(int i =0;i<vertexes.size();i++){
+                if(max_x<vertexes[i].x)
+                    max_x = vertexes[i].x;
+
+                if(max_z<vertexes[i].z)
+                    max_z = vertexes[i].z;
+
+
+                if(min_x>vertexes[i].x)
+                    min_x = vertexes[i].x;
+
+                if(min_z>vertexes[i].z)
+                    min_z = vertexes[i].z;
+
+                for(int j=i+1;j<vertexes.size();j++){
+                    auto steps = glm::abs(vertexes[i]-vertexes[j]);
+
+                    if(steps.x<min_x_step)
+                        min_x_step = steps.x;
+
+                    if(steps.z<min_z_step)
+                        min_z_step = steps.z;
+                }
+            }
+
+            this->info.w = max_x-min_x;
+            this->info.h = max_z-min_z;
+
+            this->info.h_step = min_z_step;
+            this->info.w_step = min_x_step;
+
+
+
+
+#pragma endregion ExtractInformationToBuildTheMatrixGround
+
+#pragma region BuildMatrixGround
+            const int w = info.getMappingW();
+            this->info.f_mapping = (float**)malloc(sizeof(float*)*w);
+
+#pragma omp parallel for num_threads(MAX)
+            for(int i=0;i<w;i++){
+                const int h = this->info.getMappingH();
+                this->info.f_mapping = (float**)malloc(sizeof(float)*h);
+            }
+
+#pragma omp parallel for num_threads(MAX)
+            for(auto vertex:vertexes){
+                int i = std::floor(vertex.x/this->info.w_step);
+                int j = std::floor(vertex.z/this->info.h_step);
+
+                this->info.f_mapping[i][j] = vertex.y;
+            }
+#pragma region FinishEndMatrixGround
+
+        }
     };
 }
 #endif //DB_VKOBJECT_H

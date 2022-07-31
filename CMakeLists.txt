@@ -25,7 +25,7 @@ add_library(DB STATIC
         headers/GraphicsFramework.h
         headers/stb_image.h
         headers/stb_image_write.h
-
+        headers/KinematicsRenders.h
 
         )
 
