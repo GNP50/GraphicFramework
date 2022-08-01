@@ -300,7 +300,7 @@ namespace Vulkan {
 
         std::shared_ptr<UniformBuffer<UniformBufferObject>> getGubo(){return gubo;}
 
-        void update(GLFWwindow *window){
+        virtual void update(GLFWwindow *window){
             if (glfwGetKey(window, GLFW_KEY_SPACE)) {
                 currentCamera = ++currentCamera%cameras.size();
                 hostGubo.mvpMat = cameras[currentCamera].getProj(n,f,a);

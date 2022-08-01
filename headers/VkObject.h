@@ -116,7 +116,6 @@ namespace Vulkan{
                     indicies.push_back(f++);
             }
         }
-
         void parseVertex(string vertex){
             auto vertexes = splitLine(vertex,' ');
             this->file_vert.push_back(glm::vec3{
@@ -125,7 +124,6 @@ namespace Vulkan{
                     std::stof(vertexes[3])}
                     );
         }
-
         void parseIndex(string index){
             //the format is
             //f v/vt/vn v/vt/vn v/vt/vn v/vt/vn
@@ -142,14 +140,12 @@ namespace Vulkan{
             }
 
         }
-
         void parseTextureUV(string uv){
             auto uvs = splitLine(uv,' ');
             this->file_uv.push_back(glm::vec2{
                     std::stof(uvs[1]),
                     std::stof(uvs[2])});
         }
-
         vector<string> splitLine(const string toSplit,const char separator){
 
             std::vector<string> outputArray;
@@ -169,6 +165,7 @@ namespace Vulkan{
         }
 
 
+        vector<glm::vec3> getFileVertexes(){return this->file_vert;}
     };
 
     template<typename Information>
@@ -181,96 +178,67 @@ namespace Vulkan{
     };
 
     struct GroundInformation{
-            float w;
-            float h;
-            float h_step;
-            float w_step;
+        std::map<std::pair<int,int>,float> blueprint;
+        float step;
 
-            float** f_mapping;
+        float get(std::pair<int,int> toGet){
+            if(blueprint.contains(toGet))
+                return blueprint[toGet];
 
-        int getMappingW(){return std::ceil(w/this->w_step);}
-        int getMappingH(){return std::ceil(h/this->h_step);}
+            pair<int,int> closes = {std::numeric_limits<int>::max(),std::numeric_limits<int>::max()};
+            float minus = std::sqrt(
+                    pow(closes.first-toGet.first,2)+
+                    pow(closes.second-toGet.second,2)
+            );
+            #pragma omp for
+            for(auto elems:blueprint){
+                auto key = elems.first;
+                float square = std::sqrt(
+                        pow(key.first-toGet.first,2)+
+                        pow(key.second-toGet.second,2)
+                        );
 
-        void destroyMapping(){
-            const int w = getMappingW();
-            #pragma omp parallel for num_threads(MAX)
-            for(int i=0;i<w;i++){
-                free(this->f_mapping[i]);
+                if(square<minus){
+                    minus = square;
+                    closes = key;
+                }
             }
 
-            free(this->f_mapping);
+            blueprint.insert({toGet,blueprint[closes]});
+            return blueprint[toGet];
+
         }
     };
 
     class GroundInformationExtracter:public ObjectInformationExtracter<GroundInformation>{
+    protected:
+        float step;
     public:
-        virtual void extracInfo(Object &object){
-            float max_x = std::numeric_limits<float>::min();
-            float max_z = std::numeric_limits<float>::min();
+        GroundInformationExtracter(float step):ObjectInformationExtracter<GroundInformation>(),step(step){this->info.step = step;}
 
-            float min_x = std::numeric_limits<float>::max();
-            float min_z = std::numeric_limits<float>::max();
+        virtual void extractInfo(Object &object) override{
 
-            float min_x_step = std::numeric_limits<float>::max();
-            float min_z_step = std::numeric_limits<float>::max();
 
 #pragma region ExtractInformationToBuildTheMatrixGround
 
-            auto vertexes = object.getVertex();
-            for(int i =0;i<vertexes.size();i++){
-                if(max_x<vertexes[i].x)
-                    max_x = vertexes[i].x;
+            vector<glm::vec3> vertexes;
 
-                if(max_z<vertexes[i].z)
-                    max_z = vertexes[i].z;
-
-
-                if(min_x>vertexes[i].x)
-                    min_x = vertexes[i].x;
-
-                if(min_z>vertexes[i].z)
-                    min_z = vertexes[i].z;
-
-                for(int j=i+1;j<vertexes.size();j++){
-                    auto steps = glm::abs(vertexes[i]-vertexes[j]);
-
-                    if(steps.x<min_x_step)
-                        min_x_step = steps.x;
-
-                    if(steps.z<min_z_step)
-                        min_z_step = steps.z;
-                }
+            try{
+                vertexes = dynamic_cast<BlenderObj&>(object).getFileVertexes();
+            }catch(std::bad_cast& ex){
+                vertexes = object.getVertex();
             }
 
-            this->info.w = max_x-min_x;
-            this->info.h = max_z-min_z;
+#pragma omp for
+            for(int i=0;i<vertexes.size();i++){
+                int x = std::floor(vertexes[i].x/step);
+                int z = std::floor(vertexes[i].z/step);
 
-            this->info.h_step = min_z_step;
-            this->info.w_step = min_x_step;
+                if(this->info.blueprint.contains({x,z}))
+                    continue;
 
-
-
-
-#pragma endregion ExtractInformationToBuildTheMatrixGround
-
-#pragma region BuildMatrixGround
-            const int w = info.getMappingW();
-            this->info.f_mapping = (float**)malloc(sizeof(float*)*w);
-
-#pragma omp parallel for num_threads(MAX)
-            for(int i=0;i<w;i++){
-                const int h = this->info.getMappingH();
-                this->info.f_mapping = (float**)malloc(sizeof(float)*h);
+                this->info.blueprint.insert({{x,z},vertexes[i].y});
             }
-
-#pragma omp parallel for num_threads(MAX)
-            for(auto vertex:vertexes){
-                int i = std::floor(vertex.x/this->info.w_step);
-                int j = std::floor(vertex.z/this->info.h_step);
-
-                this->info.f_mapping[i][j] = vertex.y;
-            }
-#pragma region FinishEndMatrixGround
 
         }
     };

@@ -18,12 +18,12 @@ namespace Vulkan {
         float speed = 0.1;
 
 
-        Object *obj;
         TextureBuffer<stbi_uc *> *texture;
 
 
     protected:
         vector<glm::vec2> textCoords;
+        Object *obj;
 
 
 

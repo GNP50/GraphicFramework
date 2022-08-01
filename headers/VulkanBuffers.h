@@ -918,9 +918,6 @@ namespace Vulkan {
                     descriptorWrites[i].dstSet = descriptorSets[j];
                     if(descriptorWrites[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                         descriptorWrites[i].pBufferInfo = createInfos[buffFound++][j].get();
-
-
-
                 }
                 vkUpdateDescriptorSets(swapChain.getChoosenDevice(), static_cast<uint32_t>(descriptorWrites.size()),
                                        descriptorWrites.data(), 0, nullptr);
