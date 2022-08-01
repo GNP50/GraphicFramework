@@ -54,7 +54,6 @@ namespace Vulkan {
                        shared_ptr<UniformBuffer<UniformBufferObject>> gubo):Render(repo,swap,gubo){
 
 
-            descrPool->addDescriptorSet<UniformBufferObject>(*gubo);
 
             texture = new TextureBuffer<stbi_uc *>(textPath);
             texture->createBuffers(*swap);
@@ -145,13 +144,15 @@ namespace Vulkan {
 
     public:
         BlenderRender(string obj,string textPath,
-                      Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
+                      Enviroment &env,bool finished = true):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
         {
             obj_path = obj;
             this->createObject();
 
-            TexturedRender::createModel();
-            createPipeline(*this->swapChain);
+            if(finished){
+                TexturedRender::createModel();
+                createPipeline(*this->swapChain);
+            }
             env.addRender(this);
         }
 

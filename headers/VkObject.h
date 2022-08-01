@@ -90,6 +90,7 @@ namespace Vulkan{
 
             }
 
+            file.close();
             int f=0;
             for(int i=0;i<file_ind.size();i+=3*triangle_in_a_face-2){
                     for(int j=0;j<3;j++){

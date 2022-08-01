@@ -358,6 +358,8 @@ namespace Vulkan {
         TextureData textData;
         string path;
 
+        static map<string,TextureData> alreadyLoaded;
+
     public:
 
 
@@ -371,17 +373,27 @@ namespace Vulkan {
         const TextureData &getTextureData(){return textData;}
 
         virtual void create() override {
+            if(alreadyLoaded.contains(this->path)) {
+                this->textData = alreadyLoaded[this->path];
+                return;
+            }
             this->createCommandPool();
+
             createTextureImage();
             createImageView(VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_VIEW_TYPE_2D, 1);
             createTextureSampler();
+
+            this->alreadyLoaded.insert({this->path,this->textData});
 
         };
 
 
         void createTextureImage() {
-            stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight,
+            FILE* image = fopen(path.c_str(),"rb");
+            stbi_uc *pixels = stbi_load_from_file(image, &texWidth, &texHeight,
                                         &texChannels, STBI_rgb_alpha);
+
+            fclose(image);
             if (stbi_failure_reason()) std::cout << stbi_failure_reason();
             Terminal::getInstance().printOnCondition("to load pixels for texture " + path,pixels == NULL,"");
 
@@ -692,6 +704,8 @@ namespace Vulkan {
         }
     };
 
+    template<typename  data>
+    map<string,TextureData> VkTextureMapper<data>::alreadyLoaded = map<string,TextureData>();
 
     template<typename UniformType>
     class DescriptorSet {
@@ -741,6 +755,7 @@ namespace Vulkan {
             layoutBinding.descriptorType = type;
             // we use it from the vertex shader
             layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            layoutBinding.pImmutableSamplers = NULL;
         }
 
 
