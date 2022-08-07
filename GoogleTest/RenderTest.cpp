@@ -26,7 +26,7 @@ protected:
         enviroment->addCamera(camera);
         enviroment->addCamera(camera2);
 
-        auto posMap = new VKPositionMap(*enviroment,"textures/triangle.png");
+        auto posMap = new VKPositionMap(*enviroment,"textures/triangle.png",10);
 
         posMap->setDs(vec3{1,1,0});
         //new Sky("textures/triangle.png",*enviroment);

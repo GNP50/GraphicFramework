@@ -22,11 +22,27 @@ namespace Vulkan {
         vec3  position = {0.0,0.0,0.0};
         float ratio;
         float plainFactor;
+        vec3 viewPosition;
 
     public:
+
+        void setViewPosition(const vec3 &viewPosition){
+            this->viewPosition = viewPosition;
+            hostObj->mvpMat =  TransfBuff::instance()->addTranslation(viewPosition).doTransformations<glm::mat4>()*ProjectBuffer::instance(1.0,this->n,this->f)->perspectiveProj(this->a)*glm::lookAt(
+                    glm::vec3({0.0, 0.0, 0.0}),
+                    glm::vec3({0.0, 0.0, -1.0}),
+                    glm::vec3({0.0, 1.0, 0.0})
+            );
+
+            this->gubo->updateData(*hostObj);
+        }
+
+
         Point(Enviroment &env, string textPath,float ratio = 5,float plainFactor = 5) :plainFactor(plainFactor),ratio(ratio){
             this->vertexPath = "shaders/PointTrackerVertex.spv";
             this->fragmPath = "shaders/PointTrackerFragment.spv";
+
+
 
             hostObj = new UniformBufferObject();
             hostObj->mMat = TransfBuff::instance()
@@ -41,7 +57,7 @@ namespace Vulkan {
             gubo->createBuffers(*env.getSwapChain(), *hostObj);
 
             init_texture(env.getRepository(), env.getSwapChain(), textPath, gubo);
-            hostObj->mvpMat =  ProjectBuffer::instance(1.0,this->n,this->f)->perspectiveProj(this->a)*glm::lookAt(
+            hostObj->mvpMat =  TransfBuff::instance()->addTranslation(viewPosition).doTransformations<glm::mat4>()*ProjectBuffer::instance(1.0,this->n,this->f)->perspectiveProj(this->a)*glm::lookAt(
                     glm::vec3({0.0, 0.0, 0.0}),
                     glm::vec3({0.0, 0.0, -1.0}),
                     glm::vec3({0.0, 1.0, 0.0})
@@ -101,6 +117,8 @@ namespace Vulkan {
         Point* point;
         float factor;
 
+        vec3 viewPosition;
+
 
 
         virtual void update(GLFWwindow *window) {
@@ -134,7 +152,10 @@ namespace Vulkan {
             this->vertexPath = "shaders/PositionTrackerVertex.spv";
             this->fragmPath = "shaders/PositionTrackerFragment.spv";
 
-            point = new Point(env,"textures/triangle.png",factor,factor);
+            point = new Point(env,"textures/triangle.png",factor/2,factor);
+
+            viewPosition = {1-sqrt(5)/factor,-1+sqrt(2)/factor,0.0};
+            point->setViewPosition(viewPosition);
 
             hostObj = new UniformBufferObject();
             hostObj->nMat = mat4(1.0f);
@@ -152,7 +173,7 @@ namespace Vulkan {
             gubo->createBuffers(*env.getSwapChain(), *hostObj);
 
             init_texture(env.getRepository(), env.getSwapChain(), textPath, gubo);
-            hostObj->mvpMat =ProjectBuffer::instance(1.0,this->n,this->f)->perspectiveProj(this->a)*glm::lookAt(
+            hostObj->mvpMat =TransfBuff::instance()->addTranslation(viewPosition).doTransformations<glm::mat4>()*ProjectBuffer::instance(1.0,this->n,this->f)->perspectiveProj(this->a)*glm::lookAt(
                     glm::vec3({0.0, 0.0, 0.0}),
                     glm::vec3({0.0, 0.0, -1.0}),
                     glm::vec3({0.0, 1.0, 0.0})

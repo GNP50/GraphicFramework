@@ -81,6 +81,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} ${VULKANLIBRARY})
 target_link_libraries(${CMAKE_PROJECT_NAME} ${GLFWLIBRARY})
 link_directories(${GLMLIBRARY})
 
-
+add_subdirectory(GoogleTest)
 
 
