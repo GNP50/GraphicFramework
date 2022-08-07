@@ -30,7 +30,7 @@ protected:
 
         posMap->setDs(vec3{1,1,0});
         //new Sky("textures/triangle.png",*enviroment);
-        //new BlenderRender("objs/legofriends.obj","objs/paesaggio.png",*enviroment);
+        new BlenderRender("objs/wheel.obj","objs/landscape.png",*enviroment);
 /**
 
             new Triangle(

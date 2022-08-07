@@ -263,6 +263,10 @@ namespace Vulkan {
             createCommandPool();
 
             gubo = std::make_shared<UniformBuffer<UniformBufferObject>>(*(new UniformBuffer<UniformBufferObject>()));
+            hostGubo.mvpMat = glm::mat4(1.0);
+            hostGubo.mMat = glm::mat4(1.0);
+            hostGubo.nMat = glm::mat4(1.0);
+
             gubo->createBuffers(*swapChain, hostGubo);
 
         }
@@ -281,7 +285,7 @@ namespace Vulkan {
              this->renders.push_back(r);
         }
         void mainLoop() {
-            hostGubo.mvpMat = cameras[currentCamera].getProj(n,f,a);
+            hostGubo.mvpMat = cameras[currentCamera].getProj(-n,-f,a);
             for(auto rend:renders){
                 rend->setF(f);
                 rend->setN(n);

@@ -1,6 +1,13 @@
 
 #version 450
 
+
+layout(binding = 0) uniform UniformBufferObject {
+    mat4 mvpMat;
+    mat4 mMat;
+    mat4 nMat;
+} ubo;
+
 layout(binding = 1) uniform sampler2D tex1;
 
 

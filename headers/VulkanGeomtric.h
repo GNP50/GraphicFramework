@@ -56,18 +56,13 @@ namespace Vulkan {
                        string textPath,
                        shared_ptr<UniformBuffer<UniformBufferObject>> gubo){
             Render::init(repo,swap,gubo);
-            descrPool->addDescriptorSet<UniformBufferObject>(*gubo);
 
             texture = new TextureBuffer<stbi_uc *>(textPath);
             texture->createBuffers(*swap);
             descrPool->addDescriptorSet<stbi_uc *>(*texture);
         }
     public:
-        TexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,
-                       string textPath,
-                       shared_ptr<UniformBuffer<UniformBufferObject>> gubo):Render(){
-            init_texture(repo,swap,textPath,gubo);
-        }
+
 
         void recreate(shared_ptr<VkSwapChain> swap ){
             Render::recreate(swap);
@@ -84,8 +79,9 @@ namespace Vulkan {
         Triangle(vec3 first,
                  vec3 second,
                  vec3 third,const string textPath,
-                 Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
+                 Enviroment &env):TexturedRender()
         {
+            init_texture(env.getRepository(),env.getSwapChain(),textPath,env.getGubo());
             vector<glm::vec3> app = vector<vec3>();
             app.push_back(first);
             app.push_back(second);
@@ -110,8 +106,10 @@ namespace Vulkan {
     class Sky: public TexturedRender{
     public:
         Sky(const string textPath,
-                Enviroment &env):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
+                Enviroment &env):TexturedRender()
         {
+            init_texture(env.getRepository(),env.getSwapChain(),textPath,env.getGubo());
+
             vector<glm::vec3> app = vector<vec3>();
 
             app.push_back({1,1,0});
@@ -151,8 +149,9 @@ namespace Vulkan {
 
     public:
         BlenderRender(string obj,string textPath,
-                      Enviroment &env,bool finished = true):TexturedRender(env.getRepository(),env.getSwapChain(),textPath,env.getGubo())
+                      Enviroment &env,bool finished = true):TexturedRender()
         {
+            init_texture(env.getRepository(),env.getSwapChain(),textPath,env.getGubo());
             obj_path = obj;
             this->createObject();
 

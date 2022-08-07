@@ -92,7 +92,7 @@ void Enviroment::createSyncObjects() {
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
     for (size_t i = 0; i < swapChain->getSwapChainImages().size(); i++) {
-        fenceInfo.flags = i == 0 ? VK_FENCE_CREATE_SIGNALED_BIT : VK_FENCE_CREATE_FLAG_BITS_MAX_ENUM;
+        fenceInfo.flags =  VK_FENCE_CREATE_SIGNALED_BIT ;
 
 
         VkResult result1 = vkCreateSemaphore(swapChain->getChoosenDevice(), &semaphoreInfo, nullptr,
