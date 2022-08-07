@@ -202,7 +202,7 @@ namespace Vulkan {
         virtual void createPipeline(VkSwapChain &swapChain,VkPolygonMode mode = VK_POLYGON_MODE_FILL);
 
 
-        void createCommandBuffers(VkCommandBuffer commandBuffer,int i);
+        virtual void createCommandBuffers(VkCommandBuffer commandBuffer,int i);
 
 
         void destroy(){

@@ -7,13 +7,9 @@
 #include "customTransf.hpp"
 #include <fstream>
 
-struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 norm;
-};
 
 
-class Object{
+class GraphicObject{
 protected:
     virtual void createIndiciesList() = 0;
     virtual void createVertexList() = 0;
@@ -25,7 +21,7 @@ public:
     std::vector<uint32_t> indiciesList;
     std::string filename;
 
-    Object(std::string filename){
+    GraphicObject(std::string filename){
         this->filename = filename;
     }
 
@@ -110,7 +106,7 @@ public:
 
 
 
-class SliceGeometric:public Object{
+class SliceGeometric:public GraphicObject{
 protected:
     int slices;
     int cloves;
@@ -142,7 +138,7 @@ protected:
     };
 
 public:
-    SliceGeometric(float slices,float cloves):Object("SliceGeometric"){
+    SliceGeometric(float slices,float cloves):GraphicObject("SliceGeometric"){
         this->slices = slices;
         this->cloves = cloves;
     }
@@ -372,7 +368,7 @@ public:
 };
 
 
-class CustomGeometric:public Object{
+class CustomGeometric:public GraphicObject{
 protected:
     void createIndiciesList() override {
         return;
@@ -399,7 +395,7 @@ private:
     }
 
 public:
-    CustomGeometric(std::string filename): Object(filename){}
+    CustomGeometric(std::string filename): GraphicObject(filename){}
     void loadData() override{
         //load vertices
         std::fstream vertFile;

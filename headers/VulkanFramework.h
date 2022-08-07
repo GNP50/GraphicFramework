@@ -50,6 +50,8 @@ namespace Vulkan {
 
         }
 
+        glm::vec3 getCamPos(){return CamPos;}
+
         virtual void update(GLFWwindow *window){
             if(glfwGetKey(window, GLFW_KEY_LEFT)) {
                 CamAng.y += rotSpeed;

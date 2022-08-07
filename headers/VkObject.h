@@ -180,6 +180,7 @@ namespace Vulkan{
     struct GroundInformation{
         std::map<std::pair<int,int>,float> blueprint;
         float step;
+        float w,h;
 
         float get(std::pair<int,int> toGet){
             if(blueprint.contains(toGet))
@@ -219,20 +220,41 @@ namespace Vulkan{
         virtual void extractInfo(Object &object) override{
 
 
-#pragma region ExtractInformationToBuildTheMatrixGround
 
             vector<glm::vec3> vertexes;
 
+            //to reduce the number of vertex in the case of a blender obj
             try{
                 vertexes = dynamic_cast<BlenderObj&>(object).getFileVertexes();
             }catch(std::bad_cast& ex){
                 vertexes = object.getVertex();
             }
 
+
+            //exploit the loop to get information about ground
+            float min_x = std::numeric_limits<float>::max();
+            float min_z = std::numeric_limits<float>::max();
+
+            float max_x = std::numeric_limits<float>::min();
+            float max_z = std::numeric_limits<float>::min();
+
 #pragma omp for
             for(int i=0;i<vertexes.size();i++){
                 int x = std::floor(vertexes[i].x/step);
                 int z = std::floor(vertexes[i].z/step);
+
+                if(x>max_x)
+                    max_x = x;
+
+                if(x<min_x)
+                    min_x = x;
+
+                if(z>max_z)
+                    max_z = z;
+
+                if(z<min_z)
+                    min_z = z;
+
 
                 if(this->info.blueprint.contains({x,z}))
                     continue;
@@ -240,6 +262,8 @@ namespace Vulkan{
                 this->info.blueprint.insert({{x,z},vertexes[i].y});
             }
 
+            this->info.w = (max_x-min_x);
+            this->info.h = (max_z-min_z);
         }
     };
 }
