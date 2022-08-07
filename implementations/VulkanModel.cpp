@@ -6,7 +6,7 @@
 
 using namespace Vulkan;
 
-void Render::createPipeline(VkSwapChain &swapChain) {
+void Render::createPipeline(VkSwapChain &swapChain,VkPolygonMode mode) {
 
     fragShader = new VkFragmentShader(fragmPath);
     vertexShader = new VkVertexShader(vertexPath);
@@ -18,7 +18,7 @@ void Render::createPipeline(VkSwapChain &swapChain) {
     pipeline = new VkPipeLine(*fragShader, *vertexShader, deviceRepository);
     descrPool->createDescriptorPool(swapChain);
     pipeline->setDescriptorSetLayout(descrPool->getLayouts());
-    pipeline->createPipelineWithPolyMode(swapChain,VK_POLYGON_MODE_FILL);
+    pipeline->createPipelineWithPolyMode(swapChain,mode);
 
     descrPool->allocateDescriptorSets(swapChain);
 

@@ -39,12 +39,11 @@ namespace Vulkan{
 
 
         std::shared_ptr<VkPhyDevice> deviceRepo;
-
-
         VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-
         VkPipelineViewportStateCreateInfo viewportState{};
         VkPipelineShaderStageCreateInfo shaderStages[2];
+
+        float pointSize = 1.0f;
 
         VkPipeLine(VkFragmentShader& fragShader, VkVertexShader& vertexShader,std::shared_ptr<VkPhyDevice>devicerepo) : GenericGraphicPipeline(
                  fragShader, vertexShader) {
@@ -114,7 +113,7 @@ namespace Vulkan{
             rasterizer.depthClampEnable = VK_FALSE;
             rasterizer.rasterizerDiscardEnable = VK_FALSE;
             rasterizer.polygonMode = polyModel;
-            rasterizer.lineWidth = 1.0f;
+            rasterizer.lineWidth = pointSize;
             rasterizer.cullMode = CM;
             rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             rasterizer.depthBiasEnable = VK_FALSE;

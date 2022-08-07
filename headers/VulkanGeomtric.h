@@ -48,18 +48,25 @@ namespace Vulkan {
         virtual  Object* getObject(){
             return new Object();
         }
-    public:
-        TexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,
+
+    protected:
+        TexturedRender():Render(){}
+
+        void init_texture(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,
                        string textPath,
-                       shared_ptr<UniformBuffer<UniformBufferObject>> gubo):Render(repo,swap,gubo){
-
-
+                       shared_ptr<UniformBuffer<UniformBufferObject>> gubo){
+            Render::init(repo,swap,gubo);
+            descrPool->addDescriptorSet<UniformBufferObject>(*gubo);
 
             texture = new TextureBuffer<stbi_uc *>(textPath);
             texture->createBuffers(*swap);
             descrPool->addDescriptorSet<stbi_uc *>(*texture);
-
-
+        }
+    public:
+        TexturedRender(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,
+                       string textPath,
+                       shared_ptr<UniformBuffer<UniformBufferObject>> gubo):Render(){
+            init_texture(repo,swap,textPath,gubo);
         }
 
         void recreate(shared_ptr<VkSwapChain> swap ){

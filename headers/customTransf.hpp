@@ -132,14 +132,14 @@ public:
 
     }
 
-    TransfBuff* addTranslation(glm::vec3 direction, float module = 1){
+    TransfBuff& addTranslation(glm::vec3 direction, float module = 1){
         glm::mat4x4  toPush(1.0f);
         toPush[3][0] = module*direction[0];
         toPush[3][1] = module*direction[1]*(isVulkan ? 1 : -1);
         toPush[3][2] = module*direction[2];
 
         transformations.push_back(toPush);
-        return this;
+        return *this;
     };
 
     TransfBuff& addShrink(float factor = 1.0f){
@@ -248,6 +248,12 @@ public:
             float n = 1.0f,
             float f = 1.0f
     ){
+        if(isVulkan)
+        {
+            n *=-1;
+            f *=-1;
+        }
+
         this->w = w;
         this->n = n;
         this->f = f;
@@ -323,6 +329,8 @@ public:
         );
 
 
+        if(isVulkan)
+            toRet[1][1] *= -1;
 
         return toRet;
     };
@@ -394,7 +402,7 @@ public:
                                     .addXRotation(-bheta)
                                     .addYRotation(-alpha)
                                     .addTranslation(-this->position)
-                                    ->doTransformations<glm::mat4x4>());
+                                    .doTransformations<glm::mat4x4>());
     }
 
     glm::mat4 lookAt(glm::vec3 obj,glm::vec3 upVector = glm::vec3(0.0f,1.0f,0.0f)){

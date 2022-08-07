@@ -17,6 +17,7 @@ ProjectBuffer* ProjectBuffer::instance(
         float f = 1.0f
 ){
     static ProjectBuffer *instance;
+
     instance = new ProjectBuffer(w,n,f);
 
     return instance;

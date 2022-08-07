@@ -6,7 +6,7 @@
 #include <VulkanFramework.h>
 #include <vector>
 #include "VulkanGeomtric.h"
-
+#include "VkObjectExtensions.h"
 
 using namespace std;
 using namespace Vulkan;
@@ -26,7 +26,9 @@ protected:
         enviroment->addCamera(camera);
         enviroment->addCamera(camera2);
 
-        new BlenderRender("objs/landscape.obj","textures/terra.jpeg",*enviroment);
+        auto posMap = new VKPositionMap(*enviroment,"textures/triangle.png");
+
+        posMap->setDs(vec3{1,1,0});
         //new Sky("textures/triangle.png",*enviroment);
         //new BlenderRender("objs/legofriends.obj","objs/paesaggio.png",*enviroment);
 /**

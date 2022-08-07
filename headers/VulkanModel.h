@@ -137,6 +137,22 @@ namespace Vulkan {
         float a;
         float f = 15.0;
         float n = 1.0f;
+
+        Render(){}
+
+        void init(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,shared_ptr<UniformBuffer<UniformBufferObject>> gubo){
+
+            deviceRepository = repo;
+            swapChain = swap;
+
+            descrPool = new DescriptorPool(swapChain,deviceRepository);
+
+            auto swapChainExtent = swapChain->getSwapChainExtent();
+            a = swapChainExtent.width / (float) swapChainExtent.height;
+
+            descrPool->addDescriptorSet(*gubo);
+            this->gubo = gubo;
+        }
     public:
         void setN(float n);
 
@@ -161,15 +177,8 @@ namespace Vulkan {
     protected:
 
 
-        Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,shared_ptr<UniformBuffer<UniformBufferObject>> gubo):
-            deviceRepository(repo),
-            swapChain(swap),
-            descrPool(new DescriptorPool(swapChain,deviceRepository)),gubo(gubo){
-
-            auto swapChainExtent = swapChain->getSwapChainExtent();
-            a = swapChainExtent.width / (float) swapChainExtent.height;
-
-            descrPool->addDescriptorSet(*gubo);
+        Render(shared_ptr<VkPhyDevice> repo,shared_ptr<VkSwapChain> swap,shared_ptr<UniformBuffer<UniformBufferObject>> gubo){
+            init(repo,swap,gubo);
         }
 
 
@@ -190,7 +199,7 @@ namespace Vulkan {
             this->model->createBuffers();
         }
 
-        virtual void createPipeline(VkSwapChain &swapChain);
+        virtual void createPipeline(VkSwapChain &swapChain,VkPolygonMode mode = VK_POLYGON_MODE_FILL);
 
 
         void createCommandBuffers(VkCommandBuffer commandBuffer,int i);
