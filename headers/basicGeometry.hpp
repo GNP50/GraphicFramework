@@ -48,8 +48,8 @@ public:
 
 
             return vectorRapp;
-        }else if constexpr(std::same_as<T,std::vector<Vertex>>) {
-            auto toRet = std::vector<Vertex>(points.size());
+        }else if constexpr(std::same_as<T,std::vector<Vulkan::Vertex>>) {
+            auto toRet = std::vector<Vulkan::Vertex>(points.size());
 
             #pragma omp for
             for (int i = 0; i < points.size(); i++) {

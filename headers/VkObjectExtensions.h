@@ -134,7 +134,7 @@ namespace Vulkan {
 
             point->setPosition(position);
 
-            float a_cos = glm::dot(vec3 ({1,0,0}),ds)/(glm::length(position));
+            float a_cos = glm::dot(vec3 ({1,0,0}),position)/(glm::length(position));
 
             float angle = glm::degrees(acos(a_cos));
 

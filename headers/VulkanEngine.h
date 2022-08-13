@@ -43,6 +43,7 @@ namespace Vulkan {
         glm::vec3 CamAng = glm::vec3(0.0f, 0.0f, 0.0f);
 
 
+        std::chrono::duration<double, std::ratio<1,24>> frameRate = 33ms;
 
     protected:
     public:
@@ -82,6 +83,8 @@ namespace Vulkan {
 
         }
 
+        std::chrono::duration<double, std::ratio<1,24>> getFramerate(){return frameRate;}
+
         VkEngine(int w, int h, VkAppConfiguration configuration) {
             width = w;
             heigth = h;
@@ -98,7 +101,7 @@ namespace Vulkan {
         if(!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
-            std::this_thread::sleep_for(33ms);
+            std::this_thread::sleep_for(frameRate);
 
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
                 return false;

@@ -39,40 +39,42 @@ namespace Vulkan {
 
         float rotSpeed = 0.01f;
         float translSpeed = 0.1f;
-
+        bool default_nav = false;
 
 
 
     public:
-        Camera(float rotSpeed,float transSpeed){
+        Camera(float rotSpeed,float transSpeed,bool default_nav = false){
             this->rotSpeed = rotSpeed;
             this->translSpeed = transSpeed;
+            this->default_nav = default_nav;
 
         }
 
         glm::vec3 getCamPos(){return CamPos;}
 
         virtual void update(GLFWwindow *window){
-            if(glfwGetKey(window, GLFW_KEY_LEFT)) {
-                CamAng.y += rotSpeed;
-            }
-            if(glfwGetKey(window, GLFW_KEY_RIGHT)) {
-                CamAng.y -= rotSpeed;
-            }
-            if(glfwGetKey(window, GLFW_KEY_UP)) {
-                CamAng.x += rotSpeed;
-            }
-            if(glfwGetKey(window, GLFW_KEY_DOWN)) {
-                CamAng.x -= rotSpeed;
-            }
-            if(glfwGetKey(window, GLFW_KEY_Q)) {
-                CamAng.z -= rotSpeed;
-            }
-            if(glfwGetKey(window, GLFW_KEY_E)) {
-                CamAng.z += rotSpeed;
-            }
+            if(default_nav) {
+                if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+                    CamAng.y += rotSpeed;
+                }
+                if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+                    CamAng.y -= rotSpeed;
+                }
+                if (glfwGetKey(window, GLFW_KEY_UP)) {
+                    CamAng.x += rotSpeed;
+                }
+                if (glfwGetKey(window, GLFW_KEY_DOWN)) {
+                    CamAng.x -= rotSpeed;
+                }
+                if (glfwGetKey(window, GLFW_KEY_Q)) {
+                    CamAng.z -= rotSpeed;
+                }
+                if (glfwGetKey(window, GLFW_KEY_E)) {
+                    CamAng.z += rotSpeed;
+                }
 
-
+            }
             CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.y, glm::vec3(0.0f, 1.0f, 0.0f))) *
                      glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.x, glm::vec3(1.0f, 0.0f, 0.0f))) *
                      glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.z, glm::vec3(0.0f, 0.0f, 1.0f)));
@@ -108,6 +110,8 @@ namespace Vulkan {
             return ProjectBuffer::instance(1.0f,n,f)->perspectiveProj(glm::pi<float>()/6,a);
         }
 
+        glm::vec3  getAngle(){return this->CamAng;}
+
         virtual glm::mat4 getCameraMat(){
             return glm::translate(glm::transpose(glm::mat4(CamDir)), -CamPos);
         }
@@ -127,7 +131,7 @@ namespace Vulkan {
         shared_ptr<UniformBuffer<UniformBufferObject>> gubo;
         UniformBufferObject hostGubo;
         float n = 1.0,f = 100,a = 0.0;
-        vector<Camera> cameras;
+        vector<Camera*> cameras;
         int currentCamera = 0;
 
         vector<Vulkan::Render*> renders;
@@ -274,6 +278,9 @@ namespace Vulkan {
         }
 
 
+        float getN(){return this->n;}
+        float getF(){return this->f;}
+
         shared_ptr<VkPhyDevice> getRepository(){
             return deviceRepository;
         }
@@ -287,7 +294,8 @@ namespace Vulkan {
              this->renders.push_back(r);
         }
         void mainLoop() {
-            hostGubo.mvpMat = cameras[currentCamera].getProj(-n,-f,a);
+            gubo->updateData(hostGubo);
+            hostGubo.mvpMat = cameras[currentCamera]->getProj(-n,-f,a);
             for(auto rend:renders){
                 rend->setF(f);
                 rend->setN(n);
@@ -309,23 +317,19 @@ namespace Vulkan {
         virtual void update(GLFWwindow *window){
             if (glfwGetKey(window, GLFW_KEY_SPACE)) {
                 currentCamera = ++currentCamera%cameras.size();
-                hostGubo.mvpMat = cameras[currentCamera].getProj(n,f,a);
+                hostGubo.mvpMat = cameras[currentCamera]->getProj(-n,-f,a);
+                std::this_thread::sleep_for(10*engine->getFramerate());
 
+                hostGubo.mMat = cameras[currentCamera]->getCameraMat();
+                hostGubo.nMat = glm::mat4 (1.0);
+
+                gubo->updateData(hostGubo);
             }
 
-            for(auto &camera:cameras)
-                camera.update(window);
 
-
-
-
-            hostGubo.mMat = cameras[currentCamera].getCameraMat();
-            hostGubo.nMat = glm::mat4 (1.0);
-
-            gubo->updateData(hostGubo);
         }
 
-         void addCamera(Camera camera){this->cameras.push_back(Camera(camera));}
+         void addCamera(Camera *camera){this->cameras.push_back(camera);}
     };
 }
 #endif //ASS0_VULKANFRAMEWORK_H

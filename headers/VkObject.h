@@ -243,17 +243,17 @@ namespace Vulkan{
                 int x = std::floor(vertexes[i].x/step);
                 int z = std::floor(vertexes[i].z/step);
 
-                if(x>max_x)
-                    max_x = x;
+                if(vertexes[i].x>max_x)
+                    max_x = vertexes[i].x;
 
-                if(x<min_x)
-                    min_x = x;
+                if(vertexes[i].x<min_x)
+                    min_x = vertexes[i].x;
 
-                if(z>max_z)
-                    max_z = z;
+                if(vertexes[i].z>max_z)
+                    max_z = vertexes[i].z;
 
-                if(z<min_z)
-                    min_z = z;
+                if(vertexes[i].z<min_z)
+                    min_z = vertexes[i].z;
 
 
                 if(this->info.blueprint.contains({x,z}))
