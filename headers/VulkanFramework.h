@@ -74,7 +74,7 @@ namespace Vulkan {
                     CamAng.z += rotSpeed;
                 }
 
-            }
+
             CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.y, glm::vec3(0.0f, 1.0f, 0.0f))) *
                      glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.x, glm::vec3(1.0f, 0.0f, 0.0f))) *
                      glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.z, glm::vec3(0.0f, 0.0f, 1.0f)));
@@ -110,8 +110,6 @@ namespace Vulkan {
             return ProjectBuffer::instance(1.0f,n,f)->perspectiveProj(glm::pi<float>()/6,a);
         }
 
-        glm::vec3  getAngle(){return this->CamAng;}
-
         virtual glm::mat4 getCameraMat(){
             return glm::translate(glm::transpose(glm::mat4(CamDir)), -CamPos);
         }
@@ -125,13 +123,15 @@ namespace Vulkan {
         int choosen;
         int currentFrame = 0;
 
+        bool bufferResized = false;
+
         std::map<int,vector<int>> objCameraAttached;
 
 
         shared_ptr<UniformBuffer<UniformBufferObject>> gubo;
         UniformBufferObject hostGubo;
         float n = 1.0,f = 100,a = 0.0;
-        vector<Camera*> cameras;
+        vector<Camera> cameras;
         int currentCamera = 0;
 
         vector<Vulkan::Render*> renders;
@@ -274,9 +274,33 @@ namespace Vulkan {
             hostGubo.nMat = glm::mat4(1.0);
 
             gubo->createBuffers(*swapChain, hostGubo);
+            glfwSetWindowUserPointer(this->engine->getWindow(), this);
+            glfwSetFramebufferSizeCallback(this->engine->getWindow(), framebufferResizeCallback);
 
         }
 
+
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<Enviroment*>
+        (glfwGetWindowUserPointer(window));
+        app->bufferResized = true;
+    }
+
+    void setAndRecreateSwapChain(){
+            this->destroy(false);
+            auto window = this->engine->getWindow();
+            glfwGetFramebufferSize(window, &w, &h);
+
+            while (w == 0 || h == 0) {
+                glfwGetFramebufferSize(window, &w, &h);
+                glfwWaitEvents();
+            }
+
+            auto dev = this->deviceRepository->getLogicalDevice(*this->deviceRepository->getPerfectCriteriaMatcher().begin());
+            vkDeviceWaitIdle(dev);
+
+            setAndCreateSwapChain();
+        }
 
         float getN(){return this->n;}
         float getF(){return this->f;}

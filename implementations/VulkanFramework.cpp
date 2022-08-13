@@ -107,26 +107,34 @@ void Enviroment::createSyncObjects() {
     }
 }
 
-void Enviroment::destroy(){
-    for (size_t i = 0; i < swapChain->getSwapChainImages().size(); i++) {
-        vkDestroySemaphore(swapChain->getChoosenDevice(),imageAvailableSemaphores[i],nullptr);
-        vkDestroySemaphore(swapChain->getChoosenDevice(),renderFinishedSemaphores[i],nullptr);
-        Terminal::getInstance().printDestroy(string("semaphore " + i) + "destroyed");
-
-        vkDestroyFence(swapChain->getChoosenDevice(),inFlightFences[i], nullptr);
-        Terminal::getInstance().printDestroy(string("fligth fence " + i) + "destroyed");
-
-    }
+void Enviroment::destroy(bool all){
 
     swapChain->destroy();
 
-    for(auto render:renders)
-        render->destroy();
+    if(all){
+        for(auto render:renders)
+            render->destroy();
 
 
-    vkDestroyCommandPool(swapChain->getChoosenDevice(),commandPool, nullptr);
-    Terminal::getInstance().printDestroy(" destroyed command pool " );
-    deviceRepository->destroy();
+        for (size_t i = 0; i < swapChain->getSwapChainImages().size(); i++) {
+            vkDestroySemaphore(swapChain->getChoosenDevice(),imageAvailableSemaphores[i],nullptr);
+            vkDestroySemaphore(swapChain->getChoosenDevice(),renderFinishedSemaphores[i],nullptr);
+            Terminal::getInstance().printDestroy(string("semaphore " + i) + "destroyed");
+
+            vkDestroyFence(swapChain->getChoosenDevice(),inFlightFences[i], nullptr);
+            Terminal::getInstance().printDestroy(string("fligth fence " + i) + "destroyed");
+
+        }
+
+        vkDestroyCommandPool(swapChain->getChoosenDevice(),commandPool, nullptr);
+        Terminal::getInstance().printDestroy(" destroyed command pool " );
+
+
+        deviceRepository->destroy();
+    }else{
+        for(auto render:renders)
+            render->recreate(swapChain);
+    }
 }
 void Enviroment::drawFrame() {
     vkWaitForFences(swapChain->getChoosenDevice(), 1, &inFlightFences[currentFrame],
@@ -138,12 +146,10 @@ void Enviroment::drawFrame() {
                                             imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        //todo decide how to put
-        //recreateSwapChain();
-
+        setAndRecreateSwapChain();
         return;
     }
-    //Terminal::getInstance().printOnCondition("to aquire swapchain image " + to_string(imageIndex),result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR,result);
+
 
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -175,8 +181,7 @@ void Enviroment::drawFrame() {
                       inFlightFences[currentFrame]);
 
     if(result == VK_SUBOPTIMAL_KHR){
-        this->swapChain->destroy();
-        this->setAndCreateSwapChain();
+        setAndRecreateSwapChain();
     }else if(result != VK_SUCCESS)
         return;
 
@@ -198,10 +203,9 @@ void Enviroment::drawFrame() {
 
     result = vkQueuePresentKHR(deviceRepository->presentQueue, &presentInfo);
 
-    /**if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ) {
-        this->swapChain->destroy();
-        this->setAndCreateSwapChain();
-    }**/
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ) {
+        setAndRecreateSwapChain();
+    }
 
     currentFrame = (currentFrame + 1) % inFlightFences.size();
 }

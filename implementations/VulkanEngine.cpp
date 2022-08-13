@@ -46,7 +46,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkEngine::defaultDebugCallback(
 
 
 void VkEngine::setInstance() {
-    this->setAppConfig();
+
     this->appConfiguration.setRequiredExtension(enableValidationLayers);
 
     VkInstanceCreateInfo createInfo{};

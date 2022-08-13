@@ -48,39 +48,6 @@ namespace Vulkan {
     protected:
     public:
         VkEngine() {
-            errorStorer.insert(pair<VkResult, string>{VK_NOT_READY, "Not Ready"});
-            errorStorer.insert(pair<VkResult, string>{VK_TIMEOUT, "Timeout"});
-            errorStorer.insert(pair<VkResult, string>{VK_EVENT_SET, "Event Set"});
-            errorStorer.insert(pair<VkResult, string>{VK_EVENT_RESET, "Event Reset"});
-            errorStorer.insert(pair<VkResult, string>{VK_INCOMPLETE, "Incomplete"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_OUT_OF_HOST_MEMORY, "Out of Host Memory"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_OUT_OF_DEVICE_MEMORY, "Out of Device Memory"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_INITIALIZATION_FAILED, "Initialization Failed"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_DEVICE_LOST, "Device Lost"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_MEMORY_MAP_FAILED, "Memory Map Failed"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_LAYER_NOT_PRESENT, "Layer Not Present"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_EXTENSION_NOT_PRESENT, "Extension Not Present"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_FEATURE_NOT_PRESENT, "Feature Not Present"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_INCOMPATIBLE_DRIVER, "Incompatible Driver"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_TOO_MANY_OBJECTS, "Too Many Objects"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_FORMAT_NOT_SUPPORTED, "Format Not Supported"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_FRAGMENTED_POOL, "Fragmented Pool"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_SURFACE_LOST_KHR, "Surface Lost"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, "Native Window in Use"});
-            errorStorer.insert(pair<VkResult, string>{VK_SUBOPTIMAL_KHR, "Suboptimal"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_OUT_OF_DATE_KHR, "Error Out of Date"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_INCOMPATIBLE_DISPLAY_KHR, "Incompatible Display"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_VALIDATION_FAILED_EXT, "Valuidation Failed"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_INVALID_SHADER_NV, "Invalid Shader"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_OUT_OF_POOL_MEMORY_KHR, "Out of Pool Memory"});
-            errorStorer.insert(pair<VkResult, string>{VK_ERROR_INVALID_EXTERNAL_HANDLE, "Invalid External Handle"});
-
-            this->setAppConfig(VkAppConfiguration());
-
-            this->initWindow(12, 12);
-            this->setInstance();
-            this->createSurface();
-
         }
 
         std::chrono::duration<double, std::ratio<1,24>> getFramerate(){return frameRate;}

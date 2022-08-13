@@ -563,7 +563,7 @@ public:
 
     virtual std::vector<const char *> getRequiredInstanceExtensions() = 0;
 
-    WindowObj *getWindow() { return window; }
+    WindowObj* getWindow() { return window; }
 
     SurfaceObj getSurface() { return surface; }
 

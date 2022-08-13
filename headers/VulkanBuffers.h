@@ -80,10 +80,6 @@ namespace Vulkan {
 
                 vkFreeMemory(this->device,this->bufferMemory, nullptr);
                 Terminal::getInstance().printDestroy("to free memory   buffer ");
-
-                vkDestroyCommandPool(this->device,this->commandPool, nullptr);
-                Terminal::getInstance().printDestroy("to free buffer command pool");
-
             });
             created = true;
         };
@@ -108,16 +104,6 @@ namespace Vulkan {
             this->size = size;
             this->phyDeviceOff = choosenDev;
             this->device = nullptr;
-        }
-
-
-        ~VkGenericBuffer() {
-
-            /** todo handle better (create a tresh class where put lambda to destroy everything at the end)if(this->device !=NULL && created){
-                vkDestroyBuffer(this->device, this->buffer, nullptr);
-                vkFreeMemory(this->device, this->bufferMemory, nullptr);
-
-            }**/
         }
 
         VkCommandBuffer beginSingleTimeCommands() {
@@ -382,6 +368,17 @@ namespace Vulkan {
             createTextureImage();
             createImageView(VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_VIEW_TYPE_2D, 1);
             createTextureSampler();
+
+            this->physicalDevice->registerBuffer([=](){
+                vkDestroySampler(this->device,textData.textureSampler, nullptr);
+                Terminal::getInstance().printDestroy(" destroy texture sampler ");
+
+                vkDestroyImage(this->device,textData.textureImage, nullptr);
+                Terminal::getInstance().printDestroy(" destroy texture image ");
+
+                vkDestroyImageView(this->device,textData.textureImageView, nullptr);
+                Terminal::getInstance().printDestroy(" destroy texture image view ");
+            });
 
             this->alreadyLoaded.insert({this->path,this->textData});
 
@@ -689,19 +686,9 @@ namespace Vulkan {
             Terminal::getInstance().printOnCondition(" to create image view",result!=VK_SUCCESS,result);
 
 
-        }
-
-        void destroy(){
-            vkDestroySampler(this->device,textData.textureSampler, nullptr);
-            Terminal::getInstance().printDestroy(" destroy texture sampler ");
-
-            vkDestroyImage(this->device,textData.textureImage, nullptr);
-            Terminal::getInstance().printDestroy(" destroy texture image ");
-
-            vkDestroyImageView(this->device,textData.textureImageView, nullptr);
-            Terminal::getInstance().printDestroy(" destroy texture image view ");
 
         }
+
     };
 
     template<typename  data>
