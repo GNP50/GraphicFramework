@@ -53,8 +53,8 @@ namespace Vulkan {
 
         glm::vec3 getCamPos(){return CamPos;}
 
-        virtual void update(GLFWwindow *window){
-            if(default_nav) {
+        virtual void update(GLFWwindow *window) {
+            if (default_nav) {
                 if (glfwGetKey(window, GLFW_KEY_LEFT)) {
                     CamAng.y += rotSpeed;
                 }
@@ -75,36 +75,36 @@ namespace Vulkan {
                 }
 
 
-            CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.y, glm::vec3(0.0f, 1.0f, 0.0f))) *
-                     glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.x, glm::vec3(1.0f, 0.0f, 0.0f))) *
-                     glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.z, glm::vec3(0.0f, 0.0f, 1.0f)));
+                CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.y, glm::vec3(0.0f, 1.0f, 0.0f))) *
+                         glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.x, glm::vec3(1.0f, 0.0f, 0.0f))) *
+                         glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.z, glm::vec3(0.0f, 0.0f, 1.0f)));
 
 
-            if(glfwGetKey(window, GLFW_KEY_A)) {
-                CamPos -= translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                             glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(1,0,0,1));
-            }
-            if(glfwGetKey(window, GLFW_KEY_D)) {
-                CamPos += translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                             glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(1,0,0,1));
-            }
-            if(glfwGetKey(window, GLFW_KEY_S)) {
-                CamPos += translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                             glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0,0,1,1));
-            }
-            if(glfwGetKey(window, GLFW_KEY_W)) {
-                CamPos -= translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
-                                                             glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0,0,1,1));
-            }
-            if(glfwGetKey(window, GLFW_KEY_F)) {
-                CamPos -= translSpeed * glm::vec3(0,1,0);
-            }
-            if(glfwGetKey(window, GLFW_KEY_R)) {
-                CamPos += translSpeed * glm::vec3(0,1,0);
-            }
+                if (glfwGetKey(window, GLFW_KEY_A)) {
+                    CamPos -= translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
+                                                                  glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(1, 0, 0, 1));
+                }
+                if (glfwGetKey(window, GLFW_KEY_D)) {
+                    CamPos += translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
+                                                                  glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(1, 0, 0, 1));
+                }
+                if (glfwGetKey(window, GLFW_KEY_S)) {
+                    CamPos += translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
+                                                                  glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0, 0, 1, 1));
+                }
+                if (glfwGetKey(window, GLFW_KEY_W)) {
+                    CamPos -= translSpeed * glm::vec3(glm::rotate(glm::mat4(1.0f), CamAng.y,
+                                                                  glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0, 0, 1, 1));
+                }
+                if (glfwGetKey(window, GLFW_KEY_F)) {
+                    CamPos -= translSpeed * glm::vec3(0, 1, 0);
+                }
+                if (glfwGetKey(window, GLFW_KEY_R)) {
+                    CamPos += translSpeed * glm::vec3(0, 1, 0);
+                }
 
+            }
         }
-
 
         virtual glm::mat4 getProj(float n,float f,float a){
             return ProjectBuffer::instance(1.0f,n,f)->perspectiveProj(glm::pi<float>()/6,a);
@@ -131,7 +131,7 @@ namespace Vulkan {
         shared_ptr<UniformBuffer<UniformBufferObject>> gubo;
         UniformBufferObject hostGubo;
         float n = 1.0,f = 100,a = 0.0;
-        vector<Camera> cameras;
+        vector<Camera*> cameras;
         int currentCamera = 0;
 
         vector<Vulkan::Render*> renders;
@@ -155,7 +155,7 @@ namespace Vulkan {
         int choosenDeviceSwapChain = -1;
         string name;
 
-        const int w, h;
+        int w, h;
 
         void SetUp() ;
         void ChooseADevice(vector<VkPhysicalDeviceType> type= {
@@ -164,7 +164,7 @@ namespace Vulkan {
         void setAndCreateSwapChain();
         void createSyncObjects();
         void drawFrame();
-        void destroy();
+        void destroy(bool all = true);
 
         void createCommandPool() {
             auto queueFamilyIndices =  deviceRepository->getUniqueIndicies<vector<uint32_t>>(
