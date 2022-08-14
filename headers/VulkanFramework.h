@@ -287,7 +287,8 @@ namespace Vulkan {
     }
 
     void setAndRecreateSwapChain(){
-            this->destroy(false);
+        auto dev = this->deviceRepository->getLogicalDevice(*this->deviceRepository->getPerfectCriteriaMatcher().begin());
+        vkDeviceWaitIdle(dev);
             auto window = this->engine->getWindow();
             glfwGetFramebufferSize(window, &w, &h);
 
@@ -295,12 +296,16 @@ namespace Vulkan {
                 glfwGetFramebufferSize(window, &w, &h);
                 glfwWaitEvents();
             }
+            swapChain->destroy();
+        setAndCreateSwapChain();
+        this->destroy(false);
 
-            auto dev = this->deviceRepository->getLogicalDevice(*this->deviceRepository->getPerfectCriteriaMatcher().begin());
-            vkDeviceWaitIdle(dev);
+        createSyncObjects();
+        createCommandPool();
+        this->createRender();
 
-            setAndCreateSwapChain();
-        }
+
+    }
 
         float getN(){return this->n;}
         float getF(){return this->f;}

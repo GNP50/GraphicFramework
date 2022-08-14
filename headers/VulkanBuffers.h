@@ -78,6 +78,7 @@ namespace Vulkan {
                 vkDestroyBuffer(this->device,this->buffer, nullptr);
                 Terminal::getInstance().printDestroy("to destroy  buffer ");
 
+
                 vkFreeMemory(this->device,this->bufferMemory, nullptr);
                 Terminal::getInstance().printDestroy("to free memory   buffer ");
             });
@@ -378,10 +379,17 @@ namespace Vulkan {
 
                 vkDestroyImageView(this->device,textData.textureImageView, nullptr);
                 Terminal::getInstance().printDestroy(" destroy texture image view ");
+
+                vkDestroyCommandPool(this->device,this->commandPool, nullptr);
+                Terminal::getInstance().printDestroy(" destroy texture command pool");
+
+                vkFreeMemory(this->device,textData.textureImageMemory, nullptr);
+                Terminal::getInstance().printDestroy(" destroy texture image memory");
+
+
             });
 
             this->alreadyLoaded.insert({this->path,this->textData});
-
         };
 
 

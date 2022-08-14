@@ -646,8 +646,8 @@ namespace Vulkan{
             for(int i=0;i<swapChainImageViews.size();i++){
                 vkDestroyImageView(getChoosenDevice(),swapChainImageViews[i], nullptr);
                 Terminal::getInstance().printDestroy(" destroy image view buffer in swapchain ");
-
             }
+
 
             vkDestroySwapchainKHR(getChoosenDevice(),swapChain, nullptr);
             Terminal::getInstance().printDestroy(" destroy   swapchain ");

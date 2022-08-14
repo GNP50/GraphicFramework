@@ -57,7 +57,6 @@ void Enviroment::setAndCreateSwapChain() {
 
     swapChain->createSwapChain(off, formats[0], presentMode[0], extend);
     swapChain->updateSwapImages();
-    swapChain->createImageView();
 }
 void Enviroment::ChooseADevice(vector<VkPhysicalDeviceType> type) {
 
@@ -109,9 +108,10 @@ void Enviroment::createSyncObjects() {
 
 void Enviroment::destroy(bool all){
 
-    swapChain->destroy();
 
     if(all){
+        swapChain->destroy();
+
         for(auto render:renders)
             render->destroy();
 
@@ -132,6 +132,20 @@ void Enviroment::destroy(bool all){
 
         deviceRepository->destroy();
     }else{
+        for (size_t i = 0; i < swapChain->getSwapChainImages().size(); i++) {
+            vkDestroySemaphore(swapChain->getChoosenDevice(),imageAvailableSemaphores[i],nullptr);
+            vkDestroySemaphore(swapChain->getChoosenDevice(),renderFinishedSemaphores[i],nullptr);
+            Terminal::getInstance().printDestroy(string("semaphore " + i) + "destroyed");
+
+            vkDestroyFence(swapChain->getChoosenDevice(),inFlightFences[i], nullptr);
+            Terminal::getInstance().printDestroy(string("fligth fence " + i) + "destroyed");
+
+            imagesInFlight[i] = VK_NULL_HANDLE;
+        }
+
+        vkDestroyCommandPool(swapChain->getChoosenDevice(),commandPool, nullptr);
+        Terminal::getInstance().printDestroy(" destroyed command pool " );
+
         for(auto render:renders)
             render->recreate(swapChain);
     }

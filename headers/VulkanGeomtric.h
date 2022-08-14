@@ -66,6 +66,8 @@ namespace Vulkan {
 
         void recreate(shared_ptr<VkSwapChain> swap ){
             Render::recreate(swap);
+            descrPool->addDescriptorSet<stbi_uc *>(*texture);
+            createPipeline(*this->swapChain);
 
         }
 

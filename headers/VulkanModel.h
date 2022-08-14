@@ -166,12 +166,13 @@ namespace Vulkan {
 
         void setF(float f){this->f = f;}
 
-        void recreate(shared_ptr<VkSwapChain> swap ){
+        virtual void recreate(shared_ptr<VkSwapChain> swap ){
             swapChain = swap;
 
             descrPool->destroy();
-            delete descrPool;
-            descrPool = new DescriptorPool(swapChain,deviceRepository);
+            pipeline->destroy(*swapChain);
+
+            init(deviceRepository,swap,gubo);
         }
 
     protected:
