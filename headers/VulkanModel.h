@@ -72,9 +72,11 @@ namespace Vulkan {
             for (auto toAdd: objects) {
                 int i = 0;
                 auto textCoords = toAdd.getTextCoords();
+                auto normCoords = toAdd.getVnCoords();
                 for (auto vert: toAdd.getVertex()) {
 
                     vertex[i].texCoord = textCoords.size() > 0 ? textCoords[i%textCoords.size()] : glm::vec2(0.0f);
+                    vertex[i].norm = normCoords.size() > 0 ? normCoords[i%normCoords.size()] : glm::vec3(0.0f);
                     vertex[i++].pos = vert;
                 }
 
@@ -118,6 +120,8 @@ namespace Vulkan {
     };
     class Render{
     protected:
+        vector<std::function<void()>> addDescriptors;
+
         std::shared_ptr<VkPhyDevice> deviceRepository;
         std::shared_ptr<VkSwapChain> swapChain;
         std::shared_ptr<UniformBuffer<UniformBufferObject>> gubo;
@@ -173,8 +177,20 @@ namespace Vulkan {
             pipeline->destroy(*swapChain);
 
             init(deviceRepository,swap,gubo);
+
+            for(auto adders:addDescriptors)
+                adders();
+
+            createPipeline(*this->swapChain);
         }
 
+        template<typename DescriptorType>
+        void addDescriptorSet(DescriptorSet<DescriptorType> &descriptorSet) {
+            addDescriptors.push_back([&](){
+                descrPool->addDescriptorSet<DescriptorType>(descriptorSet);
+            });
+            descrPool->addDescriptorSet<DescriptorType>(descriptorSet);
+        }
     protected:
 
 

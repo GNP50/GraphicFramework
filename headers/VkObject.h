@@ -12,6 +12,7 @@ namespace Vulkan{
     class Object{
     protected:
         vector<glm::vec3> vertexes;
+        vector<glm::vec3> norms;
         vector<glm::vec2> textCoords;
         vector<uint32_t> indicies;
         vector<glm::vec2> uvs;
@@ -27,6 +28,7 @@ namespace Vulkan{
         const vector<glm::vec3> &getVertex() const;
         const vector<uint32_t> &getIndicies() const;
         const vector<glm::vec2> &getTextCoords() const;
+        const vector<glm::vec3> &getVnCoords() const {return norms;} ;
 
         void create(bool points = false){
             this->loadData();
@@ -67,6 +69,7 @@ namespace Vulkan{
         string filename;
         vector<glm::vec2> file_uv;
         vector<glm::vec3> file_vert;
+        vector<glm::vec3> file_vn;
         vector<glm::vec<3,uint>> file_ind;
 
         const int triangle_in_a_face = 2;
@@ -88,31 +91,38 @@ namespace Vulkan{
                 else if(start == "vt")
                         parseTextureUV(line);
 
+                else if(start == "vn")
+                    parseTextureVN(line);
+
             }
 
             file.close();
             int f=0;
             for(int i=0;i<file_ind.size();i+=3*triangle_in_a_face-2){
                     for(int j=0;j<3;j++){
-                        auto ind_to_select = file_ind[i+j];
+                        auto ind_to_select = file_ind[(i+j)%file_ind.size()];
                         vertexes.push_back(file_vert[ind_to_select.x]);
                         uvs.push_back(file_uv[ind_to_select.y]);
+                        norms.push_back(file_vn[ind_to_select.z]);
                         indicies.push_back(f++);
                     }
 
-                    auto ind_to_select = file_ind[i+2];
+                    auto ind_to_select = file_ind[(i+2)%file_ind.size()];
                     vertexes.push_back(file_vert[ind_to_select.x]);
                     uvs.push_back(file_uv[ind_to_select.y]);
+                    norms.push_back(file_vn[ind_to_select.z]);
                     indicies.push_back(f++);
 
-                    ind_to_select = file_ind[i+3];
+                    ind_to_select = file_ind[(i+3)%file_ind.size()];
                     vertexes.push_back(file_vert[ind_to_select.x]);
                     uvs.push_back(file_uv[ind_to_select.y]);
+                    norms.push_back(file_vn[ind_to_select.z]);
                     indicies.push_back(f++);
 
-                    ind_to_select = file_ind[i];
+                    ind_to_select = file_ind[i%file_ind.size()];
                     vertexes.push_back(file_vert[ind_to_select.x]);
                     uvs.push_back(file_uv[ind_to_select.y]);
+                    norms.push_back(file_vn[ind_to_select.z]);
                     indicies.push_back(f++);
             }
         }
@@ -122,7 +132,15 @@ namespace Vulkan{
                     std::stof(vertexes[1]),
                     std::stof(vertexes[2]),
                     std::stof(vertexes[3])}
-                    );
+            );
+        }
+        void parseTextureVN(string vertex){
+            auto vertexes = splitLine(vertex,' ');
+            this->file_vn.push_back(glm::vec3{
+                    std::stof(vertexes[1]),
+                    std::stof(vertexes[2]),
+                    std::stof(vertexes[3])}
+            );
         }
         void parseIndex(string index){
             //the format is

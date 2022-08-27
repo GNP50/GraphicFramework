@@ -59,17 +59,12 @@ namespace Vulkan {
 
             texture = new TextureBuffer<stbi_uc *>(textPath);
             texture->createBuffers(*swap);
-            descrPool->addDescriptorSet<stbi_uc *>(*texture);
+            addDescriptorSet<stbi_uc *>(*texture);
         }
     public:
 
 
-        void recreate(shared_ptr<VkSwapChain> swap ){
-            Render::recreate(swap);
-            descrPool->addDescriptorSet<stbi_uc *>(*texture);
-            createPipeline(*this->swapChain);
 
-        }
 
 
         virtual void update(GLFWwindow *window) override{

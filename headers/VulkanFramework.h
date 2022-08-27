@@ -22,6 +22,7 @@
 namespace Vulkan {
 
     class Camera{
+    protected:
         // Camera
         glm::mat3 CamDir = glm::mat3(1.0f);
         glm::vec3 CamPos = glm::vec3(0.0f, 0.0f, 0.f);
@@ -32,6 +33,9 @@ namespace Vulkan {
 
         void setCamAng(const glm::vec3 &camAng) {
             CamAng = camAng;
+            CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.y, glm::vec3(0.0f, 1.0f, 0.0f))) *
+                     glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.x, glm::vec3(1.0f, 0.0f, 0.0f))) *
+                     glm::mat3(glm::rotate(glm::mat4(1.0f), CamAng.z, glm::vec3(0.0f, 0.0f, 1.0f)));
         }
 
     private:
@@ -52,6 +56,8 @@ namespace Vulkan {
         }
 
         glm::vec3 getCamPos(){return CamPos;}
+        glm::vec3 getCamAngle(){return CamPos;}
+        glm::mat4 getCamDim(){return CamDir;}
 
         virtual void update(GLFWwindow *window) {
             if (default_nav) {
@@ -323,8 +329,10 @@ namespace Vulkan {
              this->renders.push_back(r);
         }
         void mainLoop() {
-            gubo->updateData(hostGubo);
             hostGubo.mvpMat = cameras[currentCamera]->getProj(-n,-f,a);
+            hostGubo.mMat = cameras[currentCamera]->getCameraMat();
+            hostGubo.nMat = glm::mat4 (1.0);
+            gubo->updateData(hostGubo);
             for(auto rend:renders){
                 rend->setF(f);
                 rend->setN(n);
