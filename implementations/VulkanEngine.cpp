@@ -67,10 +67,15 @@ void VkEngine::setInstance() {
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
-    std::vector<VkExtensionProperties> extensionsPr(extensionCount);
+    extensionsPr.resize(extensionCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount,
                                            extensionsPr.data());
 
+    std::cout << "available extensions:\n";
+
+    for (const auto& extension : extensionsPr) {
+        std::cout << '\t' << extension.extensionName << '\n';
+    }
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
     setupDebugMessenger();
 

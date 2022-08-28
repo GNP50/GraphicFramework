@@ -32,6 +32,7 @@ namespace Vulkan {
     private:
         VkDebugUtilsMessengerEXT debugMessenger;
         VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+        std::vector<VkExtensionProperties> extensionsPr{};
 
         void (*debugCallback)();
 
