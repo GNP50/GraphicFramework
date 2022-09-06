@@ -17,7 +17,7 @@ namespace Vulkan{
         vector<uint32_t> indicies;
         vector<glm::vec2> uvs;
 
-        vector<UniformBuffer<UniformBufferObject>> ubo;
+
 
     public:
         void setVertex(vector<glm::vec3> vertex);
@@ -65,6 +65,8 @@ namespace Vulkan{
 
 
     class BlenderObj : public Object{
+
+        static map<string,BlenderObj*> cache;
 
         string filename;
         vector<glm::vec2> file_uv;
@@ -178,8 +180,28 @@ namespace Vulkan{
         }
 
     public:
-        BlenderObj(string filename):filename(filename){
+        BlenderObj(const BlenderObj& toCopy){
+            this->file_uv = toCopy.file_uv;
+            this->file_vert = toCopy.file_vert;
+            this->file_vn = toCopy.file_vn;
+            this->file_ind = toCopy.file_ind;
 
+            this->filename = toCopy.filename;
+
+
+            this->vertexes = toCopy.vertexes;
+            this->norms = toCopy.norms;
+            this->textCoords = toCopy.textCoords;
+            this->indicies = toCopy.indicies;
+
+        }
+        BlenderObj(string filename):filename(filename){
+            if(cache.find(filename) == cache.end())
+            {
+                BlenderObj(*this->cache[filename]);
+            }else{
+                this->cache.insert({filename,this});
+            }
         }
 
 

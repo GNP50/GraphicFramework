@@ -30,3 +30,5 @@ void Object::setIndicies(vector<uint32_t> indicies) {
 void Object::setTextCoords(vector<glm::vec2> coords) {
     this->textCoords = vector<glm::vec2>(coords);
 }
+
+map<string,BlenderObj*> BlenderObj::cache = {};

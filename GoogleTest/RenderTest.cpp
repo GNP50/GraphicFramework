@@ -26,7 +26,7 @@ protected:
         enviroment->addCamera(camera);
         enviroment->addCamera(camera2);
 
-        //new Sky("textures/triangle.png",*enviroment);
+        new Sky("textures/triangle.png",*enviroment);
         /**
         new BlenderRender("objs/wheel.obj","objs/landscape.png",*enviroment);
         new BlenderRender("objs/wheel.obj","objs/landscape.png",*enviroment);**/
