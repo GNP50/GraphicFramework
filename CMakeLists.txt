@@ -19,6 +19,7 @@ add_library(DB SHARED
         implementations/GraphicsFramework.cpp
         implementations/VulkanBuffers.cpp
         implementations/CustomGeometric.cpp
+        implementations/SkyBoxRender.cpp
 
         headers/Terminal.h
         headers/VulkanFramework.h
@@ -26,6 +27,7 @@ add_library(DB SHARED
         headers/stb_image.h
         headers/stb_image_write.h
         headers/KinematicsRenders.h
+        headers/SkyBoxRender.h
 
         )
 

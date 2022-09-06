@@ -7,6 +7,7 @@
 #include <vector>
 #include "VulkanGeomtric.h"
 #include "VkObjectExtensions.h"
+#include "SkyBoxRender.h"
 
 using namespace std;
 using namespace Vulkan;
@@ -25,40 +26,34 @@ protected:
         enviroment = new Enviroment("ass 12");
         enviroment->addCamera(camera);
         enviroment->addCamera(camera2);
-
-        new Sky("textures/triangle.png",*enviroment);
-        /**
-        new BlenderRender("objs/wheel.obj","objs/landscape.png",*enviroment);
-        new BlenderRender("objs/wheel.obj","objs/landscape.png",*enviroment);**/
-
-            new Triangle(
-                      vec3(-1,-1,0),
-                      vec3(1,-1,0),
-                      vec3(1,1,0),"textures/triangle.png",
-                      *enviroment
-              );
-
-
-        enviroment->createRender();
     }
 
     Enviroment *enviroment;
 
+    void startRender(){
+        enviroment->createRender();
+        enviroment->mainLoop();
+    }
 
 };
 
-TEST_F(RenderTestFixture,extensionsFeature){
+TEST_F(RenderTestFixture,SkyBoxRenderTest){
+    new Sky("textures/triangle.png",*enviroment);
+    startRender();
+}
 
-
-    enviroment->mainLoop();
-    assert(1==1);
-
+TEST_F(RenderTestFixture,BlenderRenderTest){
+    new BlenderRender("objs/wheel.obj","objs/landscape.png",*enviroment);
+    startRender();
 }
 
 
-TEST_F(RenderTestFixture,renderSingleTriangleTest){
-
-    enviroment->mainLoop();
-    assert(1==1);
-
+TEST_F(RenderTestFixture,TriangleRenderTest){
+    new Triangle(
+            vec3(-1,-1,0),|
+            vec3(1,-1,0),
+            vec3(1,1,0),"textures/triangle.png",
+            *enviroment
+    );
+    startRender();
 }

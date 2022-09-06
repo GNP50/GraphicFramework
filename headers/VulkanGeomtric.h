@@ -100,38 +100,6 @@ namespace Vulkan {
         }
     };
 
-    class Sky: public TexturedRender{
-    public:
-        Sky(const string textPath,
-                Enviroment &env):TexturedRender()
-        {
-            init_texture(env.getRepository(),env.getSwapChain(),textPath,env.getGubo());
-
-            vector<glm::vec3> app = vector<vec3>();
-
-            app.push_back({1,1,0});
-            app.push_back({1,-1,0.0});
-            app.push_back({-1,-1,0.0});
-            app.push_back({-1,1,0.0});
-
-            vector<uint32_t> ind = {0,1,2,2,0,3};
-
-            createObject();
-            textCoords.push_back({0.0,0.0});
-            textCoords.push_back({1.0,0.0});
-            textCoords.push_back({1.0,1.0});
-            textCoords.push_back({0.0,1.0});
-
-            TexturedRender::setVertexesAndIndicies(app,ind);
-            TexturedRender::createModel();
-
-            createPipeline(*this->swapChain);
-
-            env.addRender(this);
-        }
-
-        virtual void update(GLFWwindow *window) override {}
-    };
     class BlenderRender : public TexturedRender{
         string obj_path;
 

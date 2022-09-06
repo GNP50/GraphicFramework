@@ -119,6 +119,11 @@ namespace Vulkan {
         virtual glm::mat4 getCameraMat(){
             return glm::translate(glm::transpose(glm::mat4(CamDir)), -CamPos);
         }
+
+        virtual glm::vec3 getCameraDir(){
+            return glm::vec3(this->CamDir[2][0],this->CamDir[2][1],this->CamDir[2][2]);
+        }
+
     };
     class Enviroment{
 
@@ -186,9 +191,6 @@ namespace Vulkan {
             Terminal::getInstance().printOnCondition("to create command pool",result!=VK_SUCCESS,result);
 
         }
-
-
-
         void startRenderPass(){
             // Lesson 13
             auto frameBuffers = swapChain->getFramwBuffers();
@@ -286,6 +288,8 @@ namespace Vulkan {
         }
 
 
+        Camera* getCurrentCamera(){return this->cameras[currentCamera];}
+
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<Enviroment*>
         (glfwGetWindowUserPointer(window));
@@ -315,6 +319,8 @@ namespace Vulkan {
 
         float getN(){return this->n;}
         float getF(){return this->f;}
+        float getW(){return this->w;}
+        float getH(){return this->h;}
 
         shared_ptr<VkPhyDevice> getRepository(){
             return deviceRepository;

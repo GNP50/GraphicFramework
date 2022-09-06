@@ -395,7 +395,7 @@ namespace Vulkan {
 
         void createTextureImage() {
             FILE* image = fopen(path.c_str(),"rb");
-            Terminal::getInstance().template printOnCondition(" open texture path ",image == NULL,"");
+            Terminal::getInstance().template printOnCondition(" open texture path "+path,image == NULL,"");
 
             stbi_uc *pixels = stbi_load_from_file(image, &texWidth, &texHeight,
                                         &texChannels, STBI_rgb_alpha);
